@@ -1,0 +1,155 @@
+@startuml
+title nk推协侦探管理系统 - 概念类图
+top to bottom direction
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+class "User 用户" as User {
+  + openId: String
+  + nickname: String
+  + role: Role
+  + campus: String
+  + login()
+  + updateProfile()
+}
+
+class "Admin 管理员" as Admin {
+  + whitelist: Boolean
+  + permissions: List
+  + checkPermission()
+  + auditOperation()
+}
+
+class "DailyPuzzle 每日谜题" as Puzzle {
+  + title: String
+  + options: List
+  + answer: String
+  + publishAt: DateTime
+  + isAvailable()
+  + checkAnswer()
+}
+
+class "AnswerRecord 答题记录" as Answer {
+  + userId: String
+  + puzzleId: String
+  + selected: String
+  + correct: Boolean
+  + ensureOncePerDay()
+  + revealAnalysis()
+}
+
+class "CreditAccount 积分账户" as Credit {
+  + totalCredit: Int
+  + exchangeableCredit: Int
+  + rank: Int
+  + addPuzzleCredit()
+  + transfer()
+  + deductForExchange()
+}
+
+class "ShopItem 兑换商品" as Shop {
+  + name: String
+  + requiredCredit: Int
+  + stock: Int
+  + exchange()
+  + decreaseStock()
+}
+
+class "Activity 活动" as Activity {
+  + title: String
+  + time: DateTime
+  + location: String
+  + capacity: Int
+  + canRegister()
+  + canCancel()
+}
+
+class "Registration 报名记录" as Registration {
+  + userId: String
+  + activityId: String
+  + status: String
+  + register()
+  + cancelBeforeDeadline()
+}
+
+class "AssetItem 物资" as Asset {
+  + name: String
+  + category: String
+  + campus: String
+  + status: AssetStatus
+  + applyBorrow()
+  + markBorrowed()
+  + returnToStock()
+}
+
+class "BorrowRecord 借阅记录" as Borrow {
+  + borrowerId: String
+  + assetId: String
+  + state: BorrowState
+  + cancelInTransit()
+  + confirmBorrowed()
+}
+
+class "ReplyRule\nDud 应答规则" as Dud {
+  + keywords: List
+  + matchMode: Enum
+  + replyText: String
+  + matchMessage()
+  + updateRule()
+}
+
+class "DetectiveCard 侦探名片" as Card {
+  + userId: String
+  + bio: String
+  + style: String
+  + editCard()
+  + viewCard()
+}
+
+class "CommissionPost 事件委托" as Post {
+  + publisherId: String
+  + reward: Int
+  + status: String
+  + accept()
+  + resolve()
+  + distributeReward()
+}
+
+class "Feedback 反馈建议" as Feedback {
+  + authorId: String?
+  + content: String
+  + anonymous: Boolean
+  + submit()
+  + markHandled()
+}
+
+class "Recommendation 推荐内容" as Recommendation {
+  + title: String
+  + type: String
+  + recommender: String
+  + reasonUrl: String
+  + publish()
+  + viewDetail()
+}
+
+Admin --|> User : 继承/扩展权限
+User "1" --> "*" Answer
+Puzzle "1" --> "*" Answer
+User "1" --> "1" Credit
+Credit --> Shop : 兑换扣减
+User "1" --> "*" Registration
+Activity "1" --> "*" Registration
+Asset "1" --> "*" Borrow
+User "1" --> "*" Borrow : 借阅人
+Admin --> Asset : 维护库存
+Admin --> Puzzle : 维护谜题
+Admin --> Dud : 维护规则
+User --> Card : 拥有
+User --> Post : 发布/接收
+Credit --> Post : 积分报酬
+User --> Feedback : 提交
+Admin --> Feedback : 处理
+Admin --> Recommendation : 发布
+@enduml

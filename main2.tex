@@ -1,0 +1,573 @@
+\documentclass[a4paper,12pt]{article}
+
+%----------------------- 宏包引入 -----------------------
+\usepackage{ctex}       % 中文支持
+\usepackage{graphicx}   % 图片支持
+\usepackage{geometry}   % 页面布局
+\usepackage{listings}   % 代码展示
+\usepackage{xcolor}     % 颜色支持
+\usepackage{hyperref}   % 超链接
+\usepackage{amsmath}    % 数学公式
+\usepackage{amssymb}    % 数学符号
+\usepackage{booktabs}   % 专业表格
+\usepackage{fancyhdr}   % 页眉页脚
+\usepackage{lastpage}   % 引用最后一页
+\usepackage{caption}    % 标题设置
+\usepackage{subfigure}  % 子图支持
+\usepackage{float}      % 强制图片位置
+\usepackage{enumitem}   % 列表优化
+\usepackage{tikz}       % 绘图工具
+\usepackage{pgfplots}   % 画折线图
+\usepackage{longtable}  % 长表格支持
+\usepackage{array}      % 表格增强
+\usepackage{multirow}   % 多行单元格
+\usepackage{placeins}   % 控制浮动体
+\pgfplotsset{width=10cm,compat=1.9}
+\usetikzlibrary{shapes,arrows,positioning,automata,calc}
+
+%----------------------- 页面设置 -----------------------
+\geometry{left=2.5cm,right=2.5cm,top=2.8cm,bottom=2.8cm}
+\linespread{1.5} 
+\setlength{\headheight}{14.5pt}
+
+%----------------------- 解决排版问题 -----------------------
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{5}
+
+%----------------------- 代码高亮设置 -----------------------
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small, 
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=8pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,
+    frame=shadowbox,
+    frameround=tttt,
+    xleftmargin=2em,
+    xrightmargin=1em,
+    language=HTML
+}
+\lstset{style=mystyle}
+
+%----------------------- 页眉页脚 -----------------------
+\pagestyle{fancy}
+\lhead{\kaishu 软件工程团队文档}
+\chead{需求文档} 
+\rhead{第15组} 
+\lfoot{}
+\cfoot{第 \thepage 页 \ / \ 共 \pageref{LastPage} 页}
+\rfoot{}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+%----------------------- 封面 -----------------------
+\begin{titlepage}
+    \begin{center}
+        \vspace*{2cm}
+        \includegraphics[width=0.5\textwidth]{NKU.png} \\ 
+        \vspace*{2cm}
+        {\Huge \bfseries 软件工程团队报告} \\
+        \vspace{1.5cm}
+        {\Large \bfseries 团队作业1：需求文档} \\
+        \vspace{3cm}
+        
+        \begin{tabular}{l l}
+            \Large \textbf{团队组号：} & \Large 15 \\
+            \Large \textbf{团队成员：} & \Large 杨雨杭、刘轩麟、尹浩燃、张启鑫、王增哲 \\
+            \Large \textbf{学号：} & \Large 2310700、2312289、2313547、2313411、2310708 \\   
+            \Large \textbf{指导教师：} & \Large 徐思涵 \\
+        \end{tabular}
+        
+        \vfill
+        {\Large \today}
+    \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+%----------------------- 正文开始 -----------------------
+
+\section{引言}
+
+\subsection{编写目的}
+本文档旨在为“nk推协侦探管理系统”微信小程序的开发全生命周期提供精确的功能边界和性能基准。文档不仅详细阐述了推理协会在日常运营中的核心业务逻辑（如物资流转、解谜互动、积分体系等），还明确了非功能性质量属性，作为后续系统架构设计、数据库建模、单元测试及用户验收的权威技术指引。其目标受众包括开发团队、项目评审人员及社团管理人员。
+
+\subsection{项目背景}
+随着南开大学推理协会社团规模的日益扩大，传统的基于人工登记的剧本/书籍借阅、QQ群报名活动、以及零散的线下解谜互动已难以满足高效运营的需求。物资流转不透明、数据统计繁杂、社员活跃度缺乏直观反馈成为制约社团发展的痛点。本项目旨在利用微信开发者工具，构建一个集“推理、竞技、社交、管理”于一体的数字化平台，通过游戏化的机制增强社员粘性。
+
+\subsection{术语与缩写说明}
+\begin{itemize}[label=---]
+    \item \textbf{Dud}：系统内置的关键词匹配互动机器人，形象为一只名为“u0”的生物。
+    \item \textbf{传递中 (In-Transit)}：指物资借阅过程中的关键中间状态，即借阅申请已发起但尚未由管理员完成实物核实。
+    \item \textbf{积分 (Credit System)}：分为“总累计积分”（决定排行榜）与“可兑换积分”（用于商城消费），两者逻辑上相互独立；积分来源通过积分流水的来源类型进行区分。
+    \item \textbf{事件委托}：用户或管理员发布的互助帖、调查任务或社团官方委托，涉及积分报酬的转移与分配。
+\end{itemize}
+
+\subsection{参考文献}
+\begin{enumerate}[label={[\arabic*]}]
+    \item Ian Sommerville. 软件工程(第10版)[M]. 机械工业出版社, 2018.
+    \item Grady Booch, James Rumbaugh, Ivar Jacobson. UML用户指南(第2版)[M]. 人民邮电出版社, 2013.
+    \item IEEE Std 830-1998, IEEE Recommended Practice for Software Requirements Specifications[S].
+\end{enumerate}
+
+\section{系统概述}
+
+\subsection{系统目标与范围}
+本系统旨在构建一个全方位的社团数字化管理闭环。其核心业务范围涵盖以下13个模块：
+\begin{itemize}
+    \item \textbf{日常互动}：每日谜题解答与解析、Dud关键词自动回复系统。
+    \item \textbf{物资管理}：剧本杀与书籍借阅流转、后台物资库存清点系统。
+    \item \textbf{激励体系}：动态更新的积分排行榜、独立逻辑的积分兑换商城、个人电子侦探名片。
+    \item \textbf{活动与互助}：具备截止时间逻辑的活动报名系统、涉及积分悬赏的事件委托系统。
+    \item \textbf{基础支撑}：账号注册与登录、系统设置、权限控制和通知偏好等常规小程序功能。
+\end{itemize}
+
+\subsection{用户角色定义}
+系统通过 OpenID 进行身份识别；在数据库字段中统一使用小写 \texttt{openid}，业务描述中统一使用 OpenID。系统主要划分三类角色：
+\begin{itemize}
+    \item \textbf{未登录用户（游客）}：可浏览不依赖 user\_id 的公开内容，如游戏与书籍推荐、公开活动通知、首页基础信息等；不能参与每日谜题答题、活动报名、积分兑换、物品借阅、事件委托发布、个人名片修改等需要身份绑定的操作。
+    \item \textbf{普通用户（侦探）}：拥有答题、查看排名、报名活动、发布/领取委托、借阅申请、商城兑换及个人信息修改权限。
+    \item \textbf{管理员（社团管理层）}：除上述权限外，拥有独立的后端控制面板。职责包括物资流转状态的最终确认（将“传递中”转为“借出”）、每日谜题的预设与更新频率控制、库存数据增删改、回复规则的实时配置，以及不定期发布来自社团的官方事件委托。
+\end{itemize}
+
+\subsection{系统运行环境}
+\begin{itemize}
+    \item \textbf{开发环境}：Windows操作系统下的微信开发者工具（Stable Build），利用其内置的WXML、WXSS、JavaScript框架进行敏捷开发。
+    \item \textbf{硬件环境}：
+        \begin{itemize}
+            \item \textbf{开发侧}：运行微信开发者工具的PC设备，利用开发者工具自带的“手机模拟器”进行各种主流分辨率（如iPhone 13/Pro, Android Pixel 5等）的视口效果预览、布局适配及逻辑调试。
+            \item \textbf{运行侧}：支持微信客户端运行的移动端智能终端（iOS 10.0 或更高版本；Android 5.0 或更高版本）。
+        \end{itemize}
+    \item \textbf{网络环境}：稳定的互联网接入，用于云端数据库的数据存取与多端数据同步。
+    \item \textbf{后端服务}：微信小程序云开发（或自建云服务器），提供云函数、云数据库、云存储等基础设施。云函数基于Node.js或Python运行时实现业务逻辑与权限管理。
+    \item \textbf{支撑工具}：
+        \begin{itemize}
+            \item Git版本控制系统（托管在GitHub/GitLab，便于团队协作）。
+            \item WeChat公众平台与小程序后台（用于配置AppID、AppSecret、消息推送等）。
+        \end{itemize}
+\end{itemize}
+
+\subsubsection{兼容性要求}
+\begin{itemize}
+    \item 支持iOS、Android及Web端微信客户端。
+    \item 对于低端安卓机型（内存 < 1GB），系统应启用"轻量级模式"，减少动画与图片加载，确保基础功能可用。
+    \item 支持离线缓存：用户在没有网络连接时，本地缓存应能显示上次同步的数据，待网络恢复后自动同步。
+\end{itemize}
+
+\section{功能性需求}
+
+\subsection{模块1：每日谜题系统}
+\subsubsection{基本描述}
+每日谜题是系统的核心互动入口，用于激发社员的参与度并积累个人积分。系统每日在预设时间点更新谜题，每名已登录用户每天仅有一次作答机会。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{谜题展示与更新}：首页显示当日谜题按钮，颜色随状态动态变化（灰色表示已答、彩色表示待答）。管理员可预先在后台录入多套谜题及其更新时间点，系统到时自动切换。
+    \item \textbf{选项与答题}：每个谜题可包含不等数量的选项（2-4个）。用户选择后立即显示正确答案和详细解析。
+    \item \textbf{积分奖励}：答题正确立即增加用户的"总累计积分"与"可兑换积分"。
+\end{itemize}
+
+\subsection{模块2：积分排行榜}
+\subsubsection{基本描述}
+实时展示用户在积分方面的竞争排名，激励用户持续参与。排行榜不区分积分来源，具体来源在积分流水类型中记录。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{首页预览}：首页显示排行榜前三名的昵称与积分，并提供"查看完整排行榜"的入口。
+    \item \textbf{完整榜单}：独立页面展示排行前100名，每行显示排名、昵称、积分。排名更新频率与每日谜题结算时间一致。
+    \item \textbf{个人排名查看}：在个人系统页面实时显示当前积分与排名。若未进入前100，显示"未入榜"提示。
+    \item \textbf{并列处理}：多名用户积分相同时，按先到达该积分的时间排序；排行榜显示超过100名时，额外显示所有并列人员的排名信息。
+    \item \textbf{视觉突出}：排行榜中个人用户（若在前100）需以不同颜色标注以便快速定位。
+\end{itemize}
+
+\subsection{模块3：积分兑换商城}
+\subsubsection{基本描述}
+用户可使用"可兑换积分"换取社团库存物品，实现激励闭环。注意"可兑换积分"与"总累计积分"逻辑独立。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{商品展示}：显示商品列表（如周边、优先借阅权等），每个商品需标注所需积分、剩余库存数。库存管理与社团后端库存系统一致。
+    \item \textbf{兑换流程}：用户点击"兑换"后扣除其"可兑换积分"，但"总累计积分"（用于排行榜）保持不变。
+    \item \textbf{库存扣减}：兑换成功后原子扣减对应商品库存，防止超额兑换。
+    \item \textbf{兑换历史}：用户个人系统需保存兑换记录。
+\end{itemize}
+
+\subsection{模块4：活动报名系统}
+\subsubsection{基本描述}
+管理社团组织的各类活动（如线下解谜赛、剧本杀聚会等），支持报名与取消，并设置截止时间逻辑。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{活动列表}：独立页面按时间顺序展示近期活动。每个活动需显示标题、简介、时间、地点、人数上限及报满状态。
+    \item \textbf{报名逻辑}：
+        \begin{itemize}
+            \item 用户点击报名，系统立即显示"已报名"状态和"取消报名"按钮。
+            \item 管理员在后台设定"报名后可取消"的截止时间。若用户在此时间前取消，操作成功。
+            \item 若用户在截止时间后尝试取消，系统弹窗强制提示"当前活动报名后不可取消"，用户只可选择确认。
+        \end{itemize}
+    \item \textbf{人数管理}：报名数达到上限时，新用户看到"已报满"提示，无法继续报名。已报名用户仍可进行取消。
+    \item \textbf{实时显示}：报名/取消/人数满员状态需实时更新，确保不同用户之间的数据一致性。
+\end{itemize}
+
+\subsection{模块5：Dud 关键词回复系统}
+\subsubsection{基本描述}
+系统内置的智能互动机器人，通过关键词匹配向用户提供快速反馈。形象为一只名为"u0"的生物。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{独立对话界面}：首页提供"Dud"神秘按钮，点击进入独立的消息对话窗口。
+    \item \textbf{关键词匹配规则}：
+        \begin{itemize}
+            \item 支持全匹配（用户输入与规则完全一致）。
+            \item 支持半匹配（用户输入包含规则的关键词）。
+            \item 匹配规则参考微信公众号的多关键词处理机制。
+        \end{itemize}
+    \item \textbf{管理员配置}：管理员可在后端随时增加、修改或删除回复规则，无需重新发布程序。
+    \item \textbf{无匹配处理}：若用户输入未匹配任何规则，系统返回预设的"默认回复"。
+\end{itemize}
+
+\subsection{模块6：书籍与剧本杀借阅系统}
+\subsubsection{基本描述}
+社团物资的借阅管理核心模块。物资分为"书籍"和"剧本杀"两类，涉及库存、状态变更与权限管理。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{物资展示}：
+        \begin{itemize}
+            \item 书籍：显示书名、作者、简介、当前状态、所在位置（校区与具体位置）。
+            \item 剧本杀：额外显示类型、推荐人数、游玩时长。
+        \end{itemize}
+    \item \textbf{物资状态管理}：
+        \begin{itemize}
+            \item \textbf{在库}：物资可借用，显示"借阅"按钮。
+            \item \textbf{传递中}：借阅申请已发起，尚未由管理员实物核实。若为借阅人本身，显示专属的"取消借阅"按钮；其他用户仅显示"传递中"状态，无法申请。
+            \item \textbf{借出}：物资已被他人借出，显示"暂不可借"。
+        \end{itemize}
+    \item \textbf{借阅申请流程}：
+        \begin{itemize}
+            \item 用户点击"借阅"，系统立即将物资状态改为"传递中"，并存储借阅人信息。
+            \item 管理员收到通知，在后台确认实物转移并更新状态为"借出"。
+            \item 借阅人在"传递中"期间可随时取消，物资状态恢复为"在库"。
+        \end{itemize}
+    \item \textbf{权限隔离}：只有借阅申请人能取消自己的申请；其他用户不可操作。
+\end{itemize}
+
+\subsection{模块7：新闻与推荐系统}
+\subsubsection{基本描述}
+社团成员可分享推荐的游戏、书籍等内容，形成社区互动。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{推荐列表}：首页展示推荐内容入口。进入独立页面显示所有推荐内容，支持上下滑动翻页。
+    \item \textbf{推荐详情}：点击单个推荐，弹窗显示游戏/书籍名称、类型、推荐人、推荐理由。
+    \item \textbf{外链跳转}：推荐理由支持以"按钮"形式呈现为公众号文章链接，点击可跳转。
+    \item \textbf{发布权限}：仅管理员可发布推荐内容。
+\end{itemize}
+
+\subsection{模块8：侦探个人名片系统}
+\subsubsection{基本描述}
+每个注册用户的个人品牌页面，类似交友类应用的"名片"概念，支持社交展示。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{基本信息显示}：昵称、头像、积分、排名（未入榜显示"未入榜"）、个人简介。
+    \item \textbf{可编辑项}：用户可在个人设置页编辑昵称、头像、个人简介及名片样式（如配色方案）。
+    \item \textbf{名片交互}：在帖子评论区、活动报名列表、排行榜等社交场景，点击其他用户头像可快速查看其名片。
+    \item \textbf{一致性保证}：名片展示的信息需与个人系统实时同步。
+\end{itemize}
+
+\subsection{模块9：事件委托系统}
+\subsubsection{基本描述}
+用户可发布"求助贴"或"任务委托"，涉及积分报酬的悬赏与分配机制。管理员也可不定期发布来自社团的官方事件委托，相当于在每日谜题、活动等机制之外，为用户提供一条官方积分获取途径。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{发帖与报酬}：
+        \begin{itemize}
+            \item 发帖人若发布"求助贴"或"悬赏任务"，需支付一定积分作为报酬。系统立即从其"可兑换积分"中扣除，"总累计积分"不变。
+            \item 发帖成功后，帖子显示报酬金额与当前接收者数。
+        \end{itemize}
+    \item \textbf{官方委托}：管理员可代表社团发布官方事件委托，并设置积分奖励、截止时间和审核规则。官方委托的积分来源标记为社团奖励，不从普通用户账户扣除。
+    \item \textbf{接收与完成}：
+        \begin{itemize}
+            \item 其他用户可点击"接收委托"加入任务。
+            \item 发帖人可在帖子评论或独立的"分配"界面，自行决定将报酬分配给各个接收者（可平均分配或按比例分配）。
+            \item 发帖人点击"标记完成"后，积分立即转移到对应接收者账户，帖子状态改为"已完成"。
+        \end{itemize}
+    \item \textbf{积分流转追踪}：用户在个人系统需能查看自己发出与接收的委托历史，包括相关积分变动。
+\end{itemize}
+
+\subsection{模块10：活动反馈与建议}
+\subsubsection{基本描述}
+为社团管理层提供用户反馈与建议的渠道。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{反馈入口}：首页或菜单中提供"反馈"或"建议"按钮。
+    \item \textbf{反馈表单}：点击进入独立界面，用户可输入文本内容（可支持图片上传）后提交。
+    \item \textbf{反馈记录}：管理员后台可查看所有用户反馈，并进行标记、回复等处理。
+    \item \textbf{匿名选项}：用户可选择匿名提交反馈。
+\end{itemize}
+
+\subsection{模块11：库存管理系统（后台）}
+\subsubsection{基本描述}
+社团物资的全生命周期管理工具，仅管理员可见。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{物资分类}：
+        \begin{itemize}
+            \item 书籍与剧本杀（可借用物资）。
+            \item 积分兑换商品（可兑换物资）。
+            \item 杂物（如海报、办公用具等社团自用物资）。
+        \end{itemize}
+    \item \textbf{CRUD 操作}：管理员可新增、查看、修改、删除各类物资信息（名称、描述、库存数、位置等）。
+    \item \textbf{库存同步}：借阅系统、商城系统的库存变动需实时反映到库存管理系统。
+    \item \textbf{报表导出}：支持按分类、时间段生成库存报表，便于社团月度清点。
+    \item \textbf{权限隔离}：仅白名单中的管理员可访问此模块，其他用户无权查看或操作。
+\end{itemize}
+
+\subsection{模块12：账号注册与登录系统}
+\subsubsection{基本描述}
+账号注册与登录系统用于建立用户身份、绑定 OpenID 并维护会话状态，是所有需要 user\_id 的业务操作的前置条件。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{游客浏览}：未登录用户可浏览游戏与书籍推荐、公开活动通知、首页基础信息等公开内容。
+    \item \textbf{注册登录}：用户首次授权登录时，系统应创建用户记录并绑定 OpenID；数据库字段统一保存为 \texttt{openid}。
+    \item \textbf{会话维护}：登录成功后系统应建立有效 session，并在会话过期时引导用户重新登录。
+    \item \textbf{权限拦截}：每日谜题答题、活动报名、积分兑换、物品借阅、事件委托发布、个人名片修改等操作必须校验登录状态。
+    \item \textbf{账号资料}：用户可维护昵称、头像等基础资料，敏感身份标识不得在客户端明文展示。
+\end{itemize}
+
+\subsection{模块13：系统设置}
+\subsubsection{基本描述}
+系统设置模块用于集中管理小程序的常规偏好、通知开关和基础运行配置，提升用户使用体验和管理员维护效率。
+
+\subsubsection{功能需求}
+\begin{itemize}
+    \item \textbf{个人设置}：用户可调整通知提醒、隐私展示、缓存清理和基础界面偏好。
+    \item \textbf{通知设置}：支持每日谜题提醒、活动报名提醒、借阅状态提醒、委托进度提醒等开关。
+    \item \textbf{安全设置}：用户可查看登录状态并退出登录；系统应清理本地会话缓存。
+    \item \textbf{后台设置}：管理员可配置谜题更新时间、活动默认截止规则、积分奖励参数、推荐内容展示开关等系统级参数。
+\end{itemize}
+
+\section{非功能性需求}
+
+\subsection{性能需求}
+\begin{itemize}
+    \item \textbf{响应延迟}：常规交互（如页面跳转、答题提交、消息回复）的系统响应时间必须控制在1.5秒至2秒以内。排行榜查询（涉及排序）允许最多3秒延迟。
+    \item \textbf{高并发处理}：系统需能够支撑每日谜题更新点（通常为高峰期）至少50-100名用户同时发起查询或提交操作，且不产生数据锁冲突。云函数应配置适当的并发限制与超时时间（建议10秒）。
+    \item \textbf{数据实时性}：排行榜数据需在每日谜题结算后实时更新（$\leq$ 1分钟），积分商城库存需在兑换成功后立即完成原子扣减（秒级同步）。
+    \item \textbf{存储优化}：数据库查询应通过合理的索引策略优化，避免全表扫描；答题记录、借阅记录等大表应按时间分片存储。
+\end{itemize}
+
+\subsection{安全性需求}
+\begin{itemize}
+    \item \textbf{访问控制}：核心业务（每日谜题答题、活动报名、积分兑换、物品借阅、事件委托发布、个人名片修改等）必须经过微信授权登录并验证有效的session。未登录用户仅可浏览游戏与书籍推荐、公开活动通知、首页基础信息等不依赖 user\_id 的公开内容。后台管理入口需额外进行权限白名单校验，防止越权访问。
+    \item \textbf{数据一致性}：在处理"事件委托"的积分转移或"借阅系统"的状态变更时，必须引入事务处理机制（ACID），确保积分不会凭空产生或消失。若发生中间状态异常，系统应能自动回滚。
+    \item \textbf{业务防刷}：
+        \begin{itemize}
+            \item 每日谜题限制单一账号每日仅一次提交机会，前端与后端需双重校验。
+            \item 关键词回复系统需限制频率（如单用户30秒内最多发送5条消息），防止刷屏。
+            \item 库存扣减操作需使用数据库锁或CAS机制防止超额。
+        \end{itemize}
+    \item \textbf{信息隐私保护}：
+        \begin{itemize}
+            \item 用户的 OpenID（数据库字段为 \texttt{openid}）不应在客户端暴露或在日志中明文记录。
+            \item 借阅记录中的个人隐私（如借阅时间、位置）仅对借阅人与管理员可见。
+            \item 支持匿名反馈选项，系统不应泄露匿名反馈者身份。
+        \end{itemize}
+\end{itemize}
+
+\subsection{可用性需求}
+\begin{itemize}
+    \item \textbf{UI/UX 设计}：
+        \begin{itemize}
+            \item 界面需体现侦探解谜风格，配合品牌色彩与图标（推荐采用Mystery/Detective主题配色）。
+            \item 首页通过智能按钮颜色（如灰色代表已答，彩色代表待答）直观反馈用户当日任务状态。
+            \item 排行榜中的用户头像应以不同背景色突出（如用户所在行采用浅高亮背景）。
+        \end{itemize}
+    \item \textbf{容错提示}：
+        \begin{itemize}
+            \item 对于逻辑限制操作（如在不可取消时间内尝试取消报名），系统必须通过强制性的弹窗反馈明确告知原因与后续操作建议。
+            \item 网络超时、服务异常时，提示用户稍后重试，并记录操作日志便于排查。
+        \end{itemize}
+    \item \textbf{交互闭环}：
+        \begin{itemize}
+            \item 借阅逻辑中，借阅人需拥有专属的"取消"按钮，而第三方视图仅展示物资状态，确保权限与操作的一一对应。
+            \item 用户发起任何积分交易（兑换、委托转账）都应获得即时的确认反馈与历史记录。
+        \end{itemize}
+    \item \textbf{无障碍设计}：支持屏幕阅读器，文字大小可调节，色彩对比度符合WCAG AA标准。
+\end{itemize}
+
+\subsection{可维护性与扩展性}
+\begin{itemize}
+    \item \textbf{配置灵活性}：
+        \begin{itemize}
+            \item Dud机器人的关键词库、每日谜题库应支持无需重新发布代码的热更新（通过数据库变更自动生效）。
+            \item 管理员可在后台动态调整系统参数（如每日谜题更新时间、报名截止时间相对偏移等）。
+        \end{itemize}
+    \item \textbf{模块化架构}：系统各功能模块（如借阅、积分、报名）应解耦设计，形成清晰的内部接口与依赖图，便于未来扩展新的社团功能或更换更强大的云端引擎（如从云开发迁移至云服务器）。
+    \item \textbf{代码与文档规范}：
+        \begin{itemize}
+            \item 采用统一的代码风格指南（如ESLint配置）与注释模板，保证代码可读性。
+            \item 关键业务逻辑应配备设计文档与算法说明（如排行榜计算逻辑、借阅状态机等）。
+        \end{itemize}
+    \item \textbf{测试覆盖}：核心功能（如积分交易、权限校验）应拥有 $\geq$ 80\% 的单元测试覆盖率；关键业务流程应编写集成测试用例。
+    \item \textbf{日志与监控}：
+        \begin{itemize}
+            \item 云函数应记录所有关键操作（如登录、积分变更、权限检查失败），便于事后审计与故障诊断。
+            \item 建立性能监控仪表板，实时显示API响应时间、错误率、并发数等指标。
+        \end{itemize}
+\end{itemize}
+
+\section{数据需求}
+
+\subsection{数据模型概览}
+系统的数据持久化基于微信小程序云开发数据库。核心实体及其关系如下：
+
+\subsection{用户与身份数据}
+\subsubsection{用户表（User）}
+\begin{itemize}
+    \item \textbf{字段}：user\_id（主键），openid（微信标识，唯一），昵称，头像URL，个人简介，总积分，可兑换积分，排行榜排名，创建时间，最后登录时间。
+    \item \textbf{关键约束}：openid为唯一索引；总积分仅增不减。
+\end{itemize}
+
+\subsubsection{系统设置表（SystemSetting）}
+\begin{itemize}
+    \item \textbf{字段}：setting\_id（主键），配置键，配置值，适用范围（用户/管理员/全局），更新时间，更新人。
+    \item \textbf{关键约束}：全局配置仅管理员可修改；用户级配置需绑定 user\_id。
+\end{itemize}
+
+\subsection{每日谜题与答题数据}
+\subsubsection{谜题库表（DailyPuzzle）}
+字段：puzzle\_id（主键），题目描述，选项1-4，正确答案，解析，启用时间，停用时间。
+
+\subsubsection{答题记录表（AnswerRecord）}
+字段：record\_id（主键），user\_id（外键），puzzle\_id（外键），答题日期，用户选择，是否正确，获得积分。
+约束：同一用户每天同一谜题仅可答一次（唯一键为 user\_id + puzzle\_id + 答题日期）。
+
+\subsection{积分与排行榜数据}
+\subsubsection{积分变动日志表（PointLog）}
+字段：log\_id（主键），user\_id（外键），变动类型，变动金额，时间戳。用于审计与历史追踪。
+
+\subsubsection{排行榜缓存表（LeaderboardCache）}
+字段：rank\_id（主键），user\_id（外键），排名，积分。每日定时更新以优化查询性能。
+
+\subsection{商城与兑换数据}
+\subsubsection{兑换商品表（ExchangeItem）}
+字段：item\_id（主键），商品名称，所需积分，库存数，分类，创建时间。
+
+\subsubsection{兑换记录表（ExchangeRecord）}
+字段：exchange\_id（主键），user\_id（外键），item\_id（外键），兑换时间，扣除积分数。
+约束：使用数据库事务保证原子性（先锁定库存，检查积分，再同时扣减）。
+
+\subsection{活动报名数据}
+\subsubsection{活动表（Activity）}
+字段：activity\_id（主键），标题，简介，时间，地点，人数上限，报名截止时间，取消报名截止时间，状态。
+
+\subsubsection{报名记录表（ActivitySignup）}
+字段：signup\_id（主键），user\_id（外键），activity\_id（外键），报名时间，取消时间。
+约束：唯一键为 user\_id + activity\_id，避免重复报名。
+
+\subsection{借阅系统数据}
+\subsubsection{物资表（BookScript）}
+字段：item\_id（主键），标题，类型（书籍/剧本杀），作者，简介，当前状态（在库/传递中/借出），位置。
+
+\subsubsection{借阅记录表（BorrowRecord）}
+字段：borrow\_id（主键），item\_id（外键），borrower\_id（外键），申请时间，确认时间，归还时间，状态。
+约束：同一物资同一时间仅能被一人借出；使用锁机制防止并发冲突。
+
+\subsection{推荐与Dud数据}
+\subsubsection{推荐表（Recommendation）}
+字段：rec\_id（主键），类型，标题，推荐人（外键），推荐理由，链接，创建时间。
+
+\subsubsection{关键词回复规则表（KeywordReply）}
+字段：rule\_id（主键），关键词，匹配类型（全匹配/半匹配），回复内容，优先级，创建时间。
+
+\subsection{事件委托与库存数据}
+\subsubsection{委托帖表（DelegationPost）}
+字段：post\_id（主键），发起人（外键，可为空若为官方委托），发布方类型（用户/社团官方），题目，报酬金额，当前接收人数，发布时间，状态。
+
+\subsubsection{委托接收表（DelegationAcceptance）}
+字段：acceptance\_id（主键），post\_id（外键），接收人（外键），分配金额，是否已获得。
+
+\subsubsection{库存表（Inventory）}
+字段：inventory\_id（主键），关联物资ID（外键），分类，库存数，最低警告值，位置，清点时间。
+
+\subsubsection{反馈表（Feedback）}
+字段：feedback\_id（主键），user\_id（外键，可空若匿名），内容，附件，匿名标志，提交时间，处理状态。
+
+\section{约束与假设}
+
+\subsection{技术约束}
+\begin{itemize}
+    \item \textbf{平台限制}：系统运行在微信小程序环境，遵循微信官方的API限制与审查政策。
+    \item \textbf{存储容量}：微信小程序云开发数据库单集合不超过10GB；若数据增长超预期，需分片或迁移至云服务器。
+    \item \textbf{并发处理}：云函数并发执行数存在上限（微信默认配置），高并发业务（如秒杀式兑换）应使用队列机制降级。
+\end{itemize}
+
+\subsection{功能假设}
+\begin{itemize}
+    \item \textbf{用户身份验证}：所有已登录用户通过微信登录后唯一确定，OpenID作为业务身份标识，数据库字段统一保存为 \texttt{openid}，不支持使用其他第三方账号。
+    \item \textbf{网络连接}：用户始终具有稳定的网络连接；若断网，缓存数据以待重新同步。
+    \item \textbf{管理员可信度}：所有后台管理员操作假设为诚实执行，系统不设防管理员恶意删除或篡改数据的机制（可在后期添加审计日志）。
+    \item \textbf{积分不反悔}：积分一旦扣除或增加，不可撤销；用户与管理员均无"积分退回"功能。
+\end{itemize}
+
+\subsection{性能约束与目标}
+\begin{itemize}
+    \item \textbf{页面加载时间}：各页面首屏加载时间不超过 2 秒（包括网络传输）。
+    \item \textbf{排行榜查询}：排行榜前100名的查询响应时间不超过 500ms。
+    \item \textbf{支持并发用户数}：预期单日活跃用户 500-1000，系统应支持至少 100 并发在线用户。
+    \item \textbf{数据同步延迟}：大多数操作（如积分更新、报名结果）应在提交后 3 秒内同步至所有客户端；排行榜更新允许最多 1 小时延迟。
+\end{itemize}
+
+\subsection{数据安全与隐私}
+\begin{itemize}
+    \item \textbf{数据备份}：云数据库应启用自动备份（至少日备份一次）；关键操作（如大额积分转移）需保存审计日志。
+    \item \textbf{用户隐私}：用户头像、昵称等个人信息不与第三方共享；反馈提交时支持匿名选项保护用户隐私。
+    \item \textbf{权限隔离}：管理员后台仅授权给社团干部；普通用户无权访问他人的原始借阅记录或反馈内容。
+\end{itemize}
+
+\subsection{可用性与容错}
+\begin{itemize}
+    \item \textbf{服务可用性}：目标 99.5\% 的月度可用时间；系统故障或维护应提前通知用户，并提供离线缓存支持。
+    \item \textbf{数据一致性}：关键业务操作（如积分扣减、库存扣减）使用事务机制保证原子性，防止中途失败导致脏数据。
+    \item \textbf{错误处理}：所有API应返回标准错误码与提示文案；前端应优雅处理网络超时、服务异常等场景，避免用户困惑。
+\end{itemize}
+
+\subsection{业务假设与范围限制}
+\begin{itemize}
+    \item \textbf{社团规模}：假设社团成员数不超过 1000 人；如超出此范围，可能需要优化数据库索引或分表策略。
+    \item \textbf{积分流转}：系统中的积分纯数字化，不涉及实际金钱兑换；如未来涉及实名认证或支付，需另行设计合规流程。
+    \item \textbf{修改权限}：用户原则上无法修改已发布的帖子或已完成的借阅记录；如需要，管理员可在后台手动干预，但需记录操作日志。
+    \item \textbf{多校区支持}：系统支持书籍/剧本杀分校区存放，但假设各校区之间物流流转由社团自行协调，系统不提供跨校区物流追踪。
+\end{itemize}
+
+\end{document}

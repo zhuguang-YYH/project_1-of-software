@@ -1,0 +1,21 @@
+@startuml
+title 事件委托/调查活动图
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+
+start
+:发帖人创建求助贴;
+:设置积分报酬;
+if (可兑换积分足够？) then (否)
+  :提示积分不足;
+  stop
+else (是)
+  :冻结/预扣报酬积分;
+endif
+:其他侦探接收委托;
+:发帖人确认解决;
+:向接收者分配积分;
+:记录交易历史;
+stop
+@enduml

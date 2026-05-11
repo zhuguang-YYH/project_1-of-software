@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+.idea/
+
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.xdv
+xelatex*.fls
