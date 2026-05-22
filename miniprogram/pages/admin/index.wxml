@@ -1,0 +1,206 @@
+<view class="page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text>加载后台中...</text>
+  </view>
+
+  <scroll-view class="scroll-view" scroll-y refresher-enabled="{{true}}" bindrefresherrefresh="onPullDownRefresh" wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="stats-grid" wx:if="{{!error}}">
+      <view class="stat"><text class="num">{{stats.user_count || 0}}</text><text class="label">用户</text></view>
+      <view class="stat"><text class="num">{{stats.puzzle_count || 0}}</text><text class="label">谜题</text></view>
+      <view class="stat"><text class="num">{{stats.activity_count || 0}}</text><text class="label">活动</text></view>
+      <view class="stat"><text class="num">{{stats.inventory_count || 0}}</text><text class="label">物资</text></view>
+      <view class="stat"><text class="num warn">{{stats.feedback_pending || 0}}</text><text class="label">待反馈</text></view>
+      <view class="stat"><text class="num warn">{{stats.borrow_active || 0}}</text><text class="label">待借阅</text></view>
+      <view class="stat"><text class="num warn">{{stats.exchange_pending || 0}}</text><text class="label">待兑换</text></view>
+    </view>
+
+    <view class="tab-nav" wx:if="{{!error}}">
+      <view class="tab-item {{tab === item.key ? 'active' : ''}}" wx:for="{{tabs}}" wx:key="key" data-tab="{{item.key}}" bindtap="switchTab">
+        {{item.label}}
+      </view>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'puzzle'}}">
+      <view class="panel-title">每日谜题</view>
+      <view class="field"><text>发布日期</text><input value="{{puzzleForm.publish_date}}" data-form="puzzleForm" data-field="publish_date" bindinput="onFormInput" /></view>
+      <view class="field"><text>题干</text><textarea value="{{puzzleForm.content}}" data-form="puzzleForm" data-field="content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
+      <view class="field"><text>选项</text><textarea value="{{puzzleForm.options_text}}" data-form="puzzleForm" data-field="options_text" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
+      <view class="field"><text>正确答案</text><input value="{{puzzleForm.correct_answer}}" data-form="puzzleForm" data-field="correct_answer" bindinput="onFormInput" placeholder="A 或完整选项内容" /></view>
+      <view class="field"><text>解析</text><textarea value="{{puzzleForm.answer_explanation}}" data-form="puzzleForm" data-field="answer_explanation" bindinput="onFormInput" maxlength="400" show-confirm-bar="{{false}}" /></view>
+      <view class="grid-2">
+        <view class="field"><text>难度</text><input value="{{puzzleForm.difficulty}}" data-form="puzzleForm" data-field="difficulty" bindinput="onFormInput" /></view>
+        <view class="field"><text>奖励积分</text><input type="number" value="{{puzzleForm.reward_points}}" data-form="puzzleForm" data-field="reward_points" bindinput="onFormInput" /></view>
+      </view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="savePuzzle">保存谜题</button>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'activity'}}">
+      <view class="panel-title">活动发布</view>
+      <view class="field"><text>标题</text><input value="{{activityForm.title}}" data-form="activityForm" data-field="title" bindinput="onFormInput" /></view>
+      <view class="field"><text>简介</text><textarea value="{{activityForm.description}}" data-form="activityForm" data-field="description" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
+      <view class="grid-2">
+        <view class="field"><text>地点</text><input value="{{activityForm.location}}" data-form="activityForm" data-field="location" bindinput="onFormInput" /></view>
+        <view class="field"><text>人数上限</text><input type="number" value="{{activityForm.capacity}}" data-form="activityForm" data-field="capacity" bindinput="onFormInput" /></view>
+      </view>
+      <view class="field"><text>最晚取消时间</text><input value="{{activityForm.cancel_deadline}}" data-form="activityForm" data-field="cancel_deadline" bindinput="onFormInput" placeholder="2026-05-31 20:00" /></view>
+      <view class="field"><text>开始时间</text><input value="{{activityForm.start_time}}" data-form="activityForm" data-field="start_time" bindinput="onFormInput" placeholder="2026-05-31 19:00" /></view>
+      <view class="field"><text>结束时间</text><input value="{{activityForm.end_time}}" data-form="activityForm" data-field="end_time" bindinput="onFormInput" placeholder="2026-05-31 21:00" /></view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createActivity">创建活动</button>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'borrow'}}">
+      <view class="panel-title">物资入库</view>
+      <view class="field"><text>名称</text><input value="{{borrowForm.item_name}}" data-form="borrowForm" data-field="item_name" bindinput="onFormInput" /></view>
+      <view class="field"><text>描述</text><textarea value="{{borrowForm.description}}" data-form="borrowForm" data-field="description" bindinput="onFormInput" maxlength="240" show-confirm-bar="{{false}}" /></view>
+      <view class="grid-2">
+        <view class="field"><text>物资类型</text><input value="{{borrowForm.item_type}}" data-form="borrowForm" data-field="item_type" bindinput="onFormInput" placeholder="book / script / supplies" /></view>
+        <view class="field"><text>分类</text><input value="{{borrowForm.category}}" data-form="borrowForm" data-field="category" bindinput="onFormInput" /></view>
+      </view>
+      <view class="grid-2">
+        <view class="field"><text>数量</text><input type="number" value="{{borrowForm.total_quantity}}" data-form="borrowForm" data-field="total_quantity" bindinput="onFormInput" /></view>
+        <view class="field"><text>剧本类型</text><input value="{{borrowForm.genre}}" data-form="borrowForm" data-field="genre" bindinput="onFormInput" placeholder="本格 / 机制 / 情感" /></view>
+      </view>
+      <view class="grid-3">
+        <view class="field"><text>最少人数</text><input type="number" value="{{borrowForm.min_players}}" data-form="borrowForm" data-field="min_players" bindinput="onFormInput" /></view>
+        <view class="field"><text>最多人数</text><input type="number" value="{{borrowForm.max_players}}" data-form="borrowForm" data-field="max_players" bindinput="onFormInput" /></view>
+        <view class="field"><text>时长分钟</text><input type="number" value="{{borrowForm.duration_minutes}}" data-form="borrowForm" data-field="duration_minutes" bindinput="onFormInput" /></view>
+      </view>
+      <view class="field"><text>难度</text><input value="{{borrowForm.difficulty}}" data-form="borrowForm" data-field="difficulty" bindinput="onFormInput" placeholder="简单 / 中等 / 困难" /></view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createBorrowItem">添加物资</button>
+
+      <view class="section-divider"></view>
+      <view class="panel-title compact">借阅交付处理</view>
+      <view class="ops-card" wx:for="{{borrow_applications}}" wx:key="application_id">
+        <view class="ops-head">
+          <view>
+            <text class="ops-title">{{item.item_name}}</text>
+            <text class="ops-meta">{{item.borrower_name}} · {{item.created_text || '暂无时间'}}</text>
+          </view>
+          <text class="badge {{item.status === 'borrowed' ? 'blue' : ''}}">{{item.status_text}}</text>
+        </view>
+        <text class="ops-desc" wx:if="{{item.reason}}">用途：{{item.reason}}</text>
+        <view class="ops-actions">
+          <button wx:if="{{item.can_lend}}" class="small-btn" data-id="{{item.application_id}}" data-status="borrowed" loading="{{processing_id === item.application_id && saving}}" disabled="{{saving}}" bindtap="updateBorrowStatus">确认借出</button>
+          <button wx:if="{{item.can_return}}" class="small-btn success" data-id="{{item.application_id}}" data-status="returned" loading="{{processing_id === item.application_id && saving}}" disabled="{{saving}}" bindtap="updateBorrowStatus">确认归还</button>
+          <button wx:if="{{item.can_cancel}}" class="small-btn ghost" data-id="{{item.application_id}}" data-status="cancelled" loading="{{processing_id === item.application_id && saving}}" disabled="{{saving}}" bindtap="updateBorrowStatus">取消</button>
+        </view>
+      </view>
+      <view class="empty" wx:if="{{borrow_applications.length === 0}}">暂无待处理借阅</view>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'exchange'}}">
+      <view class="panel-title">兑换商品</view>
+      <view class="field"><text>名称</text><input value="{{exchangeForm.item_name}}" data-form="exchangeForm" data-field="item_name" bindinput="onFormInput" /></view>
+      <view class="field"><text>描述</text><textarea value="{{exchangeForm.description}}" data-form="exchangeForm" data-field="description" bindinput="onFormInput" maxlength="240" show-confirm-bar="{{false}}" /></view>
+      <view class="field"><text>分类</text><input value="{{exchangeForm.category}}" data-form="exchangeForm" data-field="category" bindinput="onFormInput" /></view>
+      <view class="grid-3">
+        <view class="field"><text>兑换积分</text><input type="number" value="{{exchangeForm.exchange_points}}" data-form="exchangeForm" data-field="exchange_points" bindinput="onFormInput" /></view>
+        <view class="field"><text>原价</text><input type="number" value="{{exchangeForm.original_cost}}" data-form="exchangeForm" data-field="original_cost" bindinput="onFormInput" /></view>
+        <view class="field"><text>库存</text><input type="number" value="{{exchangeForm.total_quantity}}" data-form="exchangeForm" data-field="total_quantity" bindinput="onFormInput" /></view>
+      </view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createExchangeGood">添加商品</button>
+
+      <view class="section-divider"></view>
+      <view class="panel-title compact">兑换领取处理</view>
+      <view class="ops-card" wx:for="{{exchange_records}}" wx:key="exchange_id">
+        <view class="ops-head">
+          <view>
+            <text class="ops-title">{{item.goods_name || item.item_name || '兑换商品'}}</text>
+            <text class="ops-meta">{{item.user_name}} · {{item.created_text || '暂无时间'}}</text>
+          </view>
+          <text class="badge">{{item.status_text}}</text>
+        </view>
+        <view class="ops-line">
+          <text>数量 {{item.quantity_text}}</text>
+          <text>{{item.total_cost_text}} 积分</text>
+        </view>
+        <view class="ops-actions" wx:if="{{item.can_process}}">
+          <button class="small-btn success" data-id="{{item.exchange_id}}" data-status="completed" loading="{{processing_id === item.exchange_id && saving}}" disabled="{{saving}}" bindtap="updateExchangeStatus">完成领取</button>
+          <button class="small-btn ghost" data-id="{{item.exchange_id}}" data-status="cancelled" loading="{{processing_id === item.exchange_id && saving}}" disabled="{{saving}}" bindtap="updateExchangeStatus">取消兑换</button>
+        </view>
+      </view>
+      <view class="empty" wx:if="{{exchange_records.length === 0}}">暂无待处理兑换</view>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'recommendation'}}">
+      <view class="panel-title">推荐内容发布</view>
+      <view class="field"><text>名称</text><input value="{{recommendationForm.title}}" data-form="recommendationForm" data-field="title" bindinput="onFormInput" /></view>
+      <view class="grid-2">
+        <view class="field"><text>类型</text><input value="{{recommendationForm.category}}" data-form="recommendationForm" data-field="category" bindinput="onFormInput" placeholder="book / game / script" /></view>
+        <view class="field"><text>推荐人</text><input value="{{recommendationForm.recommender_name}}" data-form="recommendationForm" data-field="recommender_name" bindinput="onFormInput" placeholder="默认 NK推协" /></view>
+      </view>
+      <view class="field"><text>推荐理由</text><textarea value="{{recommendationForm.reason}}" data-form="recommendationForm" data-field="reason" bindinput="onFormInput" maxlength="500" show-confirm-bar="{{false}}" /></view>
+      <view class="field"><text>外链</text><input value="{{recommendationForm.link_url}}" data-form="recommendationForm" data-field="link_url" bindinput="onFormInput" placeholder="公众号文章或说明链接" /></view>
+      <view class="field"><text>封面图</text><input value="{{recommendationForm.cover_url}}" data-form="recommendationForm" data-field="cover_url" bindinput="onFormInput" placeholder="可选，图片 URL" /></view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createRecommendation">发布推荐</button>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'dud'}}">
+      <view class="panel-title">Dud 关键词</view>
+      <view class="field"><text>关键词</text><input value="{{dudForm.keyword}}" data-form="dudForm" data-field="keyword" bindinput="onFormInput" /></view>
+      <view class="field"><text>回复</text><textarea value="{{dudForm.reply_content}}" data-form="dudForm" data-field="reply_content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
+      <view class="grid-2">
+        <view class="field"><text>匹配方式</text><input value="{{dudForm.match_type}}" data-form="dudForm" data-field="match_type" bindinput="onFormInput" placeholder="exact 或 fuzzy" /></view>
+        <view class="field"><text>优先级</text><input type="number" value="{{dudForm.priority}}" data-form="dudForm" data-field="priority" bindinput="onFormInput" /></view>
+      </view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createDudKeyword">添加关键词</button>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'feedback'}}">
+      <view class="panel-title">反馈处理</view>
+      <view class="feedback-card" wx:for="{{feedback_list}}" wx:key="feedback_id">
+        <view class="feedback-head">
+          <text class="feedback-title">{{item.feedback_title}}</text>
+          <text class="badge {{item.status === 'resolved' ? 'done' : ''}}">{{item.status_text}}</text>
+        </view>
+        <text class="feedback-content">{{item.content}}</text>
+        <text class="feedback-time">{{item.created_text}} {{item.anonymous_text}}</text>
+        <button wx:if="{{item.status !== 'resolved'}}" class="small-btn" data-id="{{item.feedback_id}}" bindtap="resolveFeedback">标记处理</button>
+      </view>
+      <view class="empty" wx:if="{{feedback_list.length === 0}}">暂无反馈</view>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'logs'}}">
+      <view class="panel-title">后台操作日志</view>
+      <view class="log-card" wx:for="{{log_list}}" wx:key="log_id">
+        <view class="log-head">
+          <text class="log-operation">{{item.operation_text}}</text>
+          <text class="log-time">{{item.created_text}}</text>
+        </view>
+        <text class="log-target">{{item.target_text}} / {{item.target_id_text}}</text>
+        <text class="log-admin">管理员：{{item.admin_id}}</text>
+      </view>
+      <view class="empty" wx:if="{{log_list.length === 0}}">暂无操作日志</view>
+    </view>
+
+    <view class="panel" wx:if="{{!error && tab === 'settings'}}">
+      <view class="panel-title">系统参数</view>
+      <view class="grid-2">
+        <view class="field"><text>谜题发布时间</text><input value="{{systemSettingsForm.puzzle_publish_time}}" data-form="systemSettingsForm" data-field="puzzle_publish_time" bindinput="onFormInput" placeholder="09:00" /></view>
+        <view class="field"><text>默认谜题奖励</text><input type="number" value="{{systemSettingsForm.default_puzzle_reward}}" data-form="systemSettingsForm" data-field="default_puzzle_reward" bindinput="onFormInput" /></view>
+      </view>
+      <view class="field"><text>活动取消提前小时数</text><input type="number" value="{{systemSettingsForm.activity_cancel_hours}}" data-form="systemSettingsForm" data-field="activity_cancel_hours" bindinput="onFormInput" /></view>
+      <view class="switch-row">
+        <view>
+          <text class="switch-title">推荐内容展示</text>
+          <text class="switch-desc">关闭后可在后续首页逻辑中隐藏推荐入口</text>
+        </view>
+        <switch checked="{{systemSettingsForm.recommendation_enabled}}" data-form="systemSettingsForm" data-field="recommendation_enabled" bindchange="onFormSwitch" />
+      </view>
+      <view class="switch-row">
+        <view>
+          <text class="switch-title">事件委托开放</text>
+          <text class="switch-desc">用于临时关闭委托发布与领取入口</text>
+        </view>
+        <switch checked="{{systemSettingsForm.commission_enabled}}" data-form="systemSettingsForm" data-field="commission_enabled" bindchange="onFormSwitch" />
+      </view>
+      <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="saveSystemSettings">保存系统设置</button>
+    </view>
+  </scroll-view>
+</view>

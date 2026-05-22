@@ -1,0 +1,79 @@
+<view class="page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text>加载反馈中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'submit' ? 'active' : ''}}" data-tab="submit" bindtap="switchTab">提交反馈</view>
+      <view class="tab-item {{tab === 'mine' ? 'active' : ''}}" data-tab="mine" bindtap="switchTab">我的反馈</view>
+    </view>
+
+    <view class="panel" wx:if="{{tab === 'submit'}}">
+      <view class="section-title">反馈类型</view>
+      <view class="type-grid">
+        <view
+          class="type-item {{form.feedback_type === item.key ? 'active' : ''}}"
+          wx:for="{{type_options}}"
+          wx:key="key"
+          data-feedback_type="{{item.key}}"
+          bindtap="chooseType">{{item.label}}</view>
+      </view>
+
+      <view class="field">
+        <text>反馈内容</text>
+        <textarea
+          value="{{form.content}}"
+          bindinput="onInput"
+          maxlength="500"
+          placeholder="请描述具体情况、建议或遇到的问题"
+          show-confirm-bar="{{false}}" />
+        <text class="counter">{{form.content.length}}/500</text>
+      </view>
+
+      <view class="switch-row">
+        <view>
+          <text class="switch-title">匿名提交</text>
+          <text class="switch-desc">匿名反馈不会在普通管理视图中展示你的身份</text>
+        </view>
+        <switch checked="{{form.is_anonymous}}" bindchange="onAnonymousChange" />
+      </view>
+
+      <button class="primary-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitFeedback">提交反馈</button>
+    </view>
+
+    <view class="list" wx:if="{{tab === 'mine'}}">
+      <view class="feedback-card" wx:for="{{feedback_list}}" wx:key="feedback_id">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.feedback_type_text}}</text>
+            <text class="card-meta">{{item.created_text}}{{item.anonymous_text}}</text>
+          </view>
+          <view class="status {{item.is_resolved ? 'resolved' : ''}}">{{item.status_text}}</view>
+        </view>
+        <text class="content">{{item.content}}</text>
+        <view class="remark" wx:if="{{item.admin_remark}}">
+          <text class="remark-label">管理员回复</text>
+          <text class="remark-text">{{item.admin_remark}}</text>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{feedback_list.length === 0}}">
+        <text class="empty-title">还没有反馈记录</text>
+        <text class="empty-text">任何小问题都值得被看见。</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

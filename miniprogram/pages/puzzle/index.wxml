@@ -1,0 +1,72 @@
+<view class="container" wx:if="{{!loading}}">
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="onRetry">重新加载</button>
+  </view>
+
+  <view class="puzzle-card" wx:elif="{{puzzle}}">
+    <view class="puzzle-header">
+      <text class="puzzle-title">每日谜题</text>
+      <text class="puzzle-difficulty difficulty-{{puzzle.difficulty || 'normal'}}">
+        {{puzzle.difficulty || '中等'}}难度
+      </text>
+    </view>
+
+    <view class="puzzle-content">
+      <text class="puzzle-desc">{{puzzle.content}}</text>
+    </view>
+
+    <view class="options-container" wx:if="{{!answered}}">
+      <view
+        class="option {{selected_option_id === item.option_id ? 'selected' : ''}}"
+        wx:for="{{options}}"
+        wx:key="option_id"
+        data-option-id="{{item.option_id}}"
+        bindtap="selectOption"
+      >
+        <view class="option-label">{{item.option_label}}</view>
+        <text class="option-text">{{item.option_content}}</text>
+      </view>
+    </view>
+
+    <view class="answer-display" wx:elif="{{answered}}">
+      <view class="answer-status {{is_correct ? 'correct' : 'wrong'}}">
+        <text class="status-icon">{{is_correct ? '✓' : '×'}}</text>
+        <text class="status-text">{{is_correct ? '恭喜答对！' : '回答错误'}}</text>
+      </view>
+
+      <view class="answer-info">
+        <text class="info-title">正确答案</text>
+        <text class="info-content">{{puzzle.correct_answer}}</text>
+      </view>
+
+      <view class="analysis" wx:if="{{puzzle.answer_explanation}}">
+        <text class="analysis-title">解析</text>
+        <text class="analysis-content">{{puzzle.answer_explanation}}</text>
+      </view>
+    </view>
+
+    <view class="action-buttons">
+      <button
+        class="btn btn-submit"
+        wx:if="{{!answered}}"
+        disabled="{{!selected_option_id || submitting}}"
+        bindtap="submitAnswer"
+        loading="{{submitting}}"
+      >
+        {{submitting ? '提交中...' : '提交答案'}}
+      </button>
+      <button class="btn btn-back" bindtap="goBack">返回首页</button>
+    </view>
+
+    <view class="reward-info" wx:if="{{puzzle.reward_points}}">
+      <text class="reward-label">答对可获得</text>
+      <text class="reward-points">+{{puzzle.reward_points}} 积分</text>
+    </view>
+  </view>
+</view>
+
+<view class="loading-state" wx:elif="{{loading}}">
+  <view class="loading-spinner"></view>
+  <text class="loading-text">加载谜题中...</text>
+</view>

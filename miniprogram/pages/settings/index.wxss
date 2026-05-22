@@ -1,0 +1,126 @@
+.page {
+  min-height: 100vh;
+  background: #f4f7fb;
+  color: #263241;
+}
+
+.scroll-view {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.account-panel,
+.section {
+  margin: 24rpx;
+  padding: 26rpx;
+  border-radius: 8rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(22, 34, 51, 0.06);
+}
+
+.panel-title,
+.section-title {
+  display: block;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #182433;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.avatar {
+  width: 86rpx;
+  height: 86rpx;
+  border-radius: 50%;
+  background: #edf2f7;
+}
+
+.account-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-name {
+  display: block;
+  color: #263241;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.account-role {
+  display: block;
+  margin-top: 8rpx;
+  color: #7a8797;
+  font-size: 24rpx;
+}
+
+.setting-row,
+.action-row {
+  min-height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  border-bottom: 1rpx solid #edf2f7;
+}
+
+.setting-row:last-child,
+.action-row:last-child {
+  border-bottom: 0;
+}
+
+.setting-name {
+  display: block;
+  color: #263241;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.setting-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: #8a96a8;
+  font-size: 23rpx;
+  line-height: 1.4;
+}
+
+.arrow {
+  flex: 0 0 auto;
+  color: #c0c8d2;
+  font-size: 38rpx;
+}
+
+.danger .setting-name {
+  color: #be123c;
+}
+
+.loading-state {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  color: #69788b;
+  font-size: 26rpx;
+}
+
+.loading-spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 6rpx solid #d9e8f7;
+  border-top-color: #2477c3;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

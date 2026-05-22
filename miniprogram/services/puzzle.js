@@ -1,0 +1,120 @@
+const CONFIG = require('../config/index.js');
+const { callFunction } = require('../utils/request.js');
+
+class PuzzleService {
+  async getTodayPuzzle() {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getTodayPuzzle, {});
+      if (!result.success) {
+        return { success: false, error: result.message || '获取今日谜题失败' };
+      }
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get today puzzle:', error);
+      return { success: false, error: error.message || '获取今日谜题失败' };
+    }
+  }
+
+  async getPuzzleDetail(puzzle_id) {
+    if (!puzzle_id) {
+      return { success: false, error: '谜题编号不能为空' };
+    }
+
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getPuzzleDetail, { puzzle_id });
+      if (!result.success) {
+        return { success: false, error: result.message || '获取谜题详情失败' };
+      }
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get puzzle detail:', error);
+      return { success: false, error: error.message || '获取谜题详情失败' };
+    }
+  }
+
+  async submitAnswer(puzzle_id, option_id) {
+    if (!puzzle_id || !option_id) {
+      return { success: false, error: '答题参数不完整' };
+    }
+
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.submitAnswer, {
+        puzzle_id,
+        option_id
+      });
+
+      if (!result.success) {
+        return { success: false, error: result.message || '提交答案失败' };
+      }
+
+      return {
+        success: true,
+        data: result.data,
+        is_correct: !!result.data.is_correct,
+        score_gained: Number(result.data.score_gained || 0)
+      };
+    } catch (error) {
+      console.error('Failed to submit answer:', error);
+      return { success: false, error: error.message || '提交答案失败' };
+    }
+  }
+
+  async getPuzzleHistory(options = {}) {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getPuzzleHistory, {
+        page: options.page || 1,
+        page_size: options.page_size || CONFIG.pagination.pageSize
+      });
+
+      if (!result.success) {
+        return { success: false, error: result.message || '获取答题历史失败' };
+      }
+
+      return {
+        success: true,
+        data: (result.data && result.data.list) || [],
+        page: result.data && result.data.page,
+        page_size: result.data && result.data.page_size
+      };
+    } catch (error) {
+      console.error('Failed to get puzzle history:', error);
+      return { success: false, error: error.message || '获取答题历史失败' };
+    }
+  }
+
+  async hasAnsweredToday() {
+    const result = await this.getTodayPuzzle();
+    return result.success && result.data && result.data.answered === true;
+  }
+
+  async getPuzzleStats() {
+    try {
+      const result = await callFunction('puzzle_getStats', {});
+      if (!result.success) {
+        return { success: false, error: result.message || '获取答题统计失败' };
+      }
+
+      return {
+        success: true,
+        data: result.data,
+        total_answered: Number(result.data.total_answered || 0),
+        correct_count: Number(result.data.correct_count || 0),
+        correct_rate: Number(result.data.correct_rate || 0),
+        current_streak: Number(result.data.current_streak || 0)
+      };
+    } catch (error) {
+      console.error('Failed to get puzzle stats:', error);
+      return {
+        success: false,
+        data: {
+          total_answered: 0,
+          correct_count: 0,
+          correct_rate: 0,
+          current_streak: 0
+        }
+      };
+    }
+  }
+}
+
+module.exports = new PuzzleService();

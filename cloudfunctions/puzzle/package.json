@@ -1,0 +1,15 @@
+{
+  "name": "puzzle",
+  "version": "1.0.0",
+  "description": "Daily puzzle management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["puzzle"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -1,0 +1,230 @@
+<view class="page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">Loading...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else>
+    <view class="summary">
+      <view>
+        <text class="summary-label">Available points</text>
+        <text class="summary-value">{{user_points.available_points}}</text>
+      </view>
+      <view>
+        <text class="summary-label">Frozen points</text>
+        <text class="summary-value frozen">{{user_points.frozen_points}}</text>
+      </view>
+      <button class="publish-btn" bindtap="openPublishModal">Publish</button>
+    </view>
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">Retry</button>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'available' ? 'active' : ''}}" data-tab="available" bindtap="switchTab">Available</view>
+      <view class="tab-item {{tab === 'accepted' ? 'active' : ''}}" data-tab="accepted" bindtap="switchTab">Accepted</view>
+      <view class="tab-item {{tab === 'published' ? 'active' : ''}}" data-tab="published" bindtap="switchTab">Published</view>
+    </view>
+
+    <view wx:if="{{tab === 'available'}}" class="list">
+      <view class="commission-card" wx:for="{{commissions}}" wx:key="commission_id">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.publisher_name}} / {{item.created_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">Reward</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Remain</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Deadline</text>
+            <text class="info-value">{{item.deadline_text}}</text>
+          </view>
+        </view>
+
+        <view class="card-actions">
+          <button
+            class="primary-btn"
+            wx:if="{{item.can_accept}}"
+            loading="{{accepting_id === item.commission_id}}"
+            disabled="{{accepting_id === item.commission_id}}"
+            data-commission_id="{{item.commission_id}}"
+            bindtap="acceptCommission">Accept</button>
+          <button class="ghost-btn" wx:elif="{{item.is_mine}}">Mine</button>
+          <button class="ghost-btn" wx:else>{{item.my_acceptance_status_text || 'Unavailable'}}</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{commissions.length === 0}}">
+        <text class="empty-title">No available commissions</text>
+        <text class="empty-text">Publish a small task to invite others to help.</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'accepted'}}" class="list">
+      <view class="commission-card" wx:for="{{accepted}}" wx:key="acceptance_id">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.accepted_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.commission.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">Reward</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Remain</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Publisher</text>
+            <text class="info-value">{{item.publisher_name}}</text>
+          </view>
+        </view>
+
+        <view class="card-actions">
+          <button
+            class="primary-btn"
+            wx:if="{{item.can_complete}}"
+            loading="{{completing_id === item.acceptance_id}}"
+            disabled="{{completing_id === item.acceptance_id}}"
+            data-acceptance_id="{{item.acceptance_id}}"
+            bindtap="completeCommission">Mark done</button>
+          <button class="ghost-btn" wx:else>{{item.status_text}}</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{accepted.length === 0}}">
+        <text class="empty-title">No accepted commissions</text>
+        <text class="empty-text">Try accepting one from the available list.</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'published'}}" class="list">
+      <view class="commission-card" wx:for="{{published}}" wx:key="commission_id">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.created_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">Reward</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Remain</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">Progress</text>
+            <text class="info-value">{{item.accepted_count}}/{{item.completed_count}}</text>
+          </view>
+        </view>
+
+        <view class="acceptance-list" wx:if="{{item.has_acceptances}}">
+          <view class="acceptance-item" wx:for="{{item.acceptances}}" wx:for-item="acc" wx:key="acceptance_id">
+            <view>
+              <text class="receiver">{{acc.receiver_name}}</text>
+              <text class="acceptance-meta">{{acc.status_text}} / {{acc.accepted_text}}</text>
+            </view>
+            <button
+              class="small-primary"
+              wx:if="{{acc.can_reward}}"
+              data-commission_id="{{item.commission_id}}"
+              data-acceptance_id="{{acc.acceptance_id}}"
+              data-receiver_name="{{acc.receiver_name}}"
+              data-max="{{item.remaining_reward}}"
+              bindtap="openRewardModal">Reward</button>
+          </view>
+        </view>
+        <view class="no-acceptance" wx:else>No acceptances yet</view>
+      </view>
+
+      <view class="empty-state" wx:if="{{published.length === 0}}">
+        <text class="empty-title">No published commissions</text>
+        <text class="empty-text">Publishing will freeze the reward points until allocation.</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="modal-mask" wx:if="{{show_publish_modal}}" bindtap="closePublishModal">
+    <view class="modal" catchtap="noop">
+      <view class="modal-head">
+        <text>Publish commission</text>
+        <button class="close-btn" bindtap="closePublishModal">x</button>
+      </view>
+
+      <view class="form">
+        <view class="field">
+          <text class="field-label">Title</text>
+          <input value="{{publish_form.title}}" data-field="title" bindinput="onPublishInput" maxlength="40" placeholder="Task title" />
+        </view>
+        <view class="field">
+          <text class="field-label">Content</text>
+          <textarea value="{{publish_form.description}}" data-field="description" bindinput="onPublishInput" maxlength="300" placeholder="Describe the task and delivery details" show-confirm-bar="{{false}}" />
+          <text class="counter">{{publish_form.description.length}}/300</text>
+        </view>
+        <view class="field">
+          <text class="field-label">Reward points</text>
+          <input type="number" value="{{publish_form.reward_points}}" data-field="reward_points" bindinput="onPublishInput" placeholder="Frozen from available points" />
+          <text class="hint">Available: {{user_points.available_points}}</text>
+        </view>
+        <view class="field">
+          <text class="field-label">Deadline</text>
+          <input value="{{publish_form.deadline}}" data-field="deadline" bindinput="onPublishInput" placeholder="Optional, e.g. 2026-05-31 20:00" />
+        </view>
+      </view>
+
+      <view class="modal-actions">
+        <button class="secondary-btn" bindtap="closePublishModal">Cancel</button>
+        <button class="primary-btn" loading="{{publishing}}" disabled="{{publishing}}" bindtap="publishCommission">Publish</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{show_reward_modal}}" bindtap="closeRewardModal">
+    <view class="modal small" catchtap="noop">
+      <view class="modal-head">
+        <text>Allocate reward</text>
+        <button class="close-btn" bindtap="closeRewardModal">x</button>
+      </view>
+      <view class="reward-box">
+        <text class="reward-name">Receiver: {{reward_target.receiver_name}}</text>
+        <text class="hint">Max: {{reward_target.max}}</text>
+        <input class="reward-input" type="number" value="{{reward_points_input}}" bindinput="onRewardInput" />
+      </view>
+      <view class="modal-actions">
+        <button class="secondary-btn" bindtap="closeRewardModal">Cancel</button>
+        <button class="primary-btn" loading="{{rewarding}}" disabled="{{rewarding}}" bindtap="allocateReward">Confirm</button>
+      </view>
+    </view>
+  </view>
+</view>

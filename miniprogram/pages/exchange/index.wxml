@@ -1,0 +1,175 @@
+<view class="container">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="points-card">
+      <view class="points-header">
+        <text class="points-title">我的积分</text>
+      </view>
+      <view class="points-row">
+        <view class="points-item">
+          <text class="points-label">可兑换</text>
+          <text class="points-value exchangeable">{{user_points.available_points}}</text>
+        </view>
+        <view class="points-divider"></view>
+        <view class="points-item">
+          <text class="points-label">已冻结</text>
+          <text class="points-value frozen">{{user_points.frozen_points}}</text>
+        </view>
+        <view class="points-divider"></view>
+        <view class="points-item">
+          <text class="points-label">累计获得</text>
+          <text class="points-value total">{{user_points.total_points}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'available' ? 'active' : ''}}" data-tab="available" bindtap="switchTab">商品兑换</view>
+      <view class="tab-item {{tab === 'my-exchanges' ? 'active' : ''}}" data-tab="my-exchanges" bindtap="switchTab">我的兑换 ({{my_exchanges.length}})</view>
+    </view>
+
+    <view wx:if="{{tab === 'available'}}">
+      <view class="search-box">
+        <input class="search-input" type="text" placeholder="搜索商品" value="{{search_keyword}}" bindinput="onSearch" />
+      </view>
+
+      <view class="goods-list">
+        <view class="goods-card" wx:for="{{filtered_goods}}" wx:key="item_id">
+          <view class="goods-header">
+            <view class="goods-name">{{item.name}}</view>
+            <view class="goods-badge" wx:if="{{item.is_sold_out}}">已兑完</view>
+            <view class="goods-badge stock-low" wx:elif="{{item.available_quantity <= 3}}">仅剩{{item.available_quantity}}</view>
+          </view>
+
+          <view class="goods-details">
+            <view class="detail-item" wx:if="{{item.description}}">
+              <text class="detail-label">描述</text>
+              <text class="detail-value">{{item.description}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">库存</text>
+              <text class="detail-value">{{item.available_quantity}}件</text>
+            </view>
+          </view>
+
+          <view class="goods-pricing">
+            <view class="cost-section">
+              <text class="cost-label">积分价格</text>
+              <view class="cost-value">
+                <text class="cost-number">{{item.exchange_points}}</text>
+                <text class="cost-unit">积分</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="goods-actions">
+            <button
+              class="btn-exchange"
+              wx:if="{{!item.is_sold_out && item.is_affordable}}"
+              data-item_id="{{item.item_id}}"
+              bindtap="showExchangeModal">立即兑换</button>
+            <button class="btn-soldout" wx:elif="{{item.is_sold_out}}">已兑完</button>
+            <button class="btn-insufficient" wx:else>积分不足</button>
+          </view>
+        </view>
+
+        <view class="empty-state" wx:if="{{filtered_goods.length === 0}}">
+          <text class="empty-text">{{search_keyword ? '未找到相关商品' : '暂无商品'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'my-exchanges'}}" class="exchanges-list">
+      <view class="exchange-card" wx:for="{{my_exchanges}}" wx:key="exchange_id">
+        <view class="exchange-header">
+          <view class="exchange-name">{{item.item_name}}</view>
+          <view class="exchange-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
+        </view>
+        <view class="exchange-details">
+          <view class="detail-item">
+            <text class="detail-label">兑换时间</text>
+            <text class="detail-value">{{item.exchange_time_text}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">数量</text>
+            <text class="detail-value">{{item.quantity}}件</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">花费积分</text>
+            <text class="detail-value">{{item.total_points}}</text>
+          </view>
+          <view class="detail-item" wx:if="{{item.pickup_code}}">
+            <text class="detail-label">领取码</text>
+            <text class="detail-value">{{item.pickup_code}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{my_exchanges.length === 0}}">
+        <text class="empty-text">你还没有兑换记录</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="modal-overlay" wx:if="{{show_exchange_modal}}" bindtap="closeExchangeModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">确认兑换</text>
+        <button class="modal-close" bindtap="closeExchangeModal">x</button>
+      </view>
+
+      <view class="modal-body">
+        <view class="modal-section">
+          <text class="section-label">商品</text>
+          <text class="section-value">{{selected_goods.name}}</text>
+        </view>
+        <view class="modal-section">
+          <text class="section-label">单价</text>
+          <view class="section-cost">
+            <text>{{selected_goods.exchange_points}}</text>
+            <text class="cost-unit">积分/件</text>
+          </view>
+        </view>
+        <view class="modal-section">
+          <text class="section-label">兑换数量</text>
+          <view class="quantity-selector">
+            <button class="qty-btn" data-change="-1" bindtap="changeQuantity">-</button>
+            <input class="qty-input" type="number" value="{{exchange_quantity}}" bindinput="onQuantityInput" />
+            <button class="qty-btn" data-change="1" bindtap="changeQuantity">+</button>
+          </view>
+          <text class="stock-hint">库存: {{selected_goods.available_quantity}} | 最多可兑: {{selected_goods.max_exchange_quantity}}</text>
+        </view>
+        <view class="cost-summary">
+          <view class="summary-item">
+            <text>小计</text>
+            <text class="summary-value">{{selected_total_points}} 积分</text>
+          </view>
+          <view class="summary-item highlight">
+            <text>可用积分</text>
+            <text class="summary-value">{{user_points.available_points}} 积分</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <button class="btn-cancel-modal" bindtap="closeExchangeModal">取消</button>
+        <button class="btn-confirm-modal" loading="{{exchanging}}" disabled="{{exchanging}}" bindtap="confirmExchange">确认兑换</button>
+      </view>
+    </view>
+  </view>
+</view>

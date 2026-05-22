@@ -1,0 +1,103 @@
+<view class="page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text>加载推荐中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="loadMore"
+    wx:else>
+
+    <view class="header">
+      <text class="title">推荐内容</text>
+      <text class="subtitle">游戏、书籍与推理灵感</text>
+    </view>
+
+    <view class="search-row">
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        bindinput="onKeywordInput"
+        bindconfirm="onSearchConfirm"
+        confirm-type="search"
+        placeholder="搜索名称、类型或推荐理由" />
+      <button class="icon-btn" wx:if="{{keyword}}" bindtap="clearSearch">清除</button>
+      <button class="search-btn" bindtap="onSearchConfirm">搜索</button>
+    </view>
+
+    <scroll-view class="category-scroll" scroll-x>
+      <view class="category-list">
+        <view
+          class="category-item {{active_category === item.key ? 'active' : ''}}"
+          wx:for="{{categories}}"
+          wx:key="key"
+          data-category="{{item.key}}"
+          bindtap="switchCategory">
+          {{item.label}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="list">
+      <view class="recommend-card" wx:for="{{list}}" wx:key="recommendation_id" data-id="{{item.recommendation_id}}" bindtap="openDetail">
+        <view class="cover {{item.cover_url ? '' : 'empty-cover'}}">
+          <image wx:if="{{item.cover_url}}" src="{{item.cover_url}}" mode="aspectFill" />
+          <text wx:else>{{item.category_text}}</text>
+        </view>
+        <view class="content">
+          <view class="card-head">
+            <text class="card-title">{{item.title}}</text>
+            <text class="badge">{{item.category_text}}</text>
+          </view>
+          <text class="reason">{{item.reason}}</text>
+          <view class="meta-row">
+            <text>推荐人：{{item.recommender_name}}</text>
+            <text wx:if="{{item.created_text}}">{{item.created_text}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="load-more" wx:if="{{list.length > 0}}">
+      <text wx:if="{{loading_more}}">加载中...</text>
+      <text wx:elif="{{has_more}}" bindtap="loadMore">继续加载</text>
+      <text wx:else>已浏览全部推荐</text>
+    </view>
+
+    <view class="empty-state" wx:if="{{!error && list.length === 0}}">
+      <text class="empty-title">暂无推荐内容</text>
+      <text class="empty-text">后台发布后会显示在这里。</text>
+    </view>
+  </scroll-view>
+
+  <view class="modal-mask" wx:if="{{show_detail}}" bindtap="closeDetail">
+    <view class="detail-modal" catchtap="noop">
+      <view class="modal-head">
+        <view>
+          <text class="modal-title">{{selected.title}}</text>
+          <text class="modal-meta">{{selected.category_text}} · {{selected.recommender_name}}</text>
+        </view>
+        <button class="close-btn" bindtap="closeDetail">×</button>
+      </view>
+
+      <image wx:if="{{selected.cover_url}}" class="detail-cover" src="{{selected.cover_url}}" mode="aspectFill" />
+
+      <view class="detail-section">
+        <text class="section-label">推荐理由</text>
+        <text class="detail-reason">{{selected.reason}}</text>
+      </view>
+
+      <button wx:if="{{selected.link_url}}" class="link-btn" bindtap="openLink">复制外链</button>
+    </view>
+  </view>
+</view>

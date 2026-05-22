@@ -1,0 +1,137 @@
+<view class="container" wx:if="{{!loading}}">
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="onRetry">Retry</button>
+  </view>
+
+  <view class="tab-container" wx:else>
+    <view class="tabs">
+      <view class="tab-item {{tab === 'top3' ? 'active' : ''}}" data-tab="top3" bindtap="switchTab">Top 3</view>
+      <view class="tab-item {{tab === 'full' ? 'active' : ''}}" data-tab="full" bindtap="switchTab">Ranking</view>
+      <view class="tab-item {{tab === 'my' ? 'active' : ''}}" data-tab="my" bindtap="switchTab">Me</view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'top3'}}">
+      <view class="podium" wx:if="{{top_three.length > 0}}">
+        <view class="podium-item rank-2" wx:if="{{top_three[1]}}" data-user_id="{{top_three[1].user_id}}" bindtap="openDetectiveCard">
+          <image class="podium-avatar" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" />
+          <text class="podium-rank">2</text>
+          <text class="podium-name">{{top_three[1].nickname}}</text>
+          <text class="podium-points">{{top_three[1].total_points}}</text>
+        </view>
+
+        <view class="podium-item rank-1" wx:if="{{top_three[0]}}" data-user_id="{{top_three[0].user_id}}" bindtap="openDetectiveCard">
+          <image class="podium-avatar" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" />
+          <text class="podium-rank">1</text>
+          <text class="podium-name">{{top_three[0].nickname}}</text>
+          <text class="podium-points">{{top_three[0].total_points}}</text>
+        </view>
+
+        <view class="podium-item rank-3" wx:if="{{top_three[2]}}" data-user_id="{{top_three[2].user_id}}" bindtap="openDetectiveCard">
+          <image class="podium-avatar" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" />
+          <text class="podium-rank">3</text>
+          <text class="podium-name">{{top_three[2].nickname}}</text>
+          <text class="podium-points">{{top_three[2].total_points}}</text>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">No ranking data</text>
+      </view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'full'}}">
+      <view class="ranking-list" wx:if="{{full_ranking.length > 0}}">
+        <detective-card-item
+          wx:for="{{full_ranking}}"
+          wx:key="user_id"
+          user="{{item}}"
+          bind:cardtap="openDetectiveCard" />
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">No ranking data</text>
+      </view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'my'}}">
+      <view class="my-ranking-card" wx:if="{{user_ranking}}">
+        <view class="my-ranking-header">
+          <text class="my-ranking-title">My ranking</text>
+        </view>
+        <view class="my-ranking-content">
+          <view class="my-ranking-item">
+            <text class="my-ranking-label">Rank</text>
+            <text class="my-ranking-value">{{user_ranking.rank_no}}</text>
+          </view>
+          <view class="my-ranking-item">
+            <text class="my-ranking-label">Total points</text>
+            <text class="my-ranking-value">{{user_ranking.total_points}}</text>
+          </view>
+          <view class="my-ranking-item">
+            <text class="my-ranking-label">Nickname</text>
+            <text class="my-ranking-value">{{user_ranking.nickname}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">Please login first</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{show_card_modal}}" bindtap="closeCardModal">
+    <view class="card-modal" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">Detective profile</text>
+        <button class="modal-close" bindtap="closeCardModal">x</button>
+      </view>
+
+      <view class="card-loading" wx:if="{{card_loading}}">
+        <view class="mini-spinner"></view>
+        <text>Loading profile...</text>
+      </view>
+
+      <view class="detective-card" wx:if="{{selected_card}}">
+        <view class="card-hero">
+          <view class="card-case-no">DETECTIVE PROFILE</view>
+          <image class="card-avatar" src="{{selected_card.avatar_url || '/images/icons/avatar.png'}}" />
+          <view class="card-identity">
+            <text class="card-name">{{selected_card.display_name}}</text>
+            <text class="card-signature">{{selected_card.self_intro}}</text>
+          </view>
+        </view>
+
+        <view class="card-stats">
+          <view class="card-stat">
+            <text class="card-stat-value">{{selected_card.rank_no}}</text>
+            <text class="card-stat-label">Rank</text>
+          </view>
+          <view class="card-stat">
+            <text class="card-stat-value">{{selected_card.total_points}}</text>
+            <text class="card-stat-label">Total</text>
+          </view>
+          <view class="card-stat">
+            <text class="card-stat-value">{{selected_card.available_points}}</text>
+            <text class="card-stat-label">Available</text>
+          </view>
+        </view>
+
+        <view class="card-section" wx:if="{{selected_card.interests}}">
+          <text class="card-section-title">Interests</text>
+          <text class="card-section-value">{{selected_card.interests}}</text>
+        </view>
+        <view class="card-section" wx:if="{{selected_card.created_text}}">
+          <text class="card-section-title">Created</text>
+          <text class="card-section-value">{{selected_card.created_text}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="loading-state" wx:elif="{{loading}}">
+  <view class="loading-spinner"></view>
+  <text class="loading-text">Loading ranking...</text>
+</view>

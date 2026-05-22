@@ -1,0 +1,185 @@
+<view class="container">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:if="{{!loading}}">
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">
+        <text>全部活动</text>
+      </view>
+      <view class="tab-item {{tab === 'registered' ? 'active' : ''}}" bindtap="switchTab" data-tab="registered">
+        <text>我的活动 ({{my_activities.length}})</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'all'}}">
+      <view class="activity-list">
+        <view class="activity-card" wx:for="{{visible_activities}}" wx:key="activity_id">
+          <view class="activity-header">
+            <view class="activity-title">{{item.title}}</view>
+            <view class="activity-status" wx:if="{{item.is_full}}">已满</view>
+            <view class="activity-status available" wx:else>余 {{item.remaining_capacity}}</view>
+          </view>
+
+          <view class="activity-details">
+            <view class="detail-item">
+              <text class="detail-label">活动时间</text>
+              <text class="detail-value">{{item.start_text}} - {{item.end_text}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">活动地点</text>
+              <text class="detail-value">{{item.location}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">最晚取消</text>
+              <text class="detail-value">{{item.deadline_text}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">报名人数</text>
+              <text class="detail-value">{{item.registered_count}}/{{item.capacity}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{item.description}}">
+              <text class="detail-label">活动说明</text>
+              <text class="detail-value">{{item.description}}</text>
+            </view>
+          </view>
+
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{item.capacity > 0 ? (item.registered_count / item.capacity) * 100 : 0}}%"></view>
+          </view>
+
+          <view class="activity-actions">
+            <button
+              class="btn-register"
+              wx:if="{{!item.is_full}}"
+              bindtap="showRegisterModal"
+              data-id="{{item.activity_id}}">
+              立即报名
+            </button>
+            <button class="btn-full" wx:else>活动已满员</button>
+          </view>
+        </view>
+
+        <view class="empty-state" wx:if="{{visible_activities.length === 0}}">
+          <text class="empty-text">暂无可报名活动</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'registered'}}">
+      <view class="my-activities">
+        <view class="activity-card" wx:for="{{my_activities}}" wx:key="registration_id">
+          <view class="activity-header">
+            <view class="activity-title">{{item.title}}</view>
+            <view class="registration-status {{item.status === 'confirmed' || item.status === 'registered' ? 'confirmed' : ''}}">
+              {{item.status_text}}
+            </view>
+          </view>
+
+          <view class="activity-details">
+            <view class="detail-item">
+              <text class="detail-label">活动时间</text>
+              <text class="detail-value">{{item.start_text}} - {{item.end_text}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">活动地点</text>
+              <text class="detail-value">{{item.location}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">最晚取消</text>
+              <text class="detail-value">{{item.deadline_text}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{item.registration_time}}">
+              <text class="detail-label">报名时间</text>
+              <text class="detail-value">{{item.registration_time}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{item.reason}}">
+              <text class="detail-label">报名理由</text>
+              <text class="detail-value">{{item.reason}}</text>
+            </view>
+          </view>
+
+          <view class="activity-actions">
+            <button
+              class="btn-cancel"
+              wx:if="{{item.can_cancel}}"
+              loading="{{canceling_id === item.activity_id}}"
+              bindtap="showCancelConfirm"
+              data-id="{{item.activity_id}}"
+              data-title="{{item.title}}">
+              取消报名
+            </button>
+            <button class="btn-confirmed" wx:elif="{{item.status !== 'cancelled'}}">已超过取消时间</button>
+          </view>
+        </view>
+
+        <view class="empty-state" wx:if="{{my_activities.length === 0}}">
+          <text class="empty-text">你还没有报名任何活动</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="modal-overlay" wx:if="{{show_register_modal}}" bindtap="closeRegisterModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">报名活动</text>
+        <button class="modal-close" bindtap="closeRegisterModal">×</button>
+      </view>
+
+      <view class="modal-body">
+        <view class="modal-section">
+          <text class="section-label">活动名称</text>
+          <text class="section-value">{{selected_activity.title}}</text>
+        </view>
+
+        <view class="modal-section">
+          <text class="section-label">活动时间</text>
+          <text class="section-value">{{selected_activity.start_text}} - {{selected_activity.end_text}}</text>
+        </view>
+
+        <view class="modal-section">
+          <text class="section-label">剩余名额</text>
+          <text class="section-value">{{selected_activity.remaining_capacity}}</text>
+        </view>
+
+        <view class="modal-section">
+          <text class="section-label">报名理由</text>
+          <textarea
+            class="reason-input"
+            placeholder="请输入你的报名理由"
+            value="{{register_reason}}"
+            bindinput="onReasonInput"
+            maxlength="200"
+            show-confirm-bar="{{false}}" />
+          <text class="input-hint">{{register_reason.length}}/200</text>
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <button class="btn-cancel-modal" bindtap="closeRegisterModal">取消</button>
+        <button
+          class="btn-confirm-modal"
+          loading="{{registering}}"
+          disabled="{{registering}}"
+          bindtap="confirmRegister">
+          确认报名
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

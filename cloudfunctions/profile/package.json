@@ -1,0 +1,15 @@
+{
+  "name": "profile",
+  "version": "1.0.0",
+  "description": "User profile and card management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["profile"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

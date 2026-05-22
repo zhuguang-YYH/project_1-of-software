@@ -1,0 +1,22 @@
+<view class="detective-item variant-{{variant}}" bindtap="handleTap">
+  <view class="rank-mark" wx:if="{{showRank}}">
+    <text>{{user.rank_no || '-'}}</text>
+  </view>
+
+  <view class="avatar-wrap">
+    <image class="avatar" src="{{user.avatar_url || '/images/icons/avatar.png'}}" />
+    <view class="rank-glow" wx:if="{{user.rank_no <= 3 && user.rank_no > 0}}"></view>
+  </view>
+
+  <view class="main">
+    <text class="name">{{user.nickname || '未设置昵称'}}</text>
+    <text class="meta">{{meta || user.meta || '点击查看个人名片'}}</text>
+  </view>
+
+  <view class="score" wx:if="{{showScore}}">
+    <text class="score-value">{{user.total_points || 0}}</text>
+    <text class="score-label">积分</text>
+  </view>
+
+  <text class="arrow">›</text>
+</view>

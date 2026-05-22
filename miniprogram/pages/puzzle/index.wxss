@@ -1,0 +1,298 @@
+/* pages/puzzle/index.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 16px;
+  padding-bottom: 40px;
+}
+
+/* 错误状态 */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 20px;
+}
+
+.error-text {
+  font-size: 16px;
+  color: #c33;
+  text-align: center;
+}
+
+.retry-btn {
+  background-color: #3498db !important;
+  color: white !important;
+  width: 160px;
+}
+
+/* 谜题卡片 */
+.puzzle-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.puzzle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.puzzle-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.puzzle-difficulty {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.difficulty-simple {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.difficulty-normal {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.difficulty-hard {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* 谜题内容 */
+.puzzle-content {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.puzzle-desc {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  display: block;
+  word-wrap: break-word;
+}
+
+/* 选项容器 */
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.option:active {
+  background-color: #f0f0f0;
+}
+
+.option.selected {
+  border-color: #3498db;
+  background-color: #ecf0f1;
+}
+
+.option-label {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.option.selected .option-label {
+  background-color: #2980b9;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 15px;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* 答题显示 */
+.answer-display {
+  margin-bottom: 20px;
+}
+
+.answer-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.answer-status.correct {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.answer-status.wrong {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.status-icon {
+  font-size: 24px;
+}
+
+.status-text {
+  font-size: 16px;
+}
+
+.answer-status.correct .status-icon,
+.answer-status.correct .status-text {
+  color: #155724;
+}
+
+.answer-status.wrong .status-icon,
+.answer-status.wrong .status-text {
+  color: #721c24;
+}
+
+/* 答案信息 */
+.answer-info,
+.analysis {
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.info-title,
+.analysis-title {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-content,
+.analysis-content {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.btn-submit {
+  background-color: #3498db !important;
+  color: white !important;
+}
+
+.btn-submit:disabled {
+  background-color: #bdc3c7 !important;
+  color: white !important;
+}
+
+.btn-back {
+  background-color: #ecf0f1 !important;
+  color: #333 !important;
+}
+
+/* 积分信息 */
+.reward-info {
+  text-align: center;
+  padding: 12px;
+  background-color: #fff9e6;
+  border-radius: 8px;
+  border: 1px solid #ffe58f;
+}
+
+.reward-label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.reward-points {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: #f39c12;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eee;
+  border-top-color: #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #999;
+}

@@ -1,0 +1,19 @@
+<view class="modal-container" wx:if="{{visible}}">
+  <view class="modal-mask"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <view class="modal-title">{{title}}</view>
+    </view>
+    <view class="modal-body">
+      <view class="modal-text">{{content}}</view>
+    </view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel-btn" wx:if="{{showCancel}}" bindtap="handleCancel">
+        {{cancelText}}
+      </button>
+      <button class="modal-btn confirm-btn" style="border-color: {{confirmColor}}; color: {{confirmColor}};" bindtap="handleConfirm">
+        {{confirmText}}
+      </button>
+    </view>
+  </view>
+</view>

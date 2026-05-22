@@ -1,0 +1,189 @@
+<view class="container">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'available' ? 'active' : ''}}" data-tab="available" bindtap="switchTab">
+        可借物资
+      </view>
+      <view class="tab-item {{tab === 'my-borrows' ? 'active' : ''}}" data-tab="my-borrows" bindtap="switchTab">
+        我的借阅 ({{my_borrows.length}})
+      </view>
+      <view class="tab-item {{tab === 'scripts' ? 'active' : ''}}" data-tab="scripts" bindtap="switchTab">
+        剧本杀
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'available'}}" class="items-list">
+      <view class="item-card" wx:for="{{items}}" wx:key="item_id">
+        <view class="item-header">
+          <view class="item-name">{{item.name}}</view>
+          <view class="item-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
+        </view>
+        <view class="item-details">
+          <view class="detail-item" wx:if="{{item.description}}">
+            <text class="detail-label">描述</text>
+            <text class="detail-value">{{item.description}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">状态</text>
+            <text class="detail-value">{{item.status_text}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">借阅次数</text>
+            <text class="detail-value">{{item.borrow_count}}</text>
+          </view>
+        </view>
+        <view class="item-actions">
+          <button
+            class="btn-apply"
+            wx:if="{{item.status === 'available'}}"
+            data-item_id="{{item.item_id}}"
+            data-name="{{item.name}}"
+            data-status="{{item.status}}"
+            bindtap="showApplyModal">申请借阅</button>
+          <button class="btn-unavailable" wx:else>{{item.status_text}}</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{items.length === 0}}">
+        <text class="empty-text">暂无可借物资</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'my-borrows'}}" class="borrows-list">
+      <view class="borrow-card" wx:for="{{my_borrows}}" wx:key="application_id">
+        <view class="borrow-header">
+          <view class="borrow-name">{{item.item_name}}</view>
+          <view class="borrow-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
+        </view>
+        <view class="borrow-details">
+          <view class="detail-item">
+            <text class="detail-label">申请时间</text>
+            <text class="detail-value">{{item.requested_text}}</text>
+          </view>
+          <view class="detail-item" wx:if="{{item.lent_text !== '-'}}">
+            <text class="detail-label">借出时间</text>
+            <text class="detail-value">{{item.lent_text}}</text>
+          </view>
+          <view class="detail-item" wx:if="{{item.returned_text !== '-'}}">
+            <text class="detail-label">归还时间</text>
+            <text class="detail-value">{{item.returned_text}}</text>
+          </view>
+          <view class="detail-item" wx:if="{{item.reason}}">
+            <text class="detail-label">借阅理由</text>
+            <text class="detail-value">{{item.reason}}</text>
+          </view>
+        </view>
+        <view class="borrow-actions" wx:if="{{item.can_cancel}}">
+          <button
+            class="btn-cancel"
+            loading="{{canceling_id === item.application_id}}"
+            data-application_id="{{item.application_id}}"
+            data-status="{{item.status}}"
+            bindtap="showCancelConfirm">取消借阅</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{my_borrows.length === 0}}">
+        <text class="empty-text">你还没有借阅记录</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'scripts'}}">
+      <view class="scripts-error" wx:if="{{scripts_error}}">
+        <text>{{scripts_error}}</text>
+        <button size="mini" bindtap="loadScripts">重试</button>
+      </view>
+
+      <view class="scripts-list">
+        <view class="script-card" wx:for="{{scripts}}" wx:key="item_id">
+          <view class="script-header">
+            <view>
+              <text class="script-name">{{item.name}}</text>
+              <text class="script-genre">{{item.genre || item.category || '未分类'}}</text>
+            </view>
+            <view class="item-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
+          </view>
+          <text class="script-desc" wx:if="{{item.description}}">{{item.description}}</text>
+          <view class="script-info-grid">
+            <view class="script-info-item">
+              <text class="info-label">人数</text>
+              <text class="info-value">{{item.player_range || '待补充'}}</text>
+            </view>
+            <view class="script-info-item">
+              <text class="info-label">时长</text>
+              <text class="info-value">{{item.duration_minutes || '待补充'}}</text>
+            </view>
+            <view class="script-info-item">
+              <text class="info-label">难度</text>
+              <text class="info-value">{{item.difficulty || '待补充'}}</text>
+            </view>
+            <view class="script-info-item">
+              <text class="info-label">借阅</text>
+              <text class="info-value">{{item.borrow_count}}次</text>
+            </view>
+          </view>
+          <view class="item-actions">
+            <button
+              class="btn-apply"
+              wx:if="{{item.status === 'available'}}"
+              data-item_id="{{item.item_id}}"
+              data-name="{{item.name}}"
+              data-status="{{item.status}}"
+              bindtap="showApplyModal">申请借阅</button>
+            <button class="btn-unavailable" wx:else>{{item.status_text}}</button>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{scripts_loaded && !scripts_error && scripts.length === 0}}">
+        <text class="empty-text">暂无剧本杀库存</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="modal-overlay" wx:if="{{show_apply_modal}}" bindtap="closeApplyModal">
+    <view class="modal-content" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">申请借阅</text>
+        <button class="modal-close" bindtap="closeApplyModal">x</button>
+      </view>
+      <view class="modal-body">
+        <view class="modal-section">
+          <text class="section-label">物资名称</text>
+          <text class="section-value">{{selected_item.name}}</text>
+        </view>
+        <view class="modal-section">
+          <text class="section-label">借阅理由</text>
+          <textarea
+            class="reason-input"
+            placeholder="请输入借阅理由"
+            value="{{apply_reason}}"
+            maxlength="200"
+            show-confirm-bar="{{false}}"
+            bindinput="onReasonInput" />
+          <text class="input-hint">{{apply_reason.length}}/200</text>
+        </view>
+      </view>
+      <view class="modal-footer">
+        <button class="btn-cancel-modal" bindtap="closeApplyModal">取消</button>
+        <button class="btn-confirm-modal" loading="{{applying}}" disabled="{{applying}}" bindtap="confirmApply">确认申请</button>
+      </view>
+    </view>
+  </view>
+</view>

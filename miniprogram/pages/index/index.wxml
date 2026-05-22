@@ -1,0 +1,111 @@
+<view class="container">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else
+  >
+    <view class="error-banner" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="user-section">
+      <view class="user-card" wx:if="{{isLoggedIn}}">
+        <view class="user-header">
+          <image class="user-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
+          <view class="user-info">
+            <text class="user-name">{{userInfo.nickname || '未设置昵称'}}</text>
+            <text class="user-points">可兑换积分 {{myPoints}}</text>
+          </view>
+          <button class="user-edit" size="mini" bindtap="goToProfile">编辑</button>
+        </view>
+      </view>
+
+      <view class="login-card" wx:else>
+        <text class="login-title">NK推协侦探管理系统</text>
+        <text class="login-desc">登录后可参与每日谜题、查看积分和个人名片。</text>
+        <button class="login-btn" bindtap="navigateToLogin">去登录</button>
+      </view>
+    </view>
+
+    <view class="quick-nav">
+      <view class="nav-item puzzle-item" bindtap="goToPuzzle">
+        <view class="nav-icon puzzle-icon">?</view>
+        <text class="nav-text">每日谜题</text>
+        <text class="nav-desc" wx:if="{{dailyPuzzle && dailyPuzzle.answered}}">今日已完成</text>
+        <text class="nav-desc" wx:elif="{{dailyPuzzle}}">今日未完成</text>
+        <text class="nav-desc" wx:else>进入答题</text>
+      </view>
+
+      <view class="nav-item ranking-item" bindtap="goToRanking">
+        <view class="nav-icon ranking-icon">#</view>
+        <text class="nav-text">排行榜</text>
+        <text class="nav-desc">查看积分排名</text>
+      </view>
+
+      <view class="nav-item activity-item" bindtap="goToActivity">
+        <view class="nav-icon activity-icon">A</view>
+        <text class="nav-text">活动</text>
+        <text class="nav-desc">报名与签到</text>
+      </view>
+
+      <view class="nav-item dud-item" bindtap="goToDud">
+        <view class="nav-icon dud-icon">D</view>
+        <text class="nav-text">Dud 对话</text>
+        <text class="nav-desc">关键词助手</text>
+      </view>
+
+      <view class="nav-item profile-item" bindtap="goToProfile">
+        <view class="nav-icon profile-icon">ID</view>
+        <text class="nav-text">个人名片</text>
+        <text class="nav-desc">资料与积分</text>
+      </view>
+    </view>
+
+    <view class="section ranking-preview" wx:if="{{topThree.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">排行榜前三</text>
+        <button class="section-more" size="mini" bindtap="goToRanking">更多</button>
+      </view>
+
+      <view class="ranking-list">
+        <detective-card-item
+          wx:for="{{topThree}}"
+          wx:key="user_id"
+          user="{{item}}"
+          variant="compact"
+          bind:cardtap="openRankingUser"
+        />
+      </view>
+    </view>
+
+    <view class="section recommendations" wx:if="{{recommendations.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">推荐阅读</text>
+        <button class="section-more" size="mini" bindtap="goToRecommendations">更多</button>
+      </view>
+
+      <view class="recommend-list">
+        <view class="recommend-item" wx:for="{{recommendations}}" wx:key="id">
+          <image class="recommend-cover" src="{{item.cover_url || '/images/icons/default-cover.png'}}" />
+          <view class="recommend-info">
+            <text class="recommend-title">{{item.title}}</text>
+            <text class="recommend-category">{{item.category || '推荐'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!dailyPuzzle && isLoggedIn && !error && topThree.length === 0 && recommendations.length === 0}}">
+      <text class="empty-text">暂无内容</text>
+    </view>
+  </scroll-view>
+</view>

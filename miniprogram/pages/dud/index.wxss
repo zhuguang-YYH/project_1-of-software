@@ -1,0 +1,177 @@
+.page {
+  min-height: 100vh;
+  background: #f4f7fb;
+  color: #243041;
+}
+
+.loading-state {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  color: #64748b;
+}
+
+.loading-spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 6rpx solid #dbeafe;
+  border-top-color: #2477c3;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.chat-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.error-banner {
+  margin: 20rpx 24rpx 0;
+  padding: 18rpx 20rpx;
+  border-radius: 8rpx;
+  background: #fff1f2;
+  color: #be123c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 25rpx;
+}
+
+.message-list {
+  flex: 1;
+  height: calc(100vh - 220rpx);
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.message-row,
+.typing {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+  align-items: flex-start;
+}
+
+.message-row.from-user {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dud-avatar {
+  background: #243041;
+}
+
+.user-avatar {
+  background: #2477c3;
+}
+
+.bubble-wrap {
+  max-width: 74%;
+  min-width: 0;
+}
+
+.message-row.from-user .bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.bubble,
+.typing-bubble {
+  padding: 18rpx 22rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  line-height: 1.55;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.from-dud .bubble,
+.typing-bubble {
+  color: #243041;
+  background: #ffffff;
+  box-shadow: 0 6rpx 18rpx rgba(22, 34, 51, 0.06);
+}
+
+.from-user .bubble {
+  color: #ffffff;
+  background: #2477c3;
+}
+
+.message-meta {
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  color: #8a96a8;
+}
+
+.quick-prompts {
+  padding: 10rpx 20rpx 12rpx;
+  display: flex;
+  gap: 12rpx;
+  overflow-x: auto;
+  background: #f4f7fb;
+  box-sizing: border-box;
+}
+
+.prompt {
+  flex: 0 0 auto;
+  padding: 12rpx 20rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #2477c3;
+  font-size: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(22, 34, 51, 0.05);
+}
+
+.composer {
+  padding: 14rpx 20rpx 24rpx;
+  display: grid;
+  grid-template-columns: 1fr 132rpx;
+  gap: 14rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #e8edf3;
+  box-sizing: border-box;
+}
+
+.message-input {
+  height: 76rpx;
+  padding: 0 22rpx;
+  border-radius: 8rpx;
+  background: #f4f7fb;
+  color: #1f2937;
+  font-size: 27rpx;
+  box-sizing: border-box;
+}
+
+.send-btn {
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: 8rpx;
+  color: #ffffff;
+  background: #2477c3;
+  font-size: 26rpx;
+  padding: 0;
+}

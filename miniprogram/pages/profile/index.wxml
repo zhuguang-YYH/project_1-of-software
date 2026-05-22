@@ -1,0 +1,134 @@
+<view class="container" wx:if="{{!loading}}">
+  <view class="login-card" wx:if="{{!userInfo}}">
+    <image class="login-avatar" src="/images/icons/avatar.png" />
+    <text class="login-title">建立侦探档案</text>
+    <text class="login-desc">登录后可保存积分、排行榜、委托和个人名片信息。</text>
+    <button class="login-btn" bindtap="loginAndEdit">登录并完善资料</button>
+  </view>
+
+  <view class="profile-header" wx:if="{{userInfo}}">
+    <view class="header-bg"></view>
+    <view class="user-card">
+      <button class="avatar-picker" wx:if="{{editMode}}" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="user-avatar" src="{{form.avatar_url || '/images/icons/avatar.png'}}" />
+      </button>
+      <image wx:else class="user-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
+
+      <view class="user-meta">
+        <view class="user-name-edit" wx:if="{{editMode}}">
+          <input
+            class="name-input"
+            value="{{form.nickname}}"
+            placeholder="请输入昵称"
+            type="nickname"
+            data-field="nickname"
+            bindinput="onInput"
+          />
+          <textarea
+            class="profile-input"
+            value="{{form.signature}}"
+            placeholder="一句侦探签名"
+            data-field="signature"
+            bindinput="onInput"
+            maxlength="80"
+            show-confirm-bar="{{false}}"
+          />
+          <input
+            class="name-input"
+            value="{{form.interests}}"
+            placeholder="兴趣标签，用顿号分隔"
+            data-field="interests"
+            bindinput="onInput"
+          />
+        </view>
+
+        <text class="user-name" wx:else>{{userInfo.nickname || '未设置昵称'}}</text>
+        <text class="user-signature" wx:if="{{!editMode && userInfo.signature}}">{{userInfo.signature}}</text>
+        <text class="user-id">编号: {{userInfo.user_id || '已登录'}}</text>
+      </view>
+
+      <button class="edit-btn" wx:if="{{!editMode}}" size="mini" bindtap="startEdit">
+        {{profileIncomplete ? '完善' : '编辑'}}
+      </button>
+      <view class="edit-actions" wx:else>
+        <button class="action-btn save" size="mini" loading="{{savingProfile}}" disabled="{{savingProfile}}" bindtap="saveEdit">保存</button>
+        <button class="action-btn cancel" size="mini" bindtap="cancelEdit">取消</button>
+      </view>
+    </view>
+
+    <view class="profile-tip" wx:if="{{profileIncomplete && !editMode}}">
+      <text>完善头像和昵称后，个人名片与排行榜会展示得更完整。</text>
+      <button size="mini" bindtap="startEdit">去完善</button>
+    </view>
+
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-label">可兑换积分</text>
+        <text class="stat-value">{{myPoints}}</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-label">当前排名</text>
+        <text class="stat-value">{{myRank > 100 ? '未入榜' : '第 ' + myRank + ' 名'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="quick-menu" wx:if="{{userInfo}}">
+    <view class="menu-item" bindtap="goToActivity">
+      <text class="menu-icon">A</text>
+      <text class="menu-text">活动</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goBorrow">
+      <text class="menu-icon">B</text>
+      <text class="menu-text">借阅</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goExchange">
+      <text class="menu-icon">E</text>
+      <text class="menu-text">兑换</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goPoints">
+      <text class="menu-icon">P</text>
+      <text class="menu-text">积分明细</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goCommission">
+      <text class="menu-icon">C</text>
+      <text class="menu-text">委托</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goFeedback">
+      <text class="menu-icon">F</text>
+      <text class="menu-text">反馈建议</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goSettings">
+      <text class="menu-icon">S</text>
+      <text class="menu-text">系统设置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" wx:if="{{userInfo.role === 'admin'}}" bindtap="goAdmin">
+      <text class="menu-icon">M</text>
+      <text class="menu-text">管理后台</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="about-section" wx:if="{{userInfo}}">
+    <view class="about-header">
+      <text class="about-title">关于</text>
+    </view>
+    <view class="about-content">
+      <text class="about-text">NK推协侦探管理系统</text>
+      <text class="about-desc">让每位侦探都能享受推理的乐趣。</text>
+    </view>
+  </view>
+</view>
+
+<view class="loading-state" wx:elif="{{loading}}">
+  <view class="loading-spinner"></view>
+  <text class="loading-text">加载中...</text>
+</view>

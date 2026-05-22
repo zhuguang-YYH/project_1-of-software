@@ -1,0 +1,75 @@
+<view class="page">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text>加载积分中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="loadMore"
+    wx:else
+  >
+    <view class="summary">
+      <view class="summary-main">
+        <text class="summary-label">可兑换积分</text>
+        <text class="summary-value">{{points.available_points}}</text>
+      </view>
+      <view class="summary-grid">
+        <view class="summary-item">
+          <text class="item-label">累计积分</text>
+          <text class="item-value">{{points.total_points}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="item-label">冻结积分</text>
+          <text class="item-value frozen">{{points.frozen_points}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="item-label">已使用</text>
+          <text class="item-value">{{points.used_points}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="filter-row">
+      <view
+        class="filter-item {{filter === item.key ? 'active' : ''}}"
+        wx:for="{{filters}}"
+        wx:key="key"
+        data-filter="{{item.key}}"
+        bindtap="switchFilter"
+      >
+        {{item.label}}
+      </view>
+    </view>
+
+    <view class="log-list">
+      <view class="log-card" wx:for="{{logs}}" wx:key="log_id">
+        <view class="log-left">
+          <text class="log-reason">{{item.reason}}</text>
+          <text class="log-meta">{{item.type_text}} · {{item.created_text}}</text>
+        </view>
+        <text class="log-amount {{item.is_income ? 'income' : 'expense'}}">{{item.display_amount}}</text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!error && logs.length === 0}}">
+      <text class="empty-title">暂无积分流水</text>
+      <text class="empty-text">答题、兑换和委托结算后会显示在这里。</text>
+    </view>
+
+    <view class="load-more" wx:if="{{logs.length > 0}}">
+      <text wx:if="{{loading_more}}">加载中...</text>
+      <text wx:elif="{{has_more}}" bindtap="loadMore">继续加载</text>
+      <text wx:else>已显示全部流水</text>
+    </view>
+  </scroll-view>
+</view>
