@@ -1,442 +1,453 @@
 /* pages/ranking/index.wxss */
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 40px;
+  padding-bottom: 80rpx;
 }
 
-/* 错误状态 */
 .error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
-  gap: 20px;
+  height: 800rpx;
+  gap: 40rpx;
 }
 
 .error-text {
-  font-size: 16px;
+  font-size: 32rpx;
   color: #c33;
   text-align: center;
 }
 
 .retry-btn {
-  background-color: #3498db !important;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
   color: white !important;
-  width: 160px;
+  width: 320rpx;
+  border-radius: 16rpx !important;
+  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.25);
 }
 
-/* 标签页 */
-.tab-container {
-  flex: 1;
-}
+.tab-container { flex: 1; }
 
 .tabs {
   display: flex;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: #fff;
   position: sticky;
   top: 0;
   z-index: 10;
+  margin: 24rpx 24rpx 0;
+  border-radius: 18rpx;
+  padding: 8rpx;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.08);
 }
 
 .tab-item {
   flex: 1;
-  padding: 14px;
+  padding: 22rpx;
   text-align: center;
-  font-size: 14px;
-  color: #999;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s;
+  font-size: 28rpx;
+  color: #8a96a8;
+  border-radius: 12rpx;
+  transition: all 0.25s;
+  font-weight: 500;
 }
 
 .tab-item.active {
-  color: #3498db;
-  border-bottom-color: #3498db;
-  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  font-weight: 700;
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.3);
 }
 
-/* 标签内容 */
-.tab-content {
-  padding: 16px;
-}
+.tab-content { padding: 32rpx 24rpx; }
 
 /* 领奖台 */
+.podium-wrap { padding-top: 40rpx; }
 .podium {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 12px;
-  height: 300px;
-  margin-bottom: 30px;
+  gap: 18rpx;
+  margin-bottom: 40rpx;
 }
 
 .podium-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 14rpx;
   text-align: center;
   flex: 1;
 }
 
-.podium-item:active {
-  opacity: 0.86;
-}
+.rank-1 { order: 2; transform: translateY(-30rpx); }
+.rank-2 { order: 1; }
+.rank-3 { order: 3; }
 
-.rank-1 {
-  order: 2;
-  flex-grow: 1.2;
+.podium-crown {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: -28rpx;
+  z-index: 2;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.15);
 }
-
-.rank-2 {
-  order: 1;
-  flex-basis: 80%;
-}
-
-.rank-3 {
-  order: 3;
-  flex-basis: 70%;
-}
+.crown-gold { background: linear-gradient(135deg, #ffd76b, #f5a623); font-size: 36rpx; }
+.crown-silver { background: linear-gradient(135deg, #d8dee9, #95a5a6); }
+.crown-bronze { background: linear-gradient(135deg, #d4977a, #a0522d); }
 
 .podium-avatar {
-  width: 60px;
-  height: 60px;
+  width: 130rpx;
+  height: 130rpx;
   border-radius: 50%;
-  border: 3px solid #f39c12;
-  background-color: white;
+  background: #fff;
 }
-
-.podium-rank {
-  font-size: 32px;
-  line-height: 1;
-}
+.avatar-gold { border: 6rpx solid #f5b041; box-shadow: 0 10rpx 28rpx rgba(245, 176, 65, 0.4); width: 150rpx; height: 150rpx; }
+.avatar-silver { border: 6rpx solid #c0c8d4; box-shadow: 0 8rpx 20rpx rgba(149, 165, 166, 0.25); }
+.avatar-bronze { border: 6rpx solid #cd853f; box-shadow: 0 8rpx 20rpx rgba(205, 133, 63, 0.25); }
 
 .podium-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  word-break: break-all;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+  max-width: 180rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .podium-points {
-  font-size: 12px;
-  color: #f39c12;
-  font-weight: 600;
+  font-size: 22rpx;
+  color: #92580d;
+  font-weight: 700;
+  background: #fef3df;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.podium-base {
+  width: 100%;
+  margin-top: 6rpx;
+  border-radius: 14rpx 14rpx 0 0;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.base-gold { height: 160rpx; background: linear-gradient(180deg, #ffd76b, #f5a623); box-shadow: 0 10rpx 24rpx rgba(245, 166, 35, 0.3); }
+.base-silver { height: 120rpx; background: linear-gradient(180deg, #d8dee9, #95a5a6); }
+.base-bronze { height: 90rpx; background: linear-gradient(180deg, #d4977a, #a0522d); }
+
+.podium-tip {
+  text-align: center;
+  color: #8a96a8;
+  font-size: 22rpx;
+  margin-top: 16rpx;
 }
 
 /* 排行列表 */
 .ranking-list {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 18rpx;
   overflow: hidden;
+  padding: 12rpx;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.06);
 }
 
 /* 我的排名 */
 .my-ranking-card {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12rpx 32rpx rgba(91, 108, 255, 0.12);
 }
 
 .my-ranking-header {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  padding: 20px;
+  background: linear-gradient(135deg, #3a4cd1, #5b6cff);
+  padding: 48rpx 40rpx;
   text-align: center;
+  color: #fff;
 }
 
 .my-ranking-title {
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
+  display: block;
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 700;
 }
 
-.my-ranking-content {
-  padding: 20px;
+.my-ranking-sub {
+  display: block;
+  margin-top: 10rpx;
+  color: rgba(255,255,255,0.78);
+  font-size: 24rpx;
 }
+
+.my-ranking-content { padding: 40rpx 36rpx; }
+
+.my-ranking-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+}
+
+.my-stat {
+  flex: 1;
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  padding: 28rpx 0;
+  border-radius: 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.my-stat-value { font-size: 48rpx; font-weight: 800; color: #3a4cd1; }
+.my-stat-label { font-size: 24rpx; color: #4a5577; }
 
 .my-ranking-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f5f5f5;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid #f0f3f8;
 }
 
-.my-ranking-item:last-child {
-  border-bottom: none;
-}
-
-.my-ranking-label {
-  font-size: 14px;
-  color: #999;
-}
-
-.my-ranking-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.my-ranking-value.not-ranked {
-  color: #999;
-}
-
-.my-ranking-tip {
-  background-color: #f0f7ff;
-  padding: 12px;
-  margin-top: 16px;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
-}
-
-.tip-text {
-  font-size: 13px;
-  color: #3498db;
-  line-height: 1.5;
-}
+.my-ranking-item:last-child { border-bottom: none; }
+.my-ranking-label { font-size: 28rpx; color: #8a96a8; }
+.my-ranking-value { font-size: 30rpx; font-weight: 600; color: #1a1f3a; }
 
 /* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 120rpx 40rpx;
 }
 
 .empty-text {
-  font-size: 14px;
-  color: #999;
+  font-size: 28rpx;
+  color: #8a96a8;
 }
 
-/* 加载状态 */
+/* 加载 */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
-  gap: 16px;
+  height: 800rpx;
+  gap: 32rpx;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #eee;
-  border-top-color: #3498db;
+  width: 64rpx;
+  height: 64rpx;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
-  font-size: 14px;
-  color: #999;
+  font-size: 28rpx;
+  color: #8a96a8;
 }
 
+/* 名片弹窗 */
 .modal-mask {
   position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; right: 0; top: 0; bottom: 0;
   z-index: 1000;
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(15, 23, 42, 0.55);
   display: flex;
   align-items: flex-end;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .card-modal {
   width: 100%;
-  max-height: 82vh;
-  padding: 18px;
-  border-radius: 16px 16px 0 0;
+  max-height: 84vh;
+  padding: 36rpx;
+  border-radius: 32rpx 32rpx 0 0;
   background: #f8fafc;
   box-sizing: border-box;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 24rpx;
 }
 
 .modal-title {
-  font-size: 17px;
+  font-size: 34rpx;
   font-weight: 700;
-  color: #263241;
+  color: #1a1f3a;
 }
 
 .modal-close {
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 30px !important;
+  width: 64rpx !important;
+  height: 64rpx !important;
+  line-height: 60rpx !important;
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 50% !important;
   color: #526174 !important;
   background: #edf2f7 !important;
-  font-size: 24px !important;
+  font-size: 40rpx !important;
 }
 
-.modal-close::after {
-  border: none !important;
-}
+.modal-close::after { border: none !important; }
 
 .card-loading {
-  padding: 18px 0;
+  padding: 36rpx 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 20rpx;
   color: #7a8797;
-  font-size: 13px;
+  font-size: 26rpx;
 }
 
 .mini-spinner {
-  width: 22px;
-  height: 22px;
+  width: 44rpx;
+  height: 44rpx;
   border-radius: 50%;
-  border: 3px solid #d9e8f7;
-  border-top-color: #2477c3;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
   animation: spin 0.8s linear infinite;
 }
 
+/* 名片 - 内部卡片自定义不复用全局 */
 .detective-card {
-  padding: 14px;
-  border-radius: 12px;
+  padding: 28rpx;
+  border-radius: 24rpx;
   background: #ffffff;
-  box-shadow: 0 8px 24px rgba(22, 34, 51, 0.08);
+  box-shadow: 0 16rpx 48rpx rgba(22, 34, 51, 0.08);
 }
+.detective-card::before { display: none; }
 
 .card-hero {
   position: relative;
-  min-height: 120px;
-  padding: 18px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #162233, #2477c3);
+  min-height: 220rpx;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  background: linear-gradient(135deg, #1a1f3a 0%, #3a4cd1 100%);
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 24rpx;
   overflow: hidden;
-}
-
-.card-hero::after {
-  content: "";
-  position: absolute;
-  right: -36px;
-  bottom: -48px;
-  width: 120px;
-  height: 120px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 50%;
 }
 
 .card-case-no {
   position: absolute;
-  right: 14px;
-  top: 12px;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 10px;
+  top: 20rpx;
+  right: 24rpx;
+  color: rgba(245, 176, 65, 0.85);
+  font-size: 20rpx;
+  letter-spacing: 3rpx;
   font-weight: 700;
-  letter-spacing: 0;
 }
 
 .card-avatar {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 76px;
-  height: 76px;
+  width: 130rpx;
+  height: 130rpx;
   border-radius: 50%;
-  background: #edf2f7;
-  border: 3px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  border: 4rpx solid #f5b041;
+  background: #fff;
+  flex-shrink: 0;
 }
 
 .card-identity {
-  position: relative;
-  z-index: 1;
   flex: 1;
   min-width: 0;
-  text-align: left;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .card-name {
-  display: block;
-  color: #ffffff;
-  font-size: 20px;
+  font-size: 36rpx;
   font-weight: 800;
-  line-height: 1.35;
+  color: #fff;
 }
 
 .card-signature {
-  display: block;
-  margin-top: 8px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 13px;
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.7);
   line-height: 1.5;
 }
 
 .card-stats {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  display: flex;
+  margin-top: 24rpx;
+  background: #eef0ff;
+  border-radius: 16rpx;
+  padding: 24rpx 0;
 }
 
 .card-stat {
-  padding: 12px 6px;
-  border-radius: 8px;
-  background: #f5f7fb;
+  flex: 1;
   text-align: center;
-}
-
-.card-stat-value,
-.card-stat-label {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
 }
 
 .card-stat-value {
-  color: #2477c3;
-  font-size: 18px;
+  font-size: 34rpx;
   font-weight: 800;
+  color: #3a4cd1;
 }
 
 .card-stat-label {
-  margin-top: 4px;
-  color: #8a96a8;
-  font-size: 12px;
+  font-size: 22rpx;
+  color: #4a5577;
 }
 
 .card-section {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-
-.card-section-title,
-.card-section-value {
-  display: block;
-  text-align: left;
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  background: #f4f6fb;
+  border-radius: 14rpx;
 }
 
 .card-section-title {
-  color: #2477c3;
-  font-size: 12px;
-  font-weight: 800;
+  display: block;
+  font-size: 22rpx;
+  color: #8a96a8;
+  margin-bottom: 8rpx;
+  font-weight: 600;
 }
 
 .card-section-value {
-  margin-top: 6px;
-  color: #263241;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 26rpx;
+  color: #1a1f3a;
+  line-height: 1.6;
 }

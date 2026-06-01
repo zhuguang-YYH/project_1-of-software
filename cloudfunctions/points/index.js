@@ -123,12 +123,17 @@ async function addPointLog({ user, amount, type, point_type = 'available', busin
 }
 
 async function ensureAdmin(openid) {
+  if (!openid) return { allowed: false, message: '缺少登录态' };
   const user = await getCurrentUser(openid);
   if (!user) return { allowed: false, message: '用户不存在' };
   if (user.role === 'admin') return { allowed: true, user };
 
-  const admin_res = await db.collection('users').where({ role: 'admin' }).limit(1).get();
-  if (admin_res.data.length === 0) return { allowed: true, user };
+  // 仅在环境变量 BOOTSTRAP_ADMIN_OPENID 显式匹配时才允许首位管理员引导。
+  const bootstrap = String(process.env.BOOTSTRAP_ADMIN_OPENID || '').trim();
+  if (bootstrap && bootstrap === openid) {
+    const admin_res = await db.collection('users').where({ role: 'admin' }).limit(1).get();
+    if (admin_res.data.length === 0) return { allowed: true, user };
+  }
   return { allowed: false, message: '仅管理员可调整积分' };
 }
 

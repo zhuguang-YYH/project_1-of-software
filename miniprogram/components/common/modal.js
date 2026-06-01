@@ -31,7 +31,7 @@ Component({
     },
     confirmColor: {
       type: String,
-      value: '#3498db'
+      value: '#5b6cff'
     }
   },
 

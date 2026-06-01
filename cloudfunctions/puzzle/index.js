@@ -142,18 +142,22 @@ async function ensurePointAccount(user) {
 }
 
 async function addPuzzlePoints(user, points, puzzle_id) {
-  const account = await ensurePointAccount(user);
-  const current = readPoints(user, account);
-  const data = {
-    total_points: current.total_points + points,
-    available_points: current.available_points + points,
-    frozen_points: current.frozen_points,
-    used_points: current.used_points,
-    updated_at: db.serverDate()
-  };
-
-  await db.collection('users').doc(user._id).update({ data });
-  await db.collection('point_accounts').doc(account._id).update({ data });
+  await ensurePointAccount(user);
+  // 原子加分：直接使用 _.inc，避免"先读后写"竞态
+  await db.collection('users').doc(user._id).update({
+    data: {
+      total_points: db.command.inc(points),
+      available_points: db.command.inc(points),
+      updated_at: db.serverDate()
+    }
+  });
+  await db.collection('point_accounts').where({ user_id: user._id }).update({
+    data: {
+      total_points: db.command.inc(points),
+      available_points: db.command.inc(points),
+      updated_at: db.serverDate()
+    }
+  });
   await db.collection('points_log').add({
     data: {
       user_id: user._id,
@@ -226,8 +230,23 @@ async function puzzle_submitAnswer(event) {
     if (!selected_value) return fail('请选择答案');
 
     const current_date = todayText();
-    const existing_answer = await getAnswerRecord(user, puzzle_id, current_date);
-    if (existing_answer) return fail('您今天已经答过这道谜题了');
+
+    // 幂等防重：用 user_id + puzzle_id + date 拼接成稳定 _id
+    // 微信云数据库 _id 唯一，并发重复 add 第二次必失败 → 天然防重
+    const stable_id = `pa_${user._id}_${puzzle_id}_${current_date}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+
+    // 命中已有记录 → 直接返回历史结果（幂等）
+    const existing = await getAnswerRecord(user, puzzle_id, current_date);
+    if (existing) {
+      return success({
+        answer_id: existing._id,
+        is_correct: !!existing.is_correct,
+        correct_answer: '',
+        answer_explanation: '',
+        score_gained: numberValue(existing.score_gained, 0),
+        idempotent: true
+      }, '您今天已经答过这道谜题了');
+    }
 
     const puzzle_res = await db.collection('puzzles').doc(puzzle_id).get();
     const puzzle = puzzle_res.data;
@@ -245,27 +264,46 @@ async function puzzle_submitAnswer(event) {
     const is_correct = !!correct_answer && selected_answer === correct_answer;
     const score_gained = is_correct ? numberValue(puzzle.reward_points, 10) : 0;
 
-    const add_res = await db.collection('puzzle_answers').add({
-      data: {
-        user_id: user._id,
-        puzzle_id,
-        selected_answer,
-        selected_option_id: selected_option ? selected_option.option_id : '',
-        is_correct,
-        score_gained,
-        answer_date: current_date,
-        answered_at: db.serverDate(),
-        created_at: db.serverDate()
+    // 使用稳定 _id 写入：并发第二次会因 _id 冲突失败 → 防止双倍加分
+    let answer_doc_id = stable_id;
+    try {
+      await db.collection('puzzle_answers').add({
+        data: {
+          _id: stable_id,
+          answer_id: stable_id,
+          user_id: user._id,
+          puzzle_id,
+          selected_answer,
+          selected_option_id: selected_option ? selected_option.option_id : '',
+          is_correct,
+          score_gained,
+          answer_date: current_date,
+          answered_at: db.serverDate(),
+          created_at: db.serverDate()
+        }
+      });
+    } catch (error) {
+      // _id 冲突：说明已被并发写入，幂等返回
+      const dup = await getAnswerRecord(user, puzzle_id, current_date);
+      if (dup) {
+        return success({
+          answer_id: dup._id,
+          is_correct: !!dup.is_correct,
+          correct_answer,
+          answer_explanation: puzzle.answer_explanation || '',
+          score_gained: numberValue(dup.score_gained, 0),
+          idempotent: true
+        }, '您今天已经答过这道谜题了');
       }
-    });
-    await db.collection('puzzle_answers').doc(add_res._id).update({ data: { answer_id: add_res._id } });
+      throw error;
+    }
 
     if (score_gained > 0) {
       await addPuzzlePoints(user, score_gained, puzzle_id);
     }
 
     return success({
-      answer_id: add_res._id,
+      answer_id: answer_doc_id,
       is_correct,
       correct_answer,
       answer_explanation: puzzle.answer_explanation || '',

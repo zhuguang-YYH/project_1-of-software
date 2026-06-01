@@ -8,57 +8,51 @@
 
   <view class="profile-header" wx:if="{{userInfo}}">
     <view class="header-bg"></view>
-    <view class="user-card">
-      <button class="avatar-picker" wx:if="{{editMode}}" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <image class="user-avatar" src="{{form.avatar_url || '/images/icons/avatar.png'}}" />
-      </button>
-      <image wx:else class="user-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
 
-      <view class="user-meta">
-        <view class="user-name-edit" wx:if="{{editMode}}">
-          <input
-            class="name-input"
-            value="{{form.nickname}}"
-            placeholder="请输入昵称"
-            type="nickname"
-            data-field="nickname"
-            bindinput="onInput"
-          />
-          <textarea
-            class="profile-input"
-            value="{{form.signature}}"
-            placeholder="一句侦探签名"
-            data-field="signature"
-            bindinput="onInput"
-            maxlength="80"
-            show-confirm-bar="{{false}}"
-          />
-          <input
-            class="name-input"
-            value="{{form.interests}}"
-            placeholder="兴趣标签，用顿号分隔"
-            data-field="interests"
-            bindinput="onInput"
-          />
-        </view>
-
-        <text class="user-name" wx:else>{{userInfo.nickname || '未设置昵称'}}</text>
-        <text class="user-signature" wx:if="{{!editMode && userInfo.signature}}">{{userInfo.signature}}</text>
-        <text class="user-id">编号: {{userInfo.user_id || '已登录'}}</text>
+    <view class="user-card" wx:if="{{!editMode}}">
+      <view class="avatar-area">
+        <image class="user-avatar{{profileIncomplete ? ' user-avatar--incomplete' : ''}}" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
       </view>
-
-      <button class="edit-btn" wx:if="{{!editMode}}" size="mini" bindtap="startEdit">
-        {{profileIncomplete ? '完善' : '编辑'}}
-      </button>
-      <view class="edit-actions" wx:else>
-        <button class="action-btn save" size="mini" loading="{{savingProfile}}" disabled="{{savingProfile}}" bindtap="saveEdit">保存</button>
-        <button class="action-btn cancel" size="mini" bindtap="cancelEdit">取消</button>
+      <view class="user-info">
+        <text class="user-name{{profileIncomplete ? ' user-name--dim' : ''}}">{{userInfo.nickname || '待完善昵称'}}</text>
+        <text class="user-signature" wx:if="{{userInfo.signature}}">{{userInfo.signature}}</text>
+        <text class="user-id">编号 #{{userIdShort}}</text>
+        <view class="interest-tags" wx:if="{{interestList.length}}">
+          <text class="interest-tag" wx:for="{{interestList}}" wx:key="*this">{{item}}</text>
+        </view>
+        <view class="incomplete-nudge" wx:if="{{profileIncomplete}}">
+          <text class="nudge-text">完善档案后名片与排名更完整</text>
+        </view>
+      </view>
+      <view class="card-edit-btn" bindtap="startEdit" hover-class="card-edit-btn--tap">
+        {{profileIncomplete ? '去完善' : '编辑'}}
       </view>
     </view>
 
-    <view class="profile-tip" wx:if="{{profileIncomplete && !editMode}}">
-      <text>完善头像和昵称后，个人名片与排行榜会展示得更完整。</text>
-      <button size="mini" bindtap="startEdit">去完善</button>
+    <view class="edit-form" wx:if="{{editMode}}">
+      <view class="edit-avatar-section">
+        <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image class="user-avatar" src="{{form.avatar_url || '/images/icons/avatar.png'}}" />
+          <view class="avatar-edit-badge">换</view>
+        </button>
+        <text class="edit-avatar-hint">点击头像可更换</text>
+      </view>
+      <view class="form-field">
+        <text class="form-label">昵称</text>
+        <input class="form-input" value="{{form.nickname}}" placeholder="请输入昵称" type="nickname" data-field="nickname" bindinput="onInput" />
+      </view>
+      <view class="form-field">
+        <text class="form-label">个性签名</text>
+        <textarea class="form-textarea" auto-height value="{{form.signature}}" placeholder="一句侦探签名（选填）" data-field="signature" bindinput="onInput" maxlength="80" show-confirm-bar="{{false}}" />
+      </view>
+      <view class="form-field">
+        <text class="form-label">兴趣标签</text>
+        <input class="form-input" value="{{form.interests}}" placeholder="多个标签用顿号 、 分隔" data-field="interests" bindinput="onInput" />
+      </view>
+      <view class="form-actions">
+        <button class="form-save-btn" loading="{{savingProfile}}" disabled="{{savingProfile}}" bindtap="saveEdit">保存档案</button>
+        <button class="form-cancel-btn" bindtap="cancelEdit">取消</button>
+      </view>
     </view>
 
     <view class="stats-row">
@@ -75,43 +69,43 @@
   </view>
 
   <view class="quick-menu" wx:if="{{userInfo}}">
-    <view class="menu-item" bindtap="goToActivity">
-      <text class="menu-icon">A</text>
-      <text class="menu-text">活动</text>
+    <view class="menu-item tap-feedback" bindtap="goToActivity">
+      <view class="icon-circle is-gold">动</view>
+      <text class="menu-text">活动报名</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goBorrow">
-      <text class="menu-icon">B</text>
-      <text class="menu-text">借阅</text>
+    <view class="menu-item tap-feedback" bindtap="goBorrow">
+      <view class="icon-circle is-cyan">借</view>
+      <text class="menu-text">物资借阅</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goExchange">
-      <text class="menu-icon">E</text>
-      <text class="menu-text">兑换</text>
+    <view class="menu-item tap-feedback" bindtap="goExchange">
+      <view class="icon-circle is-success">兑</view>
+      <text class="menu-text">积分兑换</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goPoints">
-      <text class="menu-icon">P</text>
+    <view class="menu-item tap-feedback" bindtap="goPoints">
+      <view class="icon-circle is-purple">分</view>
       <text class="menu-text">积分明细</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goCommission">
-      <text class="menu-icon">C</text>
-      <text class="menu-text">委托</text>
+    <view class="menu-item tap-feedback" bindtap="goCommission">
+      <view class="icon-circle is-orange">委</view>
+      <text class="menu-text">事件委托</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goFeedback">
-      <text class="menu-icon">F</text>
+    <view class="menu-item tap-feedback" bindtap="goFeedback">
+      <view class="icon-circle is-pink">馈</view>
       <text class="menu-text">反馈建议</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" bindtap="goSettings">
-      <text class="menu-icon">S</text>
+    <view class="menu-item tap-feedback" bindtap="goSettings">
+      <view class="icon-circle">设</view>
       <text class="menu-text">系统设置</text>
       <text class="menu-arrow">›</text>
     </view>
-    <view class="menu-item" wx:if="{{userInfo.role === 'admin'}}" bindtap="goAdmin">
-      <text class="menu-icon">M</text>
+    <view class="menu-item tap-feedback" wx:if="{{userInfo.role === 'admin'}}" bindtap="goAdmin">
+      <view class="icon-circle is-gold">管</view>
       <text class="menu-text">管理后台</text>
       <text class="menu-arrow">›</text>
     </view>

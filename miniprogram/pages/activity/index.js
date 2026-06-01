@@ -53,6 +53,7 @@ Page({
   },
 
   onShow() {
+    this.loadMyActivities();
     if (this.data.activities.length === 0) this.loadActivities();
   },
 

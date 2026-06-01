@@ -1,298 +1,372 @@
 /* pages/puzzle/index.wxss */
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 16px;
-  padding-bottom: 40px;
+  padding: 24rpx 24rpx 80rpx;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
 }
 
 /* 错误状态 */
-.error-state {
+.error-state,
+.no-puzzle-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
-  gap: 20px;
+  min-height: 720rpx;
+  gap: 28rpx;
+  padding: 0 40rpx;
 }
 
 .error-text {
-  font-size: 16px;
-  color: #c33;
+  font-size: 28rpx;
+  color: #a73a3a;
   text-align: center;
 }
 
 .retry-btn {
-  background-color: #3498db !important;
-  color: white !important;
-  width: 160px;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
+  color: #fff !important;
+  width: 280rpx;
+  border-radius: 16rpx !important;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.25);
+}
+
+.no-puzzle-icon {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f5b041, #e89d24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 12rpx 32rpx rgba(245, 176, 65, 0.35);
+}
+
+.no-puzzle-title {
+  font-size: 38rpx;
+  font-weight: 800;
+  color: #1a1f3a;
+}
+
+.no-puzzle-desc {
+  font-size: 26rpx;
+  color: #4a5577;
+  text-align: center;
+  line-height: 1.6;
 }
 
 /* 谜题卡片 */
 .puzzle-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 0;
+  box-shadow: 0 16rpx 40rpx rgba(91, 108, 255, 0.12);
+  margin-bottom: 24rpx;
+  overflow: hidden;
 }
 
+/* 谜题头部 - 渐变 */
 .puzzle-header {
+  position: relative;
+  padding: 36rpx 32rpx 28rpx;
+  background: linear-gradient(135deg, #1a1f3a 0%, #3a4cd1 100%);
+  color: #fff;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
+  gap: 20rpx;
+  overflow: hidden;
+}
+
+.puzzle-header::after {
+  content: '?';
+  position: absolute;
+  right: -30rpx;
+  bottom: -70rpx;
+  font-size: 280rpx;
+  font-weight: 900;
+  color: rgba(245, 176, 65, 0.12);
+  pointer-events: none;
+}
+
+.puzzle-title-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.puzzle-eyebrow {
+  font-size: 22rpx;
+  letter-spacing: 4rpx;
+  color: rgba(245, 176, 65, 0.9);
+  font-weight: 700;
 }
 
 .puzzle-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #fff;
 }
 
 .puzzle-difficulty {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
+  position: relative;
+  z-index: 1;
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  flex-shrink: 0;
 }
 
-.difficulty-simple {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.difficulty-normal {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.difficulty-hard {
-  background-color: #f8d7da;
-  color: #721c24;
-}
+.difficulty-easy { background: rgba(52, 211, 153, 0.25); color: #5af0a8; }
+.difficulty-normal,
+.difficulty-medium { background: rgba(245, 176, 65, 0.25); color: #ffd58c; }
+.difficulty-hard { background: rgba(231, 76, 60, 0.25); color: #ff9b8d; }
+.difficulty-extreme { background: rgba(168, 85, 247, 0.3); color: #d9bff5; }
 
 /* 谜题内容 */
 .puzzle-content {
-  margin-bottom: 24px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
+  padding: 32rpx 32rpx 16rpx;
 }
 
 .puzzle-desc {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #333;
+  font-size: 30rpx;
+  line-height: 1.75;
+  color: #1a1f3a;
   display: block;
-  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* 选项容器 */
 .options-container {
+  padding: 0 32rpx 24rpx;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 18rpx;
 }
 
 .option {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  transition: all 0.2s;
+  align-items: center;
+  gap: 22rpx;
+  padding: 24rpx 22rpx;
+  border: 2rpx solid #e2e6f3;
+  border-radius: 16rpx;
+  background: #fff;
+  transition: all 0.2s ease;
 }
 
 .option:active {
-  background-color: #f0f0f0;
+  transform: scale(0.98);
 }
 
 .option.selected {
-  border-color: #3498db;
-  background-color: #ecf0f1;
+  border-color: #5b6cff;
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.15);
 }
 
 .option-label {
-  min-width: 32px;
-  height: 32px;
+  min-width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
-  background-color: #3498db;
-  color: white;
+  background: #f4f6fb;
+  color: #4a5577;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 28rpx;
   flex-shrink: 0;
+  transition: all 0.2s;
 }
 
 .option.selected .option-label {
-  background-color: #2980b9;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.3);
 }
 
 .option-text {
   flex: 1;
-  font-size: 15px;
-  color: #333;
-  line-height: 1.4;
+  font-size: 28rpx;
+  color: #1a1f3a;
+  line-height: 1.5;
 }
 
-/* 答题显示 */
+/* 答题结果 */
 .answer-display {
-  margin-bottom: 20px;
+  padding: 0 32rpx 24rpx;
 }
 
 .answer-status {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-weight: 600;
+  gap: 22rpx;
+  padding: 30rpx 28rpx;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  animation: result-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes result-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .answer-status.correct {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
+  background: linear-gradient(135deg, #dcfce7, #a7f3d0);
+  border: 1rpx solid #34d399;
 }
 
 .answer-status.wrong {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 1rpx solid #f87171;
 }
 
 .status-icon {
-  font-size: 24px;
+  font-size: 52rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  flex-shrink: 0;
 }
+
+.answer-status.correct .status-icon { background: linear-gradient(135deg, #34d399, #16a085); }
+.answer-status.wrong .status-icon { background: linear-gradient(135deg, #f87171, #e74c3c); }
 
 .status-text {
-  font-size: 16px;
+  font-size: 32rpx;
+  font-weight: 700;
 }
 
-.answer-status.correct .status-icon,
-.answer-status.correct .status-text {
-  color: #155724;
-}
+.answer-status.correct .status-text { color: #14532d; }
+.answer-status.wrong .status-text { color: #7f1d1d; }
 
-.answer-status.wrong .status-icon,
-.answer-status.wrong .status-text {
-  color: #721c24;
-}
-
-/* 答案信息 */
 .answer-info,
 .analysis {
-  background-color: #f9f9f9;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  background: #f8fbff;
+  padding: 24rpx 26rpx;
+  border-radius: 14rpx;
+  margin-bottom: 20rpx;
+  border-left: 6rpx solid #5b6cff;
 }
+
+.analysis { border-left-color: #f5b041; background: #fffaf0; }
 
 .info-title,
 .analysis-title {
   display: block;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-  font-size: 14px;
+  font-weight: 700;
+  color: #1a1f3a;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  letter-spacing: 1rpx;
 }
 
 .info-content,
 .analysis-content {
   display: block;
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-  word-wrap: break-word;
+  font-size: 27rpx;
+  color: #4a5577;
+  line-height: 1.75;
+  word-break: break-word;
 }
 
-/* 操作按钮 */
+/* 按钮 */
 .action-buttons {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 18rpx;
+  padding: 8rpx 32rpx 28rpx;
 }
 
 .btn {
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 700;
 }
+
+.btn::after { border: none; }
 
 .btn-submit {
-  background-color: #3498db !important;
-  color: white !important;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
+  color: #fff !important;
+  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.32);
 }
 
-.btn-submit:disabled {
-  background-color: #bdc3c7 !important;
-  color: white !important;
+.btn-submit[disabled] {
+  background: #c5cee0 !important;
+  color: #fff !important;
+  box-shadow: none;
 }
 
 .btn-back {
-  background-color: #ecf0f1 !important;
-  color: #333 !important;
+  background: #fff !important;
+  color: #5b6cff !important;
+  border: 2rpx solid #5b6cff !important;
 }
 
-/* 积分信息 */
+/* 奖励信息 */
 .reward-info {
-  text-align: center;
-  padding: 12px;
-  background-color: #fff9e6;
-  border-radius: 8px;
-  border: 1px solid #ffe58f;
+  margin: 0 32rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+  padding: 22rpx;
+  background: linear-gradient(135deg, #fef3df, #ffd76b);
+  border-radius: 16rpx;
+  box-shadow: inset 0 0 0 2rpx rgba(245, 176, 65, 0.3);
 }
 
-.reward-label {
-  display: block;
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 4px;
-}
+.reward-label { font-size: 26rpx; color: #92580d; font-weight: 600; }
 
 .reward-points {
-  display: block;
-  font-size: 20px;
-  font-weight: 600;
-  color: #f39c12;
+  font-size: 32rpx;
+  color: #92580d;
+  font-weight: 800;
+  letter-spacing: 1rpx;
 }
 
-/* 加载状态 */
+/* 加载 */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
-  gap: 16px;
+  min-height: 80vh;
+  gap: 28rpx;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #eee;
-  border-top-color: #3498db;
+  width: 64rpx;
+  height: 64rpx;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-.loading-text {
-  font-size: 14px;
-  color: #999;
-}
+.loading-text { font-size: 28rpx; color: #8a96a8; }

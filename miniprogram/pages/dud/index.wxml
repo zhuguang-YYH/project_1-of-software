@@ -39,7 +39,12 @@
       <view class="typing" wx:if="{{sending}}">
         <view class="avatar dud-avatar"><text>D</text></view>
         <view class="typing-bubble">
-          <text>Dud 正在查线索...</text>
+          <text>Dud 正在查线索</text>
+          <view class="typing-dots">
+            <view class="dot"></view>
+            <view class="dot"></view>
+            <view class="dot"></view>
+          </view>
         </view>
       </view>
     </scroll-view>

@@ -88,16 +88,16 @@
     }
   ],
   "window": {
-    "backgroundColor": "#f5f5f5",
+    "backgroundColor": "#f4f6fb",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#3498db",
+    "navigationBarBackgroundColor": "#1a1f3a",
     "navigationBarTitleText": "NK推协侦探管理系统",
     "navigationBarTextStyle": "white",
     "navigationStyle": "default"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#3498db",
+    "color": "#9aa3b8",
+    "selectedColor": "#5b6cff",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [

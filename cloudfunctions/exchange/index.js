@@ -147,6 +147,53 @@ async function updateStock(item_id, quantity_delta) {
   }
 }
 
+// 原子扣减积分：仅当 available_points 足额时才扣减并冻结。
+// 防止"先查后改"在并发场景下导致积分超扣。
+async function atomicFreezePoints(user_id, total_cost) {
+  const res = await db.collection('users').where({
+    _id: user_id,
+    available_points: _.gte(total_cost)
+  }).update({
+    data: {
+      available_points: _.inc(-total_cost),
+      frozen_points: _.inc(total_cost),
+      updated_at: db.serverDate()
+    }
+  });
+  if (!res.stats || res.stats.updated === 0) {
+    throw new Error('可用积分不足或账户已变化');
+  }
+  // 同步 point_accounts（容错：缺失则忽略，下次 ensurePointAccount 时会重建）
+  try {
+    await db.collection('point_accounts').where({ user_id }).update({
+      data: {
+        available_points: _.inc(-total_cost),
+        frozen_points: _.inc(total_cost),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (e) { if (!isCollectionMissing(e)) throw e; }
+}
+
+async function rollbackFreezePoints(user_id, total_cost) {
+  try {
+    await db.collection('users').doc(user_id).update({
+      data: {
+        available_points: _.inc(total_cost),
+        frozen_points: _.inc(-total_cost),
+        updated_at: db.serverDate()
+      }
+    });
+    await db.collection('point_accounts').where({ user_id }).update({
+      data: {
+        available_points: _.inc(total_cost),
+        frozen_points: _.inc(-total_cost),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (e) { if (!isCollectionMissing(e)) throw e; }
+}
+
 async function exchange_getGoods(event) {
   try {
     const page = Math.max(1, Number(event.page) || 1);
@@ -189,28 +236,55 @@ async function exchange_getProductDetail(event) {
 }
 
 async function exchange_exchange(event) {
-  let good = null;
-  let point_snapshot = null;
+  let stock_decreased = false;
+  let points_frozen = false;
+  let item_id = '';
+  let quantity = 1;
+  let total_cost = 0;
+  let user_id = '';
 
   try {
     const user = await getCurrentUser();
     if (!user) return fail('请先登录', 'USER_NOT_FOUND');
+    user_id = user._id;
 
-    const item_id = event.item_id || event.goods_id;
-    const quantity = Math.max(1, Number(event.quantity) || 1);
-    good = await getGoodById(item_id);
+    item_id = event.item_id || event.goods_id;
+    quantity = Math.max(1, Number(event.quantity) || 1);
+    const client_request_id = String(event.client_request_id || '').trim();
 
+    // 幂等：相同 client_request_id 已存在记录则直接返回
+    if (client_request_id) {
+      try {
+        const existed = await db.collection('exchange_records')
+          .where({ user_id, client_request_id })
+          .limit(1)
+          .get();
+        if (existed.data.length > 0) {
+          const old = existed.data[0];
+          return ok({ exchange_id: old._id, points_cost: toNumber(old.points_cost), idempotent: true }, '兑换成功');
+        }
+      } catch (e) { if (!isCollectionMissing(e)) throw e; }
+    }
+
+    const good = await getGoodById(item_id);
     if (!good) return fail('兑换商品不存在');
     if (good.available_quantity < quantity) return fail('库存不足');
+    if (good.exchange_points <= 0) return fail('该商品暂不可兑换');
 
-    const points = readPoints(user, await ensurePointAccount(user));
-    const total_cost = good.exchange_points * quantity;
-    point_snapshot = points;
+    total_cost = good.exchange_points * quantity;
+    await ensurePointAccount(user);
 
-    if (points.available_points < total_cost) return fail('可用积分不足');
+    // 1) 原子扣库存
+    await updateStock(item_id, -quantity);
+    stock_decreased = true;
 
+    // 2) 原子冻结积分
+    await atomicFreezePoints(user_id, total_cost);
+    points_frozen = true;
+
+    // 3) 写兑换记录
     const data = {
-      user_id: user._id,
+      user_id,
       item_id,
       item_source: 'inventory_items',
       goods_name: good.item_name,
@@ -219,35 +293,25 @@ async function exchange_exchange(event) {
       points_cost: total_cost,
       total_cost,
       status: 'pending',
+      client_request_id,
       exchange_time: db.serverDate(),
       created_at: db.serverDate(),
       handled_by: '',
       handled_at: '',
       updated_at: db.serverDate()
     };
+    const res = await db.collection('exchange_records').add({ data });
+    await db.collection('exchange_records').doc(res._id).update({ data: { exchange_id: res._id } });
 
-    await updateStock(item_id, -quantity);
-    try {
-      await syncPoints(user, {
-        ...points,
-        available_points: points.available_points - total_cost,
-        frozen_points: points.frozen_points + total_cost
-      });
-    } catch (error) {
-      await updateStock(item_id, quantity);
-      throw error;
-    }
-
-    try {
-      const res = await db.collection('exchange_records').add({ data });
-      await db.collection('exchange_records').doc(res._id).update({ data: { exchange_id: res._id } });
-      return ok({ exchange_id: res._id, points_cost: total_cost }, '兑换成功');
-    } catch (error) {
-      await updateStock(item_id, quantity);
-      await syncPoints(user, point_snapshot);
-      throw error;
-    }
+    return ok({ exchange_id: res._id, points_cost: total_cost }, '兑换成功');
   } catch (error) {
+    // 回滚：按已完成的步骤逆序回退
+    if (points_frozen && user_id && total_cost > 0) {
+      try { await rollbackFreezePoints(user_id, total_cost); } catch (e) { console.error('回滚积分失败:', e); }
+    }
+    if (stock_decreased && item_id && quantity > 0) {
+      try { await updateStock(item_id, quantity); } catch (e) { console.error('回滚库存失败:', e); }
+    }
     return fail('兑换失败: ' + error.message);
   }
 }

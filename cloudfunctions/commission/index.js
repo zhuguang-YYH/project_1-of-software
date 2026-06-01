@@ -258,17 +258,32 @@ async function commission_publishCommission(event) {
     if (!content) return fail('委托内容不能为空');
     if (!Number.isInteger(reward) || reward <= 0) return fail('奖励积分必须为正整数');
 
-    const points = readPoints(user, await ensurePointAccount(user));
-    if (!officialReward && points.available_points < reward) {
-      return fail('可兑换积分不足，无法发布委托');
-    }
+    await ensurePointAccount(user);
 
+    // 原子冻结发布者积分（非官方委托）
     if (!officialReward) {
-      await syncPoints(user, {
-        ...points,
-        available_points: points.available_points - reward,
-        frozen_points: points.frozen_points + reward
+      const freezeRes = await db.collection('users').where({
+        _id: user._id,
+        available_points: _.gte(reward)
+      }).update({
+        data: {
+          available_points: _.inc(-reward),
+          frozen_points: _.inc(reward),
+          updated_at: db.serverDate()
+        }
       });
+      if (!freezeRes.stats || freezeRes.stats.updated === 0) {
+        return fail('可兑换积分不足，无法发布委托');
+      }
+      try {
+        await db.collection('point_accounts').where({ user_id: user._id }).update({
+          data: {
+            available_points: _.inc(-reward),
+            frozen_points: _.inc(reward),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (e) { if (!isCollectionMissing(e)) throw e; }
     }
 
     const data = {
@@ -290,7 +305,31 @@ async function commission_publishCommission(event) {
       updated_at: db.serverDate()
     };
 
-    const res = await db.collection('commissions').add({ data });
+    let res;
+    try {
+      res = await db.collection('commissions').add({ data });
+    } catch (error) {
+      // 回滚冻结
+      if (!officialReward) {
+        try {
+          await db.collection('users').doc(user._id).update({
+            data: {
+              available_points: _.inc(reward),
+              frozen_points: _.inc(-reward),
+              updated_at: db.serverDate()
+            }
+          });
+          await db.collection('point_accounts').where({ user_id: user._id }).update({
+            data: {
+              available_points: _.inc(reward),
+              frozen_points: _.inc(-reward),
+              updated_at: db.serverDate()
+            }
+          });
+        } catch (e) { console.error('回滚发布积分失败:', e); }
+      }
+      throw error;
+    }
     await db.collection('commissions').doc(res._id).update({ data: { commission_id: res._id } });
 
     if (!officialReward) {
@@ -325,17 +364,12 @@ async function commission_acceptCommission(event) {
     if (!['recruiting', 'in_progress'].includes(commission.status)) return fail('该委托当前不可领取');
     if (isExpired(commission.deadline)) return fail('该委托已超过截止时间');
 
-    const existRes = await db.collection('commission_acceptances')
-      .where({
-        commission_id: commission.commission_id || commissionId,
-        receiver_id: user._id,
-        status: _.neq('withdrawn')
-      })
-      .limit(1)
-      .get();
-    if (existRes.data.length > 0) return fail('你已领取过该委托');
+    // 用稳定 _id 防重复领取：同一 commission + 同一 receiver 第二次 add 必失败
+    const stable_id = `ca_${commissionId}_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
 
     const data = {
+      _id: stable_id,
+      acceptance_id: stable_id,
       commission_id: commission.commission_id || commissionId,
       receiver_id: user._id,
       receiver_name: user.nickname || '匿名侦探',
@@ -350,8 +384,21 @@ async function commission_acceptCommission(event) {
       updated_at: db.serverDate()
     };
 
-    const res = await db.collection('commission_acceptances').add({ data });
-    await db.collection('commission_acceptances').doc(res._id).update({ data: { acceptance_id: res._id } });
+    try {
+      await db.collection('commission_acceptances').add({ data });
+    } catch (error) {
+      // _id 冲突 → 检查是否是已领取，决定幂等返回还是真正出错
+      const dup = await db.collection('commission_acceptances')
+        .where({ _id: stable_id })
+        .limit(1).get();
+      if (dup.data.length > 0) {
+        const old = dup.data[0];
+        if (old.status === 'withdrawn') return fail('你已退回该委托，请联系发布者重新发起');
+        return ok({ acceptance_id: old._id, idempotent: true }, '已领取过该委托');
+      }
+      throw error;
+    }
+
     await db.collection('commissions').doc(commission.commission_id || commissionId).update({
       data: {
         status: 'in_progress',
@@ -360,7 +407,7 @@ async function commission_acceptCommission(event) {
       }
     });
 
-    return ok({ acceptance_id: res._id }, '领取成功');
+    return ok({ acceptance_id: stable_id }, '领取成功');
   } catch (error) {
     return fail('领取失败: ' + error.message);
   }
@@ -378,15 +425,21 @@ async function commission_completeCommission(event) {
     const acceptance = accRes.data || {};
     if (!acceptance._id && !acceptance.acceptance_id) return fail('领取记录不存在');
     if (acceptance.receiver_id !== user._id) return fail('只能完成自己领取的委托');
-    if (acceptance.status !== 'accepted') return fail('该委托状态不可标记完成');
 
-    await db.collection('commission_acceptances').doc(acceptanceId).update({
+    // 条件原子更新：必须当前 status='accepted' 才能流转到 'completed'
+    const updateRes = await db.collection('commission_acceptances').where({
+      _id: acceptanceId,
+      status: 'accepted'
+    }).update({
       data: {
         status: 'completed',
         completed_at: db.serverDate(),
         updated_at: db.serverDate()
       }
     });
+    if (!updateRes.stats || updateRes.stats.updated === 0) {
+      return fail('该委托状态不可标记完成（可能已被处理）');
+    }
     await db.collection('commissions').doc(acceptance.commission_id).update({
       data: {
         completed_count: _.inc(1),
@@ -425,29 +478,19 @@ async function commission_allocateRewards(event) {
     if ((!acceptance._id && !acceptance.acceptance_id) || acceptance.commission_id !== (commission.commission_id || commissionId)) {
       return fail('领取记录不存在');
     }
-    if (acceptance.status !== 'completed') return fail('只能给已完成的领取记录分配奖励');
 
     const receiver = await getUserById(acceptance.receiver_id);
     if (!receiver) return fail('领取者信息不存在');
 
-    const receiverPoints = readPoints(receiver, await ensurePointAccount(receiver));
-    await syncPoints(receiver, {
-      ...receiverPoints,
-      total_points: receiverPoints.total_points + points,
-      available_points: receiverPoints.available_points + points
-    });
-
     const officialReward = commission.reward_source === 'official';
-    if (!officialReward) {
-      const publisherPoints = readPoints(publisher, await ensurePointAccount(publisher));
-      await syncPoints(publisher, {
-        ...publisherPoints,
-        frozen_points: Math.max(0, publisherPoints.frozen_points - points),
-        used_points: publisherPoints.used_points + points
-      });
-    }
+    const realCommissionId = commission.commission_id || commissionId;
 
-    await db.collection('commission_acceptances').doc(acceptanceId).update({
+    // ===== 关键原子操作：状态流转 =====
+    // 1) acceptance：必须当前 status='completed' 才能转为 'rewarded'，防止双重发放
+    const accUpdate = await db.collection('commission_acceptances').where({
+      _id: acceptanceId,
+      status: 'completed'
+    }).update({
       data: {
         status: 'rewarded',
         reward_points: points,
@@ -455,21 +498,81 @@ async function commission_allocateRewards(event) {
         updated_at: db.serverDate()
       }
     });
+    if (!accUpdate.stats || accUpdate.stats.updated === 0) {
+      return fail('该领取记录当前状态不可分配奖励（可能已被发放）');
+    }
 
-    const nextRemainingReward = remainingReward - points;
-    await db.collection('commissions').doc(commission.commission_id || commissionId).update({
+    // 2) commission：必须 remaining_reward >= points 才扣减
+    const commUpdate = await db.collection('commissions').where({
+      _id: realCommissionId,
+      remaining_reward: _.gte(points)
+    }).update({
       data: {
-        remaining_reward: nextRemainingReward,
-        frozen_reward: officialReward ? 0 : Math.max(0, toNumber(commission.frozen_reward) - points),
-        status: nextRemainingReward <= 0 ? 'resolved' : commission.status,
-        resolved_at: nextRemainingReward <= 0 ? db.serverDate() : commission.resolved_at,
+        remaining_reward: _.inc(-points),
+        frozen_reward: officialReward ? 0 : _.inc(-points),
         updated_at: db.serverDate()
       }
     });
+    if (!commUpdate.stats || commUpdate.stats.updated === 0) {
+      // 极端竞态：回滚 acceptance 状态
+      await db.collection('commission_acceptances').doc(acceptanceId).update({
+        data: { status: 'completed', reward_points: 0, rewarded_at: '', updated_at: db.serverDate() }
+      });
+      return fail('委托剩余奖励不足，分配失败');
+    }
 
+    // 3) 领取者加分（原子 inc）
+    await ensurePointAccount(receiver);
+    await db.collection('users').doc(receiver._id).update({
+      data: {
+        total_points: _.inc(points),
+        available_points: _.inc(points),
+        updated_at: db.serverDate()
+      }
+    });
+    try {
+      await db.collection('point_accounts').where({ user_id: receiver._id }).update({
+        data: {
+          total_points: _.inc(points),
+          available_points: _.inc(points),
+          updated_at: db.serverDate()
+        }
+      });
+    } catch (e) { if (!isCollectionMissing(e)) throw e; }
+
+    // 4) 发布者：非官方委托才解冻+计入已用
+    if (!officialReward) {
+      await ensurePointAccount(publisher);
+      await db.collection('users').doc(publisher._id).update({
+        data: {
+          frozen_points: _.inc(-points),
+          used_points: _.inc(points),
+          updated_at: db.serverDate()
+        }
+      });
+      try {
+        await db.collection('point_accounts').where({ user_id: publisher._id }).update({
+          data: {
+            frozen_points: _.inc(-points),
+            used_points: _.inc(points),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (e) { if (!isCollectionMissing(e)) throw e; }
+    }
+
+    // 5) 委托整体已分配完 → 标记 resolved
+    const nextRemainingReward = remainingReward - points;
+    if (nextRemainingReward <= 0) {
+      await db.collection('commissions').doc(realCommissionId).update({
+        data: { status: 'resolved', resolved_at: db.serverDate(), updated_at: db.serverDate() }
+      });
+    }
+
+    // 6) 写分配记录 + 积分流水
     const allocationRes = await db.collection('commission_allocations').add({
       data: {
-        commission_id: commission.commission_id || commissionId,
+        commission_id: realCommissionId,
         acceptance_id: acceptanceId,
         receiver_id: acceptance.receiver_id,
         allocated_points: points,
@@ -485,7 +588,7 @@ async function commission_allocateRewards(event) {
       type: 'income',
       point_type: 'available',
       business_type: officialReward ? 'official_commission_reward' : 'commission_reward',
-      related_id: commission.commission_id || commissionId,
+      related_id: realCommissionId,
       reason: `委托奖励 - ${commission.title || ''}`
     });
 

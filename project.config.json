@@ -51,7 +51,6 @@
   "libVersion": "3.16.0",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "cloudbaseRoot": "cloudfunctions/",
-  "cloudfunctionRoot": "cloudfunctions/",
   "cloudEnv": "cloud1",
   "cloudEnvId": "cloud1-d6g9sz3rn0b612135",
   "condition": {

@@ -4,11 +4,21 @@
     <button class="retry-btn" bindtap="onRetry">重新加载</button>
   </view>
 
+  <view class="no-puzzle-state" wx:elif="{{!puzzle}}">
+    <view class="no-puzzle-icon">?</view>
+    <text class="no-puzzle-title">今日暂无谜题</text>
+    <text class="no-puzzle-desc">管理员还未发布今日谜题，稍后再来看看。</text>
+    <button class="retry-btn" bindtap="onRetry">刷新</button>
+  </view>
+
   <view class="puzzle-card" wx:elif="{{puzzle}}">
     <view class="puzzle-header">
-      <text class="puzzle-title">每日谜题</text>
-      <text class="puzzle-difficulty difficulty-{{puzzle.difficulty || 'normal'}}">
-        {{puzzle.difficulty || '中等'}}难度
+      <view class="puzzle-title-block">
+        <text class="puzzle-eyebrow">DAILY PUZZLE</text>
+        <text class="puzzle-title">每日谜题</text>
+      </view>
+      <text class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
+        {{puzzle._difficulty_text || '中等'}}
       </text>
     </view>
 

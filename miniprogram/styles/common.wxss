@@ -1,22 +1,27 @@
 /**
- * 全局样式变量和通用样式定义
+ * 全局样式变量和通用样式定义 - 侦探主题
  */
 
-:root {
-  /* 主题色 */
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
+page {
+  /* 主题色 - 侦探深蓝紫 + 金色点缀 */
+  --primary-color: #5b6cff;
+  --primary-deep: #3a4cd1;
+  --primary-light: #eef0ff;
+  --accent-gold: #f5b041;
+  --accent-gold-soft: #fef3df;
+  --secondary-color: #16a085;
   --danger-color: #e74c3c;
   --warning-color: #f39c12;
-  --info-color: #3498db;
-  
-  /* 中性色 */
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-disabled: #999;
-  --border-color: #ddd;
-  --bg-light: #f5f5f5;
+  --info-color: #5b6cff;
+
+  /* 中性色 - 侦探调性 */
+  --text-primary: #1a1f3a;
+  --text-secondary: #4a5577;
+  --text-disabled: #9aa3b8;
+  --border-color: #e2e6f3;
+  --bg-light: #f4f6fb;
   --bg-white: #ffffff;
+  --bg-page: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 100%);
   
   /* 间距 */
   --spacing-xs: 4px;
@@ -420,4 +425,148 @@ page {
   .m-lg {
     margin: var(--spacing-md);
   }
+}
+
+/* ===== 侦探主题扩展工具类 ===== */
+
+/* 渐变背景 */
+.page-bg-gradient {
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 100%);
+  min-height: 100vh;
+}
+
+/* 强调卡片 - 带左侧侦探色条 */
+.detective-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.08);
+  overflow: hidden;
+}
+.detective-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6rpx;
+  background: linear-gradient(180deg, #5b6cff, #f5b041);
+}
+
+/* 状态标签 - 不同色彩 */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.status-tag.is-success { color: #166534; background: #dcfce7; }
+.status-tag.is-info    { color: #1e3a8a; background: #e0e7ff; }
+.status-tag.is-warning { color: #92400e; background: #fef3c7; }
+.status-tag.is-danger  { color: #991b1b; background: #fee2e2; }
+.status-tag.is-muted   { color: #475569; background: #e2e8f0; }
+.status-tag.is-gold    { color: #92580d; background: #fef3df; }
+.status-tag.is-primary { color: #3a4cd1; background: #eef0ff; }
+
+/* 圆形图标容器 - 用于菜单/列表 */
+.icon-circle {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.25);
+}
+.icon-circle.is-gold { background: linear-gradient(135deg, #f5b041, #e89d24); box-shadow: 0 4rpx 12rpx rgba(245, 176, 65, 0.25); }
+.icon-circle.is-success { background: linear-gradient(135deg, #34d399, #16a085); box-shadow: 0 4rpx 12rpx rgba(22, 160, 133, 0.25); }
+.icon-circle.is-pink { background: linear-gradient(135deg, #fb7185, #e11d48); box-shadow: 0 4rpx 12rpx rgba(225, 29, 72, 0.25); }
+.icon-circle.is-purple { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.25); }
+.icon-circle.is-cyan { background: linear-gradient(135deg, #22d3ee, #0891b2); box-shadow: 0 4rpx 12rpx rgba(8, 145, 178, 0.25); }
+.icon-circle.is-orange { background: linear-gradient(135deg, #fb923c, #ea580c); box-shadow: 0 4rpx 12rpx rgba(234, 88, 12, 0.25); }
+.icon-circle.is-sm { width: 56rpx; height: 56rpx; font-size: 24rpx; }
+.icon-circle.is-lg { width: 96rpx; height: 96rpx; font-size: 42rpx; }
+
+/* 按下态反馈 */
+.tap-feedback {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.tap-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* 骨架屏 */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200rpx 0; }
+  100% { background-position: 200rpx 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #eef0ff 0%, #f4f6fb 50%, #eef0ff 100%);
+  background-size: 400rpx 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8rpx;
+}
+
+/* 分割线 */
+.divider {
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, #e2e6f3 20%, #e2e6f3 80%, transparent);
+  margin: 20rpx 0;
+}
+
+/* 主题按钮 - 侦探风 */
+.btn-detective {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 80rpx;
+  padding: 0 32rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.3);
+  transition: all 0.2s ease;
+}
+.btn-detective:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(91, 108, 255, 0.3);
+}
+.btn-detective.is-gold {
+  background: linear-gradient(135deg, #f5b041, #e89d24);
+  box-shadow: 0 6rpx 16rpx rgba(245, 176, 65, 0.3);
+}
+.btn-detective.is-ghost {
+  color: #5b6cff;
+  background: #fff;
+  border: 2rpx solid #5b6cff;
+  box-shadow: none;
+}
+
+/* 标题段落（带左侧装饰条） */
+.section-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+  padding: 24rpx 0 16rpx;
+}
+.section-title-bar::before {
+  content: '';
+  width: 8rpx;
+  height: 28rpx;
+  border-radius: 4rpx;
+  background: linear-gradient(180deg, #5b6cff, #f5b041);
 }

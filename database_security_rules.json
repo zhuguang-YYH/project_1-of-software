@@ -1,0 +1,113 @@
+{
+  "_README": "微信云开发数据库安全规则配置。每个集合的规则需要在【云开发控制台→数据库→对应集合→权限设置→自定义安全规则】中分别粘贴对应字段的 JSON 值（不含外层 key）。所有写操作统一通过云函数进行，因此客户端 write 默认禁止。",
+
+  "users": {
+    "read": "auth.openid != null && doc.openid == auth.openid",
+    "write": false
+  },
+
+  "profile_cards": {
+    "read": true,
+    "write": false
+  },
+
+  "point_accounts": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "points_log": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzles": {
+    "read": true,
+    "write": false
+  },
+
+  "puzzle_options": {
+    "read": true,
+    "write": false
+  },
+
+  "puzzle_answers": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "activities": {
+    "read": true,
+    "write": false
+  },
+
+  "activity_registrations": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "inventory_items": {
+    "read": true,
+    "write": false
+  },
+
+  "borrow_records": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "exchange_records": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "commissions": {
+    "read": true,
+    "write": false
+  },
+
+  "commission_acceptances": {
+    "read": "auth.openid != null && (get(`database.users.${doc.receiver_id}`).openid == auth.openid || get(`database.users.${doc.publisher_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "commission_allocations": {
+    "read": true,
+    "write": false
+  },
+
+  "dud_keywords": {
+    "read": true,
+    "write": false
+  },
+
+  "dud_messages": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "feedback": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "recommendations": {
+    "read": true,
+    "write": false
+  },
+
+  "ranking_snapshots": {
+    "read": true,
+    "write": false
+  },
+
+  "system_settings": {
+    "read": true,
+    "write": false
+  },
+
+  "admin_logs": {
+    "read": false,
+    "write": false
+  }
+}

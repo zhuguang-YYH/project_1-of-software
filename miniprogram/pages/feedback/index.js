@@ -10,23 +10,23 @@ function formatTime(value) {
 
 function feedbackTypeText(feedback_type) {
   const map = {
-    general: 'General',
-    bug: 'Bug',
-    activity: 'Activity',
-    feature: 'Feature',
-    content: 'Content'
+    general: '一般反馈',
+    bug: '问题反馈',
+    activity: '活动建议',
+    feature: '功能建议',
+    content: '内容建议'
   };
-  return map[feedback_type] || feedback_type || 'General';
+  return map[feedback_type] || feedback_type || '一般反馈';
 }
 
 function feedbackStatusText(status) {
   const map = {
-    pending: 'Pending',
-    processing: 'Processing',
-    resolved: 'Resolved',
-    closed: 'Closed'
+    pending: '待处理',
+    processing: '处理中',
+    resolved: '已处理',
+    closed: '已关闭'
   };
-  return map[status] || status || 'Pending';
+  return map[status] || status || '待处理';
 }
 
 function normalizeFeedback(item = {}) {
@@ -43,7 +43,7 @@ function normalizeFeedback(item = {}) {
     status_text: feedbackStatusText(item.status),
     created_text: formatTime(item.created_at),
     is_resolved: item.status === 'resolved',
-    anonymous_text: item.is_anonymous ? ' / Anonymous' : ''
+    anonymous_text: item.is_anonymous ? ' · 匿名' : ''
   };
 }
 
@@ -56,11 +56,11 @@ Page({
     error: '',
     feedback_list: [],
     type_options: [
-      { key: 'general', label: 'General' },
-      { key: 'bug', label: 'Bug' },
-      { key: 'activity', label: 'Activity' },
-      { key: 'feature', label: 'Feature' },
-      { key: 'content', label: 'Content' }
+      { key: 'general', label: '一般反馈' },
+      { key: 'bug', label: '问题反馈' },
+      { key: 'activity', label: '活动建议' },
+      { key: 'feature', label: '功能建议' },
+      { key: 'content', label: '内容建议' }
     ],
     form: {
       content: '',
@@ -79,7 +79,7 @@ Page({
       await this.loadMyFeedback();
     } catch (err) {
       console.error('Feedback init failed:', err);
-      this.setData({ error: err.message || 'Load failed' });
+      this.setData({ error: err.message || '加载失败' });
     } finally {
       this.setData({ loading: false });
     }

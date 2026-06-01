@@ -27,6 +27,7 @@ function shouldUploadAvatar(path) {
 Page({
   data: {
     userInfo: null,
+    userIdShort: '...',
     card: null,
     myPoints: 0,
     myRank: 0,
@@ -34,6 +35,7 @@ Page({
     editMode: false,
     savingProfile: false,
     profileIncomplete: false,
+    interestList: [],
     form: {
       nickname: '',
       avatar_url: '',
@@ -77,7 +79,7 @@ Page({
         return;
       }
 
-      this.setData({ userInfo });
+      this.setData({ userInfo, userIdShort: (userInfo.user_id || '').slice(-8) || '...' });
 
       await Promise.all([
         this.loadCard(),
@@ -87,8 +89,10 @@ Page({
 
       this.setData({
         userInfo,
+        userIdShort: (userInfo.user_id || '').slice(-8) || '...',
         profileIncomplete: isProfileIncomplete(userInfo),
-        form: this.buildForm(userInfo)
+        form: this.buildForm(userInfo),
+        interestList: this.buildInterestList(userInfo)
       });
     } catch (err) {
       console.error('Load profile failed:', err);
@@ -106,6 +110,10 @@ Page({
       signature: userInfo.signature || '',
       interests: normalizeInterests(userInfo.interests).join('、')
     };
+  },
+
+  buildInterestList(userInfo) {
+    return normalizeInterests(userInfo && userInfo.interests);
   },
 
   async loadCard() {
@@ -159,9 +167,11 @@ Page({
       const userInfo = result.data.userInfo;
       this.setData({
         userInfo,
+        userIdShort: (userInfo.user_id || '').slice(-8) || '...',
         profileIncomplete: isProfileIncomplete(userInfo),
         loading: false,
-        form: this.buildForm(userInfo)
+        form: this.buildForm(userInfo),
+        interestList: this.buildInterestList(userInfo)
       });
       this.startEdit();
     } catch (err) {
@@ -236,7 +246,8 @@ Page({
         userInfo,
         editMode: false,
         profileIncomplete: isProfileIncomplete(userInfo),
-        form: this.buildForm(userInfo)
+        form: this.buildForm(userInfo),
+        interestList: this.buildInterestList(userInfo)
       });
       await this.loadCard();
       wx.showToast({ title: '保存成功', icon: 'success' });

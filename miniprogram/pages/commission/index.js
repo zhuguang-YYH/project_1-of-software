@@ -14,16 +14,16 @@ function formatTime(value) {
 
 function statusText(status) {
   const map = {
-    recruiting: 'Recruiting',
-    in_progress: 'In progress',
-    resolved: 'Resolved',
-    closed: 'Closed',
-    accepted: 'Accepted',
-    completed: 'Completed',
-    rewarded: 'Rewarded',
-    withdrawn: 'Withdrawn'
+    recruiting: '招募中',
+    in_progress: '进行中',
+    resolved: '已结案',
+    closed: '已关闭',
+    accepted: '已领取',
+    completed: '已完成',
+    rewarded: '已发放',
+    withdrawn: '已撤销'
   };
-  return map[status] || status || 'Unknown';
+  return map[status] || status || '未知';
 }
 
 function normalizeCommission(item = {}) {
@@ -42,14 +42,14 @@ function normalizeCommission(item = {}) {
     description: item.content || item.description || '',
     reward_points,
     remaining_reward,
-    publisher_name: item.publisher_name || 'Anonymous',
+    publisher_name: item.publisher_name || '匿名侦探',
     created_text: formatTime(item.created_at),
-    deadline_text: item.deadline ? formatTime(item.deadline) : 'Long term',
+    deadline_text: item.deadline ? formatTime(item.deadline) : '长期有效',
     status_text: statusText(item.status),
     can_accept: !expired && !item.is_mine && !my_acceptance && ['recruiting', 'in_progress'].includes(item.status),
     is_expired: expired,
     accepted_by_me: !!my_acceptance,
-    my_acceptance_status_text: expired ? 'Expired' : (my_acceptance ? statusText(my_acceptance.status) : '')
+    my_acceptance_status_text: expired ? '已过期' : (my_acceptance ? statusText(my_acceptance.status) : '')
   };
 }
 
@@ -61,10 +61,10 @@ function normalizeAcceptance(item = {}) {
     ...item,
     acceptance_id,
     commission,
-    title: item.title || commission.title || 'Untitled commission',
+    title: item.title || commission.title || '未命名委托',
     reward_points: Number(commission.reward_points || item.reward_points || 0),
     remaining_reward: Number(commission.remaining_reward || 0),
-    publisher_name: commission.publisher_name || 'Publisher',
+    publisher_name: commission.publisher_name || '发布人',
     accepted_text: formatTime(item.accepted_at),
     completed_text: formatTime(item.completed_at),
     status_text: statusText(item.status),
@@ -77,7 +77,7 @@ function normalizePublished(item = {}) {
   const acceptances = (item.acceptances || []).map(acc => ({
     ...acc,
     acceptance_id: acc.acceptance_id || acc._id || acc.id || '',
-    receiver_name: acc.receiver_name || 'Anonymous',
+    receiver_name: acc.receiver_name || '匿名侦探',
     status_text: statusText(acc.status),
     accepted_text: formatTime(acc.accepted_at),
     completed_text: formatTime(acc.completed_at),
@@ -139,7 +139,7 @@ Page({
       ]);
     } catch (err) {
       console.error('Init commission failed:', err);
-      this.setData({ error: err.message || 'Load failed' });
+      this.setData({ error: err.message || '加载失败' });
     } finally {
       this.setData({ loading: false });
     }
@@ -177,13 +177,13 @@ Page({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load commissions failed');
+      if (!result.success) throw new Error(result.message || '加载委托列表失败');
 
       const list = ((result.data && result.data.list) || []).map(normalizeCommission);
       this.setData({ commissions: list, error: '' });
     } catch (err) {
       console.error('Load commissions failed:', err);
-      this.setData({ error: err.message || 'Network error' });
+      this.setData({ error: err.message || '网络异常' });
     }
   },
 
@@ -252,19 +252,19 @@ Page({
     const reward_points = Number(form.reward_points);
 
     if (!form.title.trim()) {
-      wx.showToast({ title: 'Title required', icon: 'none' });
+      wx.showToast({ title: '请填写标题', icon: 'none' });
       return;
     }
     if (!form.description.trim()) {
-      wx.showToast({ title: 'Content required', icon: 'none' });
+      wx.showToast({ title: '请填写描述', icon: 'none' });
       return;
     }
     if (!Number.isInteger(reward_points) || reward_points <= 0) {
-      wx.showToast({ title: 'Invalid reward', icon: 'none' });
+      wx.showToast({ title: '奖励积分无效', icon: 'none' });
       return;
     }
     if (reward_points > this.data.user_points.available_points) {
-      wx.showToast({ title: 'Points not enough', icon: 'none' });
+      wx.showToast({ title: '可用积分不足', icon: 'none' });
       return;
     }
 
@@ -276,13 +276,13 @@ Page({
         reward_points,
         deadline: form.deadline.trim()
       });
-      if (!result.success) throw new Error(result.message || 'Publish failed');
+      if (!result.success) throw new Error(result.message || '发布失败');
 
-      wx.showToast({ title: 'Published', icon: 'success' });
+      wx.showToast({ title: '发布成功', icon: 'success' });
       this.setData({ show_publish_modal: false, tab: 'published' });
       await Promise.all([this.loadUserPoints(), this.loadCommissions(), this.loadMyCommissions()]);
     } catch (err) {
-      wx.showToast({ title: err.message || 'Publish failed', icon: 'none' });
+      wx.showToast({ title: err.message || '发布失败', icon: 'none' });
     } finally {
       this.setData({ publishing: false });
     }
@@ -293,12 +293,12 @@ Page({
     this.setData({ accepting_id: commission_id });
     try {
       const result = await request.callCloudFunction('commission_acceptCommission', { commission_id });
-      if (!result.success) throw new Error(result.message || 'Accept failed');
+      if (!result.success) throw new Error(result.message || '领取失败');
 
-      wx.showToast({ title: 'Accepted', icon: 'success' });
+      wx.showToast({ title: '领取成功', icon: 'success' });
       await Promise.all([this.loadCommissions(), this.loadMyCommissions()]);
     } catch (err) {
-      wx.showToast({ title: err.message || 'Accept failed', icon: 'none' });
+      wx.showToast({ title: err.message || '领取失败', icon: 'none' });
     } finally {
       this.setData({ accepting_id: '' });
     }
@@ -309,12 +309,12 @@ Page({
     this.setData({ completing_id: acceptance_id });
     try {
       const result = await request.callCloudFunction('commission_completeCommission', { acceptance_id });
-      if (!result.success) throw new Error(result.message || 'Submit failed');
+      if (!result.success) throw new Error(result.message || '提交失败');
 
-      wx.showToast({ title: 'Submitted', icon: 'success' });
+      wx.showToast({ title: '已提交', icon: 'success' });
       await this.loadMyCommissions();
     } catch (err) {
-      wx.showToast({ title: err.message || 'Submit failed', icon: 'none' });
+      wx.showToast({ title: err.message || '提交失败', icon: 'none' });
     } finally {
       this.setData({ completing_id: '' });
     }
@@ -349,11 +349,11 @@ Page({
 
     if (!target) return;
     if (!Number.isInteger(allocated_points) || allocated_points <= 0) {
-      wx.showToast({ title: 'Invalid points', icon: 'none' });
+      wx.showToast({ title: '积分无效', icon: 'none' });
       return;
     }
     if (allocated_points > target.max) {
-      wx.showToast({ title: 'Too many points', icon: 'none' });
+      wx.showToast({ title: '超过可发放上限', icon: 'none' });
       return;
     }
 
@@ -364,13 +364,13 @@ Page({
         acceptance_id: target.acceptance_id,
         allocated_points
       });
-      if (!result.success) throw new Error(result.message || 'Reward failed');
+      if (!result.success) throw new Error(result.message || '发放失败');
 
-      wx.showToast({ title: 'Rewarded', icon: 'success' });
+      wx.showToast({ title: '已发放', icon: 'success' });
       this.setData({ show_reward_modal: false, reward_target: null, reward_points_input: '' });
       await Promise.all([this.loadUserPoints(), this.loadCommissions(), this.loadMyCommissions()]);
     } catch (err) {
-      wx.showToast({ title: err.message || 'Reward failed', icon: 'none' });
+      wx.showToast({ title: err.message || '发放失败', icon: 'none' });
     } finally {
       this.setData({ rewarding: false });
     }
@@ -382,7 +382,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: 'Commission',
+      title: '推协委托',
       path: '/pages/commission/index'
     };
   },

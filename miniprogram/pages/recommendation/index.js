@@ -71,7 +71,8 @@ Page({
     ]
   },
 
-  onLoad() {
+  onLoad(options) {
+    this._highlightId = options && options.highlight ? options.highlight : null;
     this.loadRecommendations(true);
   },
 
@@ -105,6 +106,14 @@ Page({
         has_more: Boolean(data.has_more),
         error: ''
       });
+
+      if (reset && this._highlightId) {
+        const target = list.find(item => item.recommendation_id === this._highlightId);
+        if (target) {
+          this.setData({ selected: target, show_detail: true });
+        }
+        this._highlightId = null;
+      }
     } catch (error) {
       console.error('Load recommendations failed:', error);
       this.setData({ error: error.message || '加载失败，请稍后重试' });

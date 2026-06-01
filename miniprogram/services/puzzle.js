@@ -38,20 +38,22 @@ class PuzzleService {
     }
 
     try {
-      const result = await callFunction(CONFIG.api.puzzle.submitAnswer, {
-        puzzle_id,
-        option_id
-      });
+      const result = await callFunction(
+        CONFIG.api.puzzle.submitAnswer,
+        { puzzle_id, option_id },
+        { idempotent: true }
+      );
 
       if (!result.success) {
         return { success: false, error: result.message || '提交答案失败' };
       }
 
+      const payload = result.data || {};
       return {
         success: true,
-        data: result.data,
-        is_correct: !!result.data.is_correct,
-        score_gained: Number(result.data.score_gained || 0)
+        data: payload,
+        is_correct: !!payload.is_correct,
+        score_gained: Number(payload.score_gained || 0)
       };
     } catch (error) {
       console.error('Failed to submit answer:', error);
@@ -94,13 +96,14 @@ class PuzzleService {
         return { success: false, error: result.message || '获取答题统计失败' };
       }
 
+      const payload = result.data || {};
       return {
         success: true,
-        data: result.data,
-        total_answered: Number(result.data.total_answered || 0),
-        correct_count: Number(result.data.correct_count || 0),
-        correct_rate: Number(result.data.correct_rate || 0),
-        current_streak: Number(result.data.current_streak || 0)
+        data: payload,
+        total_answered: Number(payload.total_answered || 0),
+        correct_count: Number(payload.correct_count || 0),
+        correct_rate: Number(payload.correct_rate || 0),
+        current_streak: Number(payload.current_streak || 0)
       };
     } catch (error) {
       console.error('Failed to get puzzle stats:', error);

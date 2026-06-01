@@ -9,6 +9,22 @@ const _ = db.command;
  */
 exports.main = async (event, context) => {
   try {
+    const wx_context = cloud.getWXContext();
+    const openid = wx_context.OPENID || '';
+    const bootstrap = String(process.env.BOOTSTRAP_ADMIN_OPENID || '').trim();
+    let allowed = false;
+    if (bootstrap && bootstrap === openid) {
+      allowed = true;
+    } else if (openid) {
+      try {
+        const res = await db.collection('users').where({ openid }).limit(1).get();
+        if (res.data[0] && res.data[0].role === 'admin') allowed = true;
+      } catch (e) { /* users 集合可能尚未创建，跳过 */ }
+    }
+    if (!allowed) {
+      return { code: 'PERMISSION_DENIED', message: '仅管理员或 BOOTSTRAP_ADMIN_OPENID 可执行数据库初始化' };
+    }
+
     const { cleanupLegacyFields = false } = event || {};
     console.log('寮€濮嬪垵濮嬪寲鏁版嵁搴?..');
 

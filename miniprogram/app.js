@@ -7,7 +7,8 @@ App({
     userId: null,
     isLoggedIn: false,
     systemInfo: null,
-    env: CONFIG.cloudEnv
+    env: CONFIG.cloudEnv,
+    lastError: null
   },
 
   onLaunch() {
@@ -63,12 +64,24 @@ App({
   },
 
   onError(error) {
-    console.error('App error:', error);
-    this.reportError(error);
+    console.error('[App onError]', error);
+    this.recordError('js_error', error);
   },
 
-  onPageNotFound() {
-    wx.navigateTo({ url: '/pages/index/index' });
+  onUnhandledRejection(res) {
+    console.error('[App onUnhandledRejection]', res && res.reason);
+    this.recordError('unhandled_rejection', res && res.reason);
+  },
+
+  onPageNotFound(res) {
+    console.warn('[App onPageNotFound]', res && res.path);
+    // 兜底跳回首页（首页是 tabBar 页面，必须用 switchTab）
+    wx.switchTab({
+      url: '/pages/index/index',
+      fail: () => {
+        wx.reLaunch({ url: '/pages/index/index' });
+      }
+    });
   },
 
   async checkTokenExpiry() {
@@ -81,22 +94,26 @@ App({
     }
   },
 
-  reportError(error) {
+  // 仅本地记录最近一次错误，供反馈页或调试用；不再调用未部署的 error_report 云函数
+  recordError(type, error) {
     try {
-      wx.cloud.callFunction({
-        name: 'error_report',
-        data: {
-          error: {
-            message: error.message,
-            stack: error.stack,
-            timestamp: Date.now(),
-            url: (getCurrentPages().pop() || {}).route || 'unknown'
-          }
-        }
-      });
+      const message = error && (error.message || error.errMsg) || String(error || '');
+      const stack = error && error.stack ? String(error.stack).slice(0, 2000) : '';
+      const page = (getCurrentPages().pop() || {}).route || 'unknown';
+      this.globalData.lastError = {
+        type,
+        message,
+        stack,
+        page,
+        timestamp: Date.now()
+      };
     } catch (e) {
-      console.error('Failed to report error:', e);
+      // 防止错误上报本身再次抛错
     }
+  },
+
+  getLastError() {
+    return this.globalData.lastError;
   },
 
   getUserInfo() {

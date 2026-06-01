@@ -93,19 +93,22 @@ async function getUserById(user_id) {
 }
 
 async function ensureAdmin(openid) {
+  if (!openid) return { allowed: false, message: '缺少登录态' };
   const user = await getCurrentUser(openid);
   if (!user) return { allowed: false, message: '用户不存在，请先登录' };
   if (user.role === 'admin') return { allowed: true, user };
 
-  const admin_list = await safeList('users', { where: { role: 'admin' }, limit: 1 });
-  if (admin_list.length === 0) {
-    await db.collection('users').doc(user._id).update({
-      data: {
-        role: 'admin',
-        updated_at: db.serverDate()
-      }
-    });
-    return { allowed: true, user: { ...user, role: 'admin' } };
+  // 引导首位管理员：仅当 openid 与环境变量 BOOTSTRAP_ADMIN_OPENID 完全匹配时才允许提权。
+  // 在云开发控制台 -> 云函数 -> admin -> 配置 中设置该环境变量。
+  const bootstrap = String(process.env.BOOTSTRAP_ADMIN_OPENID || '').trim();
+  if (bootstrap && bootstrap === openid) {
+    const admin_list = await safeList('users', { where: { role: 'admin' }, limit: 1 });
+    if (admin_list.length === 0) {
+      await db.collection('users').doc(user._id).update({
+        data: { role: 'admin', updated_at: db.serverDate() }
+      });
+      return { allowed: true, user: { ...user, role: 'admin' } };
+    }
   }
 
   return { allowed: false, message: '仅管理员可访问后台' };

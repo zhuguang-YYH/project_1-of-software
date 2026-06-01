@@ -1,0 +1,55 @@
+.sc-card {
+  position: relative;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin: 20rpx 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(26, 31, 58, 0.06);
+  overflow: hidden;
+}
+
+.with-accent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6rpx;
+  background: linear-gradient(180deg, #5b6cff, #f5b041);
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  gap: 16rpx;
+}
+
+.sc-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+}
+
+.sc-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #9aa3b8;
+}
+
+.sc-extra {
+  flex-shrink: 0;
+}
+
+.sc-body {
+  color: #4a5577;
+  font-size: 26rpx;
+}

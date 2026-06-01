@@ -34,7 +34,7 @@
   width: 58rpx;
   height: 58rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2477c3, #4aa3df);
+  background: linear-gradient(135deg, #5b6cff, #8a9eff);
   color: #ffffff;
   display: flex;
   align-items: center;

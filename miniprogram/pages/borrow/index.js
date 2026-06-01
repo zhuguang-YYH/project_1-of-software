@@ -21,13 +21,13 @@ function statusText(status) {
 
 function statusColor(status) {
   const map = {
-    available: '#27ae60',
+    available: '#16a085',
     borrowed: '#e74c3c',
     in_transit: '#f39c12',
     maintenance: '#9b59b6',
     out_of_stock: '#95a5a6'
   };
-  return map[status] || '#3498db';
+  return map[status] || '#5b6cff';
 }
 
 function borrowStatusText(status) {
@@ -94,6 +94,7 @@ Page({
   },
 
   onShow() {
+    this.loadMyBorrows();
     if (this.data.items.length === 0) this.loadItems();
   },
 

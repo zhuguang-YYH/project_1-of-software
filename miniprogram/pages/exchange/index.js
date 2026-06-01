@@ -10,24 +10,24 @@ function formatTime(value) {
 
 function exchangeStatusText(status) {
   const map = {
-    pending: 'Pending',
-    shipped: 'Ready',
-    completed: 'Completed',
-    received: 'Received',
-    cancelled: 'Cancelled'
+    pending: '处理中',
+    shipped: '待领取',
+    completed: '已完成',
+    received: '已领取',
+    cancelled: '已取消'
   };
-  return map[status] || status || 'Unknown';
+  return map[status] || status || '未知';
 }
 
 function exchangeStatusColor(status) {
   const map = {
     pending: '#f39c12',
-    shipped: '#3498db',
-    completed: '#27ae60',
-    received: '#27ae60',
+    shipped: '#5b6cff',
+    completed: '#16a085',
+    received: '#16a085',
     cancelled: '#95a5a6'
   };
-  return map[status] || '#3498db';
+  return map[status] || '#5b6cff';
 }
 
 function normalizeGoods(item = {}, available_points = 0) {
@@ -38,14 +38,15 @@ function normalizeGoods(item = {}, available_points = 0) {
   return {
     ...item,
     item_id,
-    name: item.name || item.item_name || 'Unnamed goods',
+    name: item.name || item.item_name || '未命名商品',
     exchange_points,
     available_quantity,
     max_exchange_quantity: exchange_points > 0
       ? Math.min(available_quantity, Math.floor(available_points / exchange_points))
       : 0,
     is_sold_out: available_quantity <= 0,
-    is_affordable: exchange_points > 0 && available_points >= exchange_points
+    is_affordable: exchange_points > 0 && available_points >= exchange_points,
+    short_points: Math.max(0, exchange_points - available_points)
   };
 }
 
@@ -54,7 +55,7 @@ function normalizeExchange(record = {}) {
   return {
     ...record,
     exchange_id,
-    item_name: record.item_name || record.goods_name || 'Exchange goods',
+    item_name: record.item_name || record.goods_name || '兑换商品',
     exchange_time_text: formatTime(record.created_at || record.exchange_time),
     handled_time_text: formatTime(record.handled_at),
     total_points: Number(record.total_points || record.points_cost || 0),
@@ -90,6 +91,8 @@ Page({
   },
 
   onShow() {
+    this.loadUserPoints();
+    this.loadMyExchanges();
     if (this.data.goods.length === 0) this.loadGoods();
   },
 
@@ -133,7 +136,7 @@ Page({
       });
     } catch (err) {
       console.error('Load exchange goods failed:', err);
-      this.setData({ error: err.message || 'Network error' });
+      this.setData({ error: err.message || '网络异常' });
     } finally {
       this.setData({ loading: false });
     }
@@ -189,11 +192,11 @@ Page({
     if (!selected_goods) return;
 
     if (selected_goods.available_quantity <= 0) {
-      wx.showToast({ title: 'Sold out', icon: 'none' });
+      wx.showToast({ title: '商品已兑完', icon: 'none' });
       return;
     }
     if (this.data.user_points.available_points < selected_goods.exchange_points) {
-      wx.showToast({ title: 'Points not enough', icon: 'none' });
+      wx.showToast({ title: '积分不足', icon: 'none' });
       return;
     }
 
@@ -225,7 +228,7 @@ Page({
     const max = Math.max(1, selected_goods.max_exchange_quantity);
     const exchange_quantity = Math.min(Math.max(1, quantity), max);
     if (quantity > max) {
-      wx.showToast({ title: `Max ${max}`, icon: 'none' });
+      wx.showToast({ title: `最多兑换 ${max} 件`, icon: 'none' });
     }
     this.setData({
       exchange_quantity,
@@ -239,7 +242,7 @@ Page({
 
     const total_points = selected_goods.exchange_points * exchange_quantity;
     if (total_points > user_points.available_points) {
-      wx.showToast({ title: 'Points not enough', icon: 'none' });
+      wx.showToast({ title: '积分不足', icon: 'none' });
       return;
     }
 
@@ -249,13 +252,13 @@ Page({
         item_id: selected_goods.item_id,
         quantity: exchange_quantity
       });
-      if (!result.success) throw new Error(result.message || 'Exchange failed');
+      if (!result.success) throw new Error(result.message || '兑换失败');
 
-      wx.showToast({ title: 'Exchanged', icon: 'success' });
+      wx.showToast({ title: '兑换成功', icon: 'success' });
       this.setData({ show_exchange_modal: false });
       await this.initPage();
     } catch (err) {
-      wx.showToast({ title: err.message || 'Exchange failed', icon: 'none' });
+      wx.showToast({ title: err.message || '兑换失败', icon: 'none' });
     } finally {
       this.setData({ exchanging: false });
     }

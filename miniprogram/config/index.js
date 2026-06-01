@@ -102,10 +102,14 @@ const CONFIG = {
 
   // 超时配置（毫秒）
   timeout: {
-    default: 5000,
+    default: 10000,
     login: 12000,
-    upload: 15000,
-    ranking: 3000
+    upload: 30000,
+    // 按模块配置，超出 default 的复杂查询场景
+    ranking: 12000,
+    recommendation: 12000,
+    puzzle: 10000,
+    dud: 15000
   },
 
   // 分页配置

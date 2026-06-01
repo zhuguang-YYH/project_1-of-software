@@ -162,8 +162,23 @@ async function ranking_getUserRanking() {
   }
 }
 
+async function isAdminOrTimer(wx_context) {
+  // 云函数定时触发器调用时 SOURCE 包含 "timer"，且 OPENID 为空
+  const source = String(wx_context.SOURCE || '');
+  if (!wx_context.OPENID && source.indexOf('timer') >= 0) return true;
+  if (!wx_context.OPENID) return false;
+  const res = await db.collection('users').where({ openid: wx_context.OPENID }).limit(1).get();
+  const user = res.data[0];
+  if (user && user.role === 'admin') return true;
+  const bootstrap = String(process.env.BOOTSTRAP_ADMIN_OPENID || '').trim();
+  return Boolean(bootstrap && bootstrap === wx_context.OPENID);
+}
+
 async function ranking_generateSnapshot() {
   try {
+    const wx_context = cloud.getWXContext();
+    const allowed = await isAdminOrTimer(wx_context);
+    if (!allowed) return fail('permission denied', 'PERMISSION_DENIED');
     const list = applyTieRanks(await getRankedUsers(100));
     await writeRankingSnapshots(list);
     return ok({ count: list.length, ranking_date: todayString() });

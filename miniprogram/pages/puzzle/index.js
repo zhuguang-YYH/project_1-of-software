@@ -24,6 +24,11 @@ Page({
       if (!result.success) throw new Error(result.message || '加载谜题失败');
 
       const puzzle = result.data || {};
+      const DIFFICULTY_MAP = { easy: '简单', normal: '中等', medium: '中等', hard: '困难', extreme: '极限' };
+      const VALID_CLASSES = ['easy', 'normal', 'medium', 'hard', 'extreme'];
+      const raw = String(puzzle.difficulty || '').toLowerCase();
+      puzzle._difficulty_class = VALID_CLASSES.includes(raw) ? raw : 'normal';
+      puzzle._difficulty_text = DIFFICULTY_MAP[raw] || (puzzle.difficulty || '中等');
       const options = (puzzle.options || []).map((option, index) => ({
         option_id: option.option_id || option.option_content,
         option_label: option.option_label || String.fromCharCode(65 + index),

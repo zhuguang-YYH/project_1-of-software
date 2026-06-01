@@ -84,7 +84,7 @@
               data-item_id="{{item.item_id}}"
               bindtap="showExchangeModal">立即兑换</button>
             <button class="btn-soldout" wx:elif="{{item.is_sold_out}}">已兑完</button>
-            <button class="btn-insufficient" wx:else>积分不足</button>
+            <button class="btn-insufficient" wx:else>差 {{item.short_points}} 积分</button>
           </view>
         </view>
 

@@ -179,6 +179,11 @@ Page({
     wx.navigateTo({ url: '/pages/recommendation/index' });
   },
 
+  goToRecommendationDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/recommendation/index?highlight=${id}` });
+  },
+
   goToProfile() {
     wx.navigateTo({ url: '/pages/profile/index' });
   },
