@@ -161,7 +161,7 @@
     <view class="modal-content" catchtap="noop">
       <view class="modal-header">
         <text class="modal-title">申请借阅</text>
-        <button class="modal-close" bindtap="closeApplyModal">x</button>
+        <button class="modal-close" bindtap="closeApplyModal">×</button>
       </view>
       <view class="modal-body">
         <view class="modal-section">

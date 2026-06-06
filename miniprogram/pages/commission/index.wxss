@@ -38,16 +38,23 @@
 .summary {
   position: relative;
   margin: 24rpx;
-  padding: 32rpx;
+  padding: 32rpx 24rpx;
   background: linear-gradient(135deg, #3a4cd1 0%, #5b6cff 100%);
   border-radius: 24rpx;
   display: grid;
-  grid-template-columns: 1fr 1fr 160rpx;
-  gap: 20rpx;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 176rpx;
+  gap: 16rpx;
   align-items: center;
   box-shadow: 0 16rpx 40rpx rgba(91, 108, 255, 0.3);
   color: #fff;
   overflow: hidden;
+}
+
+.summary > view,
+.summary > button {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
 }
 
 .summary::before {
@@ -96,9 +103,16 @@
 }
 
 .publish-btn {
+  width: 176rpx !important;
+  height: 72rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
   background: #fff !important;
   color: #3a4cd1 !important;
   box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.12);
+  white-space: nowrap;
+  word-break: keep-all;
+  word-wrap: normal;
 }
 
 .secondary-btn {

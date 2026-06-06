@@ -67,7 +67,9 @@
         placeholder="输入关键词或问题"
         bindinput="onInput"
         bindconfirm="sendMessage" />
-      <button class="send-btn" loading="{{sending}}" disabled="{{sending}}" bindtap="sendMessage">发送</button>
+      <button class="send-btn" disabled="{{sending}}" bindtap="sendMessage">
+        <text class="send-btn-text">发送</text>
+      </button>
     </view>
   </view>
 </view>

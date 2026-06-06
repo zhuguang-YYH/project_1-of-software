@@ -87,8 +87,8 @@ Page({
     };
   },
 
-  async loadActivities() {
-    this.setData({ loading: true, error: '' });
+  async loadActivities(showLoading = true) {
+    if (showLoading) this.setData({ loading: true, error: '' });
     try {
       const result = await request.callCloudFunction('activity_getActivities', { page_size: 50 });
       if (result.code !== 0) throw new Error(result.message || '加载活动失败');
@@ -101,7 +101,7 @@ Page({
       this.setData({ error: error.message || '网络错误，请重试' });
       console.error('Load activities failed:', error);
     } finally {
-      this.setData({ loading: false });
+      if (showLoading) this.setData({ loading: false });
     }
   },
 
@@ -145,7 +145,7 @@ Page({
   onPullDownRefresh() {
     this.setData({ refreshing: true });
     Promise.all([
-      this.loadActivities(),
+      this.loadActivities(false),
       this.loadMyActivities()
     ]).finally(() => {
       wx.stopPullDownRefresh();
@@ -236,7 +236,7 @@ Page({
     if (result.code === 0) {
       wx.showToast({ title: '报名成功', icon: 'success' });
       this.setData({ show_register_modal: false });
-      await Promise.all([this.loadActivities(), this.loadMyActivities()]);
+      await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       return;
     }
     wx.showToast({ title: result.message || '报名失败', icon: 'none' });
@@ -261,7 +261,7 @@ Page({
       const result = await request.callCloudFunction('activity_cancelRegister', { activity_id });
       if (result.code === 0) {
         wx.showToast({ title: '已取消报名', icon: 'success' });
-        await Promise.all([this.loadActivities(), this.loadMyActivities()]);
+        await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       } else {
         wx.showToast({ title: result.message || '取消失败', icon: 'none' });
       }

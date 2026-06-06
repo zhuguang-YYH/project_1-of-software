@@ -216,15 +216,24 @@
 
 /* 编辑按钮（右，常态下显示） */
 .card-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  align-self: flex-start;
+  align-self: center;
+  flex-basis: 156rpx;
+  width: 156rpx;
+  height: 112rpx;
   font-size: 26rpx;
   color: #5b6cff;
   background: #eef0ff;
   border-radius: 20rpx;
-  padding: 10rpx 26rpx;
-  line-height: 1.5;
-  margin-top: 2rpx;
+  padding: 0;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  word-break: keep-all;
+  word-wrap: normal;
 }
 .card-edit-btn--tap {
   opacity: 0.65;

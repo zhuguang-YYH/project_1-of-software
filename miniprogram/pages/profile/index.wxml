@@ -21,7 +21,7 @@
           <text class="interest-tag" wx:for="{{interestList}}" wx:key="*this">{{item}}</text>
         </view>
         <view class="incomplete-nudge" wx:if="{{profileIncomplete}}">
-          <text class="nudge-text">完善档案后名片与排名更完整</text>
+          <text class="nudge-text">完善档案后信息更完整</text>
         </view>
       </view>
       <view class="card-edit-btn" bindtap="startEdit" hover-class="card-edit-btn--tap">

@@ -138,8 +138,11 @@
 }
 
 .filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 64rpx;
-  line-height: 64rpx;
+  line-height: 1.2;
   border-radius: 12rpx;
   text-align: center;
   color: #8a96a8;

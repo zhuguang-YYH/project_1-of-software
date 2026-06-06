@@ -10,13 +10,13 @@ function formatTime(value) {
 
 function statusText(status) {
   const map = {
-    available: 'Available',
-    borrowed: 'Borrowed',
-    in_transit: 'In transit',
-    maintenance: 'Maintenance',
-    out_of_stock: 'Unavailable'
+    available: '可借阅',
+    borrowed: '已借出',
+    in_transit: '传递中',
+    maintenance: '维护中',
+    out_of_stock: '不可借'
   };
-  return map[status] || status || 'Unknown';
+  return map[status] || status || '未知';
 }
 
 function statusColor(status) {
@@ -32,14 +32,35 @@ function statusColor(status) {
 
 function borrowStatusText(status) {
   const map = {
-    applying: 'Applying',
-    confirmed: 'Confirmed',
-    in_transit: 'In transit',
-    borrowed: 'Borrowed',
-    returned: 'Returned',
-    cancelled: 'Cancelled'
+    applying: '申请中',
+    confirmed: '已确认',
+    in_transit: '传递中',
+    borrowed: '已借出',
+    returned: '已归还',
+    cancelled: '已取消'
   };
-  return map[status] || status || 'Unknown';
+  return map[status] || status || '未知';
+}
+
+function toChineseMessage(message, fallback) {
+  if (!message) return fallback;
+  const map = {
+    'Load items failed': '加载物资失败',
+    'Load borrow history failed': '加载借阅记录失败',
+    'Load scripts failed': '加载剧本杀库存失败',
+    'Network error': '网络错误，请重试',
+    'Invalid item': '物资信息无效',
+    'Reason required': '请填写借阅理由',
+    'Apply failed': '申请失败',
+    'Cancel failed': '取消失败',
+    Unavailable: '当前不可借阅',
+    Applied: '申请成功',
+    Cancelled: '已取消',
+    TIMEOUT: '请求超时，请重试',
+    SERVER_ERROR: '服务异常，请稍后重试',
+    NETWORK_ERROR: '网络连接失败'
+  };
+  return map[message] || message;
 }
 
 function normalizeItem(item = {}) {
@@ -47,7 +68,7 @@ function normalizeItem(item = {}) {
   return {
     ...item,
     item_id,
-    name: item.name || item.item_name || 'Unnamed item',
+    name: item.name || item.item_name || '未命名物资',
     status: item.status || 'available',
     borrow_count: Number(item.borrow_count || 0),
     status_text: statusText(item.status || 'available'),
@@ -60,7 +81,7 @@ function normalizeBorrow(record = {}) {
   return {
     ...record,
     application_id,
-    item_name: record.item_name || 'Borrow item',
+    item_name: record.item_name || '借阅物资',
     requested_text: formatTime(record.requested_at || record.created_at),
     lent_text: formatTime(record.lent_at),
     returned_text: formatTime(record.returned_at),
@@ -109,13 +130,13 @@ Page({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load items failed');
+      if (!result.success) throw new Error(result.message || '加载物资失败');
 
       const list = (result.data && result.data.list) || result.data || [];
       this.setData({ items: list.map(normalizeItem) });
     } catch (err) {
       console.error('Load borrow items failed:', err);
-      this.setData({ error: err.message || 'Network error' });
+      this.setData({ error: toChineseMessage(err.message, '网络错误，请重试') });
     } finally {
       this.setData({ loading: false });
     }
@@ -127,7 +148,7 @@ Page({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load borrow history failed');
+      if (!result.success) throw new Error(result.message || '加载借阅记录失败');
 
       const list = (result.data && result.data.list) || [];
       this.setData({ my_borrows: list.map(normalizeBorrow) });
@@ -143,7 +164,7 @@ Page({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load scripts failed');
+      if (!result.success) throw new Error(result.message || '加载剧本杀库存失败');
 
       const list = (result.data && result.data.list) || [];
       this.setData({
@@ -153,7 +174,7 @@ Page({
     } catch (err) {
       console.error('Load scripts failed:', err);
       this.setData({
-        scripts_error: err.message || 'Network error',
+        scripts_error: toChineseMessage(err.message, '网络错误，请重试'),
         scripts_loaded: true
       });
     }
@@ -178,7 +199,7 @@ Page({
   showApplyModal(e) {
     const { item_id, name, status } = e.currentTarget.dataset;
     if (status !== 'available') {
-      wx.showToast({ title: 'Unavailable', icon: 'none' });
+      wx.showToast({ title: '当前不可借阅', icon: 'none' });
       return;
     }
 
@@ -202,11 +223,11 @@ Page({
     const reason = apply_reason.trim();
 
     if (!selected_item || !selected_item.item_id) {
-      wx.showToast({ title: 'Invalid item', icon: 'none' });
+      wx.showToast({ title: '物资信息无效', icon: 'none' });
       return;
     }
     if (reason.length < 2) {
-      wx.showToast({ title: 'Reason required', icon: 'none' });
+      wx.showToast({ title: '请填写借阅理由', icon: 'none' });
       return;
     }
 
@@ -216,13 +237,13 @@ Page({
         item_id: selected_item.item_id,
         reason
       });
-      if (!result.success) throw new Error(result.message || 'Apply failed');
+      if (!result.success) throw new Error(result.message || '申请失败');
 
-      wx.showToast({ title: 'Applied', icon: 'success' });
+      wx.showToast({ title: '申请成功', icon: 'success' });
       this.setData({ show_apply_modal: false });
       await Promise.all([this.loadItems(), this.loadMyBorrows()]);
     } catch (err) {
-      wx.showToast({ title: err.message || 'Apply failed', icon: 'none' });
+      wx.showToast({ title: toChineseMessage(err.message, '申请失败'), icon: 'none' });
     } finally {
       this.setData({ applying: false });
     }
@@ -231,14 +252,14 @@ Page({
   showCancelConfirm(e) {
     const { application_id, status } = e.currentTarget.dataset;
     const content = status === 'in_transit'
-      ? 'This item is in transit. Cancel this application?'
-      : 'Cancel this borrow application?';
+      ? '该物资正在传递中，确定取消这次借阅申请吗？'
+      : '确定取消这次借阅申请吗？';
 
     wx.showModal({
-      title: 'Cancel borrow',
+      title: '取消借阅',
       content,
-      confirmText: 'Confirm',
-      cancelText: 'Back',
+      confirmText: '确认取消',
+      cancelText: '返回',
       success: (res) => {
         if (res.confirm) this.cancelBorrow(application_id);
       }
@@ -249,12 +270,12 @@ Page({
     this.setData({ canceling_id: application_id });
     try {
       const result = await callCloudFunction('borrow_cancelBorrow', { application_id });
-      if (!result.success) throw new Error(result.message || 'Cancel failed');
+      if (!result.success) throw new Error(result.message || '取消失败');
 
-      wx.showToast({ title: 'Cancelled', icon: 'success' });
+      wx.showToast({ title: '已取消', icon: 'success' });
       await Promise.all([this.loadItems(), this.loadMyBorrows()]);
     } catch (err) {
-      wx.showToast({ title: err.message || 'Cancel failed', icon: 'none' });
+      wx.showToast({ title: toChineseMessage(err.message, '取消失败'), icon: 'none' });
     } finally {
       this.setData({ canceling_id: '' });
     }

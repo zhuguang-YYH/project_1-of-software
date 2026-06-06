@@ -20,12 +20,18 @@
 }
 
 .tab-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
-  padding: 22rpx;
+  min-width: 0;
+  height: 88rpx;
+  padding: 0 12rpx;
   text-align: center;
   color: #8a96a8;
   font-weight: 500;
   font-size: 28rpx;
+  line-height: 1.2;
   border-radius: 12rpx;
   transition: all 0.25s;
 }
@@ -155,6 +161,9 @@
 .btn-cancel,
 .btn-confirm-modal,
 .btn-cancel-modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex: 1;
   height: 80rpx !important;
   line-height: 80rpx !important;
@@ -171,6 +180,38 @@
   color: #fff !important;
   border: none !important;
   box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.28);
+}
+
+.btn-confirm-modal[disabled] {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
+  color: #fff !important;
+  opacity: 0.85;
+}
+
+.btn-register,
+.btn-confirm-modal {
+  font-size: 0 !important;
+}
+
+.btn-register .btn-text,
+.btn-confirm-modal .btn-text {
+  display: block;
+  color: #fff;
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.btn-register text,
+.btn-cancel text,
+.btn-confirm-modal text,
+.btn-cancel-modal text,
+.btn-full text,
+.btn-confirmed text {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
 }
 
 .btn-cancel {
@@ -299,10 +340,11 @@
   width: 100%;
   background: #fff;
   border-radius: 32rpx 32rpx 0 0;
-  max-height: 85vh;
+  max-height: calc(85vh - env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -336,6 +378,7 @@
 
 .modal-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 28rpx 32rpx;
 }
@@ -362,12 +405,15 @@
 }
 
 .reason-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 240rpx;
+  min-height: 0;
   padding: 18rpx 20rpx;
   border: 2rpx solid #e2e6f3;
   border-radius: 12rpx;
   font-size: 28rpx;
   color: #1a1f3a;
-  min-height: 160rpx;
   background: #fff;
 }
 
@@ -380,6 +426,8 @@
 .modal-footer {
   display: flex;
   gap: 16rpx;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
   border-top: 1rpx solid #f0f3f8;
+  background: #fff;
+  flex-shrink: 0;
 }

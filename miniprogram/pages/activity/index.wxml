@@ -68,7 +68,7 @@
               wx:if="{{!item.is_full}}"
               bindtap="showRegisterModal"
               data-id="{{item.activity_id}}">
-              立即报名
+              <text class="btn-text">立即报名</text>
             </button>
             <button class="btn-full" wx:else>活动已满员</button>
           </view>
@@ -174,10 +174,9 @@
         <button class="btn-cancel-modal" bindtap="closeRegisterModal">取消</button>
         <button
           class="btn-confirm-modal"
-          loading="{{registering}}"
           disabled="{{registering}}"
           bindtap="confirmRegister">
-          确认报名
+          <text class="btn-text">确认报名</text>
         </button>
       </view>
     </view>
