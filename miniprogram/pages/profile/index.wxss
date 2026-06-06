@@ -333,6 +333,10 @@
   align-items: center;
   gap: 8rpx;
 }
+.stat-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
 .stat-label {
   font-size: 22rpx;
   color: #a0aec0;

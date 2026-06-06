@@ -71,6 +71,37 @@
   background: linear-gradient(180deg, #5b6cff, #f5b041);
 }
 
+.borrow-card-main,
+.script-main {
+  display: flex;
+  gap: 20rpx;
+  min-width: 0;
+}
+
+.borrow-cover {
+  width: 132rpx;
+  height: 168rpx;
+  flex-shrink: 0;
+  border-radius: 14rpx;
+  background: #eef0ff;
+  box-shadow: 0 8rpx 18rpx rgba(24, 39, 75, 0.1);
+}
+
+.script-cover {
+  width: 150rpx;
+  height: 206rpx;
+  flex-shrink: 0;
+  border-radius: 14rpx;
+  background: #eef0ff;
+  box-shadow: 0 8rpx 18rpx rgba(24, 39, 75, 0.1);
+}
+
+.borrow-card-content,
+.script-content {
+  flex: 1;
+  min-width: 0;
+}
+
 /* 头部 */
 .item-header,
 .borrow-header,
@@ -107,12 +138,23 @@
 
 .item-status,
 .borrow-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: 22rpx;
   padding: 6rpx 16rpx;
   border-radius: 999rpx;
   white-space: nowrap;
   font-weight: 600;
   color: #fff;
+}
+
+.status-icon {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
 }
 
 /* 详情 */
@@ -172,6 +214,14 @@
   align-items: center;
   gap: 6rpx;
   text-align: center;
+  min-width: 0;
+}
+
+.info-icon {
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50%;
+  margin-bottom: 2rpx;
 }
 
 .info-label { font-size: 20rpx; color: #4a5577; }

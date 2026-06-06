@@ -68,8 +68,27 @@
 .tab-content { padding: 32rpx 24rpx; }
 
 /* 领奖台 */
-.podium-wrap { padding-top: 40rpx; }
+.podium-wrap {
+  position: relative;
+  padding-top: 40rpx;
+  overflow: hidden;
+}
+
+.podium-decor {
+  position: absolute;
+  left: 50%;
+  top: 8rpx;
+  width: 640rpx;
+  height: 300rpx;
+  transform: translateX(-50%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .podium {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -91,23 +110,19 @@
 .rank-2 { order: 1; }
 .rank-3 { order: 3; }
 
-.podium-crown {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: -28rpx;
+.podium-medal {
+  width: 72rpx;
+  height: 72rpx;
+  margin-bottom: -34rpx;
   z-index: 2;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.15);
+  filter: drop-shadow(0 6rpx 10rpx rgba(0, 0, 0, 0.18));
 }
-.crown-gold { background: linear-gradient(135deg, #ffd76b, #f5a623); font-size: 36rpx; }
-.crown-silver { background: linear-gradient(135deg, #d8dee9, #95a5a6); }
-.crown-bronze { background: linear-gradient(135deg, #d4977a, #a0522d); }
+
+.medal-gold {
+  width: 84rpx;
+  height: 84rpx;
+  margin-bottom: -40rpx;
+}
 
 .podium-avatar {
   width: 130rpx;
@@ -351,6 +366,7 @@
 
 /* 名片 - 内部卡片自定义不复用全局 */
 .detective-card {
+  position: relative;
   padding: 28rpx;
   border-radius: 24rpx;
   background: #ffffff;
@@ -368,6 +384,23 @@
   align-items: center;
   gap: 24rpx;
   overflow: hidden;
+}
+
+.card-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-case-no,
+.card-avatar,
+.card-identity {
+  position: relative;
+  z-index: 1;
 }
 
 .card-case-no {
@@ -423,7 +456,14 @@
   text-align: center;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 4rpx;
+}
+
+.card-stat-icon {
+  width: 42rpx;
+  height: 42rpx;
+  margin-bottom: 4rpx;
 }
 
 .card-stat-value {

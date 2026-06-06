@@ -57,11 +57,13 @@
 
     <view class="stats-row">
       <view class="stat-item">
+        <image class="stat-icon" src="/images/rank_card/可兑换积分图标.svg" mode="aspectFit" />
         <text class="stat-label">可兑换积分</text>
         <text class="stat-value">{{myPoints}}</text>
       </view>
       <view class="stat-divider"></view>
       <view class="stat-item">
+        <image class="stat-icon" src="/images/rank_card/排名图标.svg" mode="aspectFit" />
         <text class="stat-label">当前排名</text>
         <text class="stat-value">{{myRank > 100 ? '未入榜' : '第 ' + myRank + ' 名'}}</text>
       </view>

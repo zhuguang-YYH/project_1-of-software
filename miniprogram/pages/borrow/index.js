@@ -1,6 +1,17 @@
 const { callCloudFunction } = require('../../utils/request.js');
 const format = require('../../utils/format.js');
 
+const BORROW_ASSETS = {
+  bookCover: '/images/borrow_jubensha/书籍默认封面.jpg',
+  scriptCover: '/images/borrow_jubensha/剧本杀默认封面.jpg',
+  statusAvailable: '/images/borrow_jubensha/在库状态图标.jpg',
+  statusTransit: '/images/borrow_jubensha/传递中状态图标.jpg',
+  statusBorrowed: '/images/borrow_jubensha/已借出状态图标.jpg',
+  players: '/images/borrow_jubensha/人数图标.jpg',
+  duration: '/images/borrow_jubensha/时长图标.jpg',
+  difficulty: '/images/borrow_jubensha/难度图标.jpg'
+};
+
 function formatTime(value) {
   if (!value) return '-';
   const date = value instanceof Date ? value : new Date(value.$date || value);
@@ -28,6 +39,18 @@ function statusColor(status) {
     out_of_stock: '#95a5a6'
   };
   return map[status] || '#5b6cff';
+}
+
+function statusIcon(status) {
+  const map = {
+    available: BORROW_ASSETS.statusAvailable,
+    in_transit: BORROW_ASSETS.statusTransit,
+    borrowed: BORROW_ASSETS.statusBorrowed,
+    confirmed: BORROW_ASSETS.statusAvailable,
+    applying: BORROW_ASSETS.statusAvailable,
+    returned: BORROW_ASSETS.statusAvailable
+  };
+  return map[status] || BORROW_ASSETS.statusBorrowed;
 }
 
 function borrowStatusText(status) {
@@ -63,16 +86,22 @@ function toChineseMessage(message, fallback) {
   return map[message] || message;
 }
 
-function normalizeItem(item = {}) {
+function normalizeItem(item = {}, type = 'book') {
   const item_id = item.item_id || item._id || '';
+  const status = item.status || 'available';
   return {
     ...item,
     item_id,
     name: item.name || item.item_name || '未命名物资',
-    status: item.status || 'available',
+    cover_image: item.cover_image || item.image || item.image_url || (type === 'script' ? BORROW_ASSETS.scriptCover : BORROW_ASSETS.bookCover),
+    status,
     borrow_count: Number(item.borrow_count || 0),
-    status_text: statusText(item.status || 'available'),
-    status_color: statusColor(item.status || 'available')
+    status_text: statusText(status),
+    status_color: statusColor(status),
+    status_icon: statusIcon(status),
+    players_icon: BORROW_ASSETS.players,
+    duration_icon: BORROW_ASSETS.duration,
+    difficulty_icon: BORROW_ASSETS.difficulty
   };
 }
 
@@ -88,6 +117,7 @@ function normalizeBorrow(record = {}) {
     cancelled_text: formatTime(record.cancelled_at),
     status_text: borrowStatusText(record.status),
     status_color: statusColor(record.status),
+    status_icon: statusIcon(record.status),
     can_cancel: record.status === 'applying' || record.status === 'in_transit'
   };
 }
@@ -168,7 +198,7 @@ Page({
 
       const list = (result.data && result.data.list) || [];
       this.setData({
-        scripts: list.map(normalizeItem),
+        scripts: list.map(item => normalizeItem(item, 'script')),
         scripts_loaded: true
       });
     } catch (err) {

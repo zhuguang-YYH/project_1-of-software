@@ -1,0 +1,9 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 徽章底盘 - 金色 -->
+  <path d="M64 10L80 40H110L85 65L95 95L64 80L33 95L43 65L18 40H48L64 10Z" fill="#FFD700" stroke="#B8860B" stroke-width="4"/>
+  <!-- 中心放大镜 -->
+  <circle cx="64" cy="55" r="15" fill="white" stroke="#333" stroke-width="3"/>
+  <line x1="74" y1="65" x2="85" y2="76" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+  <!-- 数字 1 -->
+  <text x="64" y="62" font-family="Serif" font-size="20" font-weight="bold" fill="#333" text-anchor="middle">1</text>
+</svg>

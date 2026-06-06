@@ -30,22 +30,30 @@
 
     <view wx:if="{{tab === 'available'}}" class="items-list">
       <view class="item-card" wx:for="{{items}}" wx:key="item_id">
-        <view class="item-header">
-          <view class="item-name">{{item.name}}</view>
-          <view class="item-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
-        </view>
-        <view class="item-details">
-          <view class="detail-item" wx:if="{{item.description}}">
-            <text class="detail-label">描述</text>
-            <text class="detail-value">{{item.description}}</text>
-          </view>
-          <view class="detail-item">
-            <text class="detail-label">状态</text>
-            <text class="detail-value">{{item.status_text}}</text>
-          </view>
-          <view class="detail-item">
-            <text class="detail-label">借阅次数</text>
-            <text class="detail-value">{{item.borrow_count}}</text>
+        <view class="borrow-card-main">
+          <image class="borrow-cover" src="{{item.cover_image}}" mode="aspectFill" />
+          <view class="borrow-card-content">
+            <view class="item-header">
+              <view class="item-name">{{item.name}}</view>
+              <view class="item-status" style="background-color: {{item.status_color}}">
+                <image class="status-icon" src="{{item.status_icon}}" mode="aspectFill" />
+                <text>{{item.status_text}}</text>
+              </view>
+            </view>
+            <view class="item-details">
+              <view class="detail-item" wx:if="{{item.description}}">
+                <text class="detail-label">描述</text>
+                <text class="detail-value">{{item.description}}</text>
+              </view>
+              <view class="detail-item">
+                <text class="detail-label">状态</text>
+                <text class="detail-value">{{item.status_text}}</text>
+              </view>
+              <view class="detail-item">
+                <text class="detail-label">借阅次数</text>
+                <text class="detail-value">{{item.borrow_count}}</text>
+              </view>
+            </view>
           </view>
         </view>
         <view class="item-actions">
@@ -69,7 +77,10 @@
       <view class="borrow-card" wx:for="{{my_borrows}}" wx:key="application_id">
         <view class="borrow-header">
           <view class="borrow-name">{{item.item_name}}</view>
-          <view class="borrow-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
+          <view class="borrow-status" style="background-color: {{item.status_color}}">
+            <image class="status-icon" src="{{item.status_icon}}" mode="aspectFill" />
+            <text>{{item.status_text}}</text>
+          </view>
         </view>
         <view class="borrow-details">
           <view class="detail-item">
@@ -112,30 +123,41 @@
 
       <view class="scripts-list">
         <view class="script-card" wx:for="{{scripts}}" wx:key="item_id">
-          <view class="script-header">
-            <view>
-              <text class="script-name">{{item.name}}</text>
-              <text class="script-genre">{{item.genre || item.category || '未分类'}}</text>
-            </view>
-            <view class="item-status" style="background-color: {{item.status_color}}">{{item.status_text}}</view>
-          </view>
-          <text class="script-desc" wx:if="{{item.description}}">{{item.description}}</text>
-          <view class="script-info-grid">
-            <view class="script-info-item">
-              <text class="info-label">人数</text>
-              <text class="info-value">{{item.player_range || '待补充'}}</text>
-            </view>
-            <view class="script-info-item">
-              <text class="info-label">时长</text>
-              <text class="info-value">{{item.duration_minutes || '待补充'}}</text>
-            </view>
-            <view class="script-info-item">
-              <text class="info-label">难度</text>
-              <text class="info-value">{{item.difficulty || '待补充'}}</text>
-            </view>
-            <view class="script-info-item">
-              <text class="info-label">借阅</text>
-              <text class="info-value">{{item.borrow_count}}次</text>
+          <view class="script-main">
+            <image class="script-cover" src="{{item.cover_image}}" mode="aspectFill" />
+            <view class="script-content">
+              <view class="script-header">
+                <view>
+                  <text class="script-name">{{item.name}}</text>
+                  <text class="script-genre">{{item.genre || item.category || '未分类'}}</text>
+                </view>
+                <view class="item-status" style="background-color: {{item.status_color}}">
+                  <image class="status-icon" src="{{item.status_icon}}" mode="aspectFill" />
+                  <text>{{item.status_text}}</text>
+                </view>
+              </view>
+              <text class="script-desc" wx:if="{{item.description}}">{{item.description}}</text>
+              <view class="script-info-grid">
+                <view class="script-info-item">
+                  <image class="info-icon" src="{{item.players_icon}}" mode="aspectFill" />
+                  <text class="info-label">人数</text>
+                  <text class="info-value">{{item.player_range || '待补充'}}</text>
+                </view>
+                <view class="script-info-item">
+                  <image class="info-icon" src="{{item.duration_icon}}" mode="aspectFill" />
+                  <text class="info-label">时长</text>
+                  <text class="info-value">{{item.duration_minutes || '待补充'}}</text>
+                </view>
+                <view class="script-info-item">
+                  <image class="info-icon" src="{{item.difficulty_icon}}" mode="aspectFill" />
+                  <text class="info-label">难度</text>
+                  <text class="info-value">{{item.difficulty || '待补充'}}</text>
+                </view>
+                <view class="script-info-item">
+                  <text class="info-label">借阅</text>
+                  <text class="info-value">{{item.borrow_count}}次</text>
+                </view>
+              </view>
             </view>
           </view>
           <view class="item-actions">
