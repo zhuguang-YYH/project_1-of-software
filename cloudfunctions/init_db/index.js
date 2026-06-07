@@ -1,11 +1,11 @@
-﻿// 浜戝嚱鏁板叆鍙?- 鏁版嵁搴撳垵濮嬪寲
+﻿// 云函数入口- 数据库初始化
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
 /**
- * 鍒濆鍖栨暟鎹簱闆嗗悎鍜屾祴璇曟暟鎹?
+ * 初始化数据库集合和测试数据
  */
 exports.main = async (event, context) => {
   try {
@@ -26,9 +26,10 @@ exports.main = async (event, context) => {
     }
 
     const { cleanupLegacyFields = false } = event || {};
-    console.log('寮€濮嬪垵濮嬪寲鏁版嵁搴?..');
+    console.log('开始初始化数据库...');
 
-    // 1. 鍒涘缓闆嗗悎骞舵坊鍔犳祴璇曟暟鎹?    await initUsers();
+    // 1. 创建集合并添加测试数据
+    await initUsers();
     await initProfileCards();
     await initPointAccounts();
     await initPuzzles();
@@ -49,31 +50,31 @@ exports.main = async (event, context) => {
       await cleanupLegacyDatabaseFields();
     }
 
-    console.log('鏁版嵁搴撳垵濮嬪寲瀹屾垚锛?);
+    console.log('数据库初始化完成');
     return {
       code: 0,
-      message: '鏁版嵁搴撳垵濮嬪寲鎴愬姛'
+      message: '数据库初始化成功'
     };
   } catch (error) {
-    console.error('鏁版嵁搴撳垵濮嬪寲澶辫触:', error);
+    console.error('数据库初始化失败:', error);
     return {
       code: -1,
-      message: '鏁版嵁搴撳垵濮嬪寲澶辫触: ' + error.message,
+      message: '数据库初始化失败: ' + error.message,
       error: error.toString()
     };
   }
 };
 
 /**
- * 鍒濆鍖栫敤鎴疯〃
+ * 初始化用户表
  */
 async function initUsers() {
   try {
-    // 娣诲姞娴嬭瘯鐢ㄦ埛
+    // 添加测试用户
     const users = [
       {
         openid: 'test_user_001',
-        nickname: '绉垎灏忕帇',
+        nickname: '积分小王',
         avatar_url: '',
         role: 'user',
         status: 'active',
@@ -87,7 +88,7 @@ async function initUsers() {
       },
       {
         openid: 'test_user_002',
-        nickname: '鎺掕姒滅涓€',
+        nickname: '排行榜第一',
         avatar_url: '',
         role: 'user',
         status: 'active',
@@ -101,7 +102,7 @@ async function initUsers() {
       },
       {
         openid: 'test_user_003',
-        nickname: '娲昏穬鐢ㄦ埛',
+        nickname: '活跃用户',
         avatar_url: '',
         role: 'user',
         status: 'active',
@@ -120,20 +121,20 @@ async function initUsers() {
         const res = await db.collection('users').where({ openid: user.openid }).get();
         if (res.data.length === 0) {
           await db.collection('users').add({ data: user });
-          console.log(`鉁?鐢ㄦ埛 ${user.nickname} 娣诲姞鎴愬姛`);
+          console.log(`✅ 用户 ${user.nickname} 添加成功`);
         }
       } catch (e) {
-        // 闆嗗悎涓嶅瓨鍦紝鐩存帴娣诲姞浼氳嚜鍔ㄥ垱寤?
+        // 集合不存在，直接添加会自动创建
         if (e.errCode === -502005 || e.message.includes('not exist')) {
           await db.collection('users').add({ data: user });
-          console.log(`鉁?鐢ㄦ埛 ${user.nickname} 娣诲姞鎴愬姛`);
+          console.log(`✅ 用户 ${user.nickname} 添加成功`);
         } else {
           throw e;
         }
       }
     }
   } catch (error) {
-    console.log('鐢ㄦ埛琛ㄥ垵濮嬪寲:', error.message);
+    console.log('用户表初始化:', error.message);
   }
 }
 
@@ -463,7 +464,7 @@ async function cleanupCollectionLegacyFields(collectionName, legacyFields) {
 }
 
 async function cleanupLegacyDatabaseFields() {
-  console.log('寮€濮嬫竻鐞嗙涓€鎵规棫瀛楁...');
+  console.log('开始清理第一批旧字段...');
   const result = {};
   for (const collectionName of Object.keys(LEGACY_FIELD_CLEANUP)) {
     result[collectionName] = await cleanupCollectionLegacyFields(
@@ -471,19 +472,19 @@ async function cleanupLegacyDatabaseFields() {
       LEGACY_FIELD_CLEANUP[collectionName]
     );
   }
-  console.log('绗竴鎵规棫瀛楁娓呯悊瀹屾垚', result);
+  console.log('第二批旧字段清理完成', result);
   return result;
 }
 
 /**
- * 鍒濆鍖栦釜浜哄悕鐗囪〃
+ * 初始化个人名片表
  */
 async function initProfileCards() {
   try {
     const userRes = await db.collection('users').limit(100).get();
 
     for (const user of userRes.data || []) {
-      const nickName = user.nickName || user.nickname || '渚︽帰';
+      const nickName = user.nickName || user.nickname || '侦探';
       const avatarUrl = user.avatarUrl || user.avatar_url || '';
       const selfIntro = user.signature || user.self_intro || '';
       let exists = false;
@@ -514,15 +515,15 @@ async function initProfileCards() {
           updated_at: new Date()
         }
       });
-      console.log(`鉁?涓汉鍚嶇墖 ${nickName} 娣诲姞鎴愬姛`);
+      console.log(`✅ 个人名片 ${nickName} 添加成功`);
     }
   } catch (error) {
-    console.log('涓汉鍚嶇墖琛ㄥ垵濮嬪寲:', error.message);
+    console.log('个人名片表初始化:', error.message);
   }
 }
 
 /**
- * 鍒濆鍖栫Н鍒嗚处鎴疯〃
+ * 初始化积分账户表
  */
 async function initPointAccounts() {
   try {
@@ -555,28 +556,29 @@ async function initPointAccounts() {
           updated_at: new Date()
         }
       });
-      console.log(`鉁?绉垎璐︽埛 ${user.nickName || user.nickname || user.openid} 娣诲姞鎴愬姛`);
+      console.log(`✅ 积分账户 ${user.nickName || user.nickname || user.openid} 添加成功`);
     }
   } catch (error) {
-    console.log('绉垎璐︽埛琛ㄥ垵濮嬪寲:', error.message);
+    console.log('积分账户表初始化:', error.message);
   }
 }
 
 /**
- * 鍒濆鍖栨瘡鏃ヨ皽棰? */
+ * 初始化每日谜题
+ */
 async function initPuzzles() {
   try {
     const puzzles = [
       {
         date: new Date().toISOString().split('T')[0],
         publish_date: new Date().toISOString().split('T')[0],
-        title: '姣忔棩璋滈',
-        question: '浠ヤ笅鍝釜閫夐」鏄纭殑锛?,
-        content: '浠ヤ笅鍝釜閫夐」鏄纭殑锛?,
-        options: ['閫夐」A', '閫夐」B', '閫夐」C', '閫夐」D'],
-        correct_answer: '閫夐」B',
-        explanation: '杩欐槸姝ｇ‘绛旀鐨勮В閲婅鏄?,
-        answer_explanation: '杩欐槸姝ｇ‘绛旀鐨勮В閲婅鏄?,
+        title: '每日谜题',
+        question: '以下哪个选项是正确的？',
+        content: '以下哪个选项是正确的？',
+        options: ['选项A', '选项B', '选项C', '选项D'],
+        correct_answer: '选项B',
+        explanation: '这是正确答案的解释说明。',
+        answer_explanation: '这是正确答案的解释说明。',
         difficulty: 'easy',
         reward_points: 10,
         publish_time: '',
@@ -593,7 +595,7 @@ async function initPuzzles() {
       if (res.data.length === 0) {
         const addRes = await db.collection('puzzles').add({ data: puzzle });
         puzzleId = addRes._id;
-        console.log(`鉁?璋滈 ${puzzle.date} 娣诲姞鎴愬姛`);
+        console.log(`✅ 谜题 ${puzzle.date} 添加成功`);
       } else {
         puzzleId = res.data[0]._id;
       }
@@ -601,7 +603,7 @@ async function initPuzzles() {
       await syncPuzzleOptions(puzzleId, puzzle.options, puzzle.correct_answer);
     }
   } catch (error) {
-    console.log('璋滈琛ㄥ垵濮嬪寲:', error.message);
+    console.log('谜题表初始化:', error.message);
   }
 }
 
@@ -612,7 +614,8 @@ async function syncPuzzleOptions(puzzleId, options, correctAnswer) {
     const existRes = await db.collection('puzzle_options').where({ puzzle_id: puzzleId }).limit(100).get();
     if (existRes.data.length > 0) return;
   } catch (error) {
-    // 闆嗗悎涓嶅瓨鍦ㄦ椂缁х画鍒涘缓銆?  }
+    // 集合不存在时继续创建。
+  }
 
   for (let index = 0; index < options.length; index += 1) {
     const content = options[index];
@@ -630,19 +633,19 @@ async function syncPuzzleOptions(puzzleId, options, correctAnswer) {
       }
     });
   }
-  console.log(`鉁?璋滈閫夐」 ${puzzleId} 娣诲姞鎴愬姛`);
+  console.log(`✅ 谜题选项 ${puzzleId} 添加成功`);
 }
 
 /**
- * 鍒濆鍖栨椿鍔?
+ * 初始化活动
  */
 async function initActivities() {
   try {
     const activities = [
       {
-        title: '鏄ュ瓒ｅ懗杩愬姩浼?,
-        description: '鍙傚姞鏄ュ杩愬姩浼氾紝璧㈠彇濂栧搧锛?,
-        location: '鏍¤繍鍔ㄥ満',
+        title: '春季趣味运动会',
+        description: '参加春季运动会，赢取奖品！',
+        location: '校运动场',
         capacity: 100,
         registered_count: 23,
         deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -655,9 +658,9 @@ async function initActivities() {
         updated_at: new Date()
       },
       {
-        title: '鏆戞湡澶忎护钀?,
-        description: '鍙傚姞鏆戞湡澶忎护钀ワ紝浣撻獙澶ц嚜鐒?,
-        location: '灞卞尯钀ュ湴',
+        title: '暑期夏令营',
+        description: '参加暑期夏令营，体验大自然',
+        location: '山区营地',
         capacity: 50,
         registered_count: 35,
         deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -676,7 +679,7 @@ async function initActivities() {
         const res = await db.collection('activities').where({ title: activity.title }).get();
         if (res.data.length === 0) {
           await db.collection('activities').add({ data: activity });
-          console.log(`鉁?娲诲姩 ${activity.title} 娣诲姞鎴愬姛`);
+          console.log(`✅ 活动 ${activity.title} 添加成功`);
         } else {
           await db.collection('activities').doc(res.data[0]._id).update({
             data: {
@@ -692,29 +695,29 @@ async function initActivities() {
       } catch (e) {
         if (e.errCode === -502005 || e.message.includes('not exist')) {
           await db.collection('activities').add({ data: activity });
-          console.log(`鉁?娲诲姩 ${activity.title} 娣诲姞鎴愬姛`);
+          console.log(`✅ 活动 ${activity.title} 添加成功`);
         } else {
           throw e;
         }
       }
     }
   } catch (error) {
-    console.log('娲诲姩琛ㄥ垵濮嬪寲:', error.message);
+    console.log('活动表初始化:', error.message);
   }
 }
 
 /**
- * 鍒濆鍖栫墿璧勫€熼槄
+ * 初始化物资借阅
  */
 async function initInventoryItems() {
   try {
     const items = [
       {
-        name: '甯愮',
-        item_name: '甯愮',
+        name: '帐篷',
+        item_name: '帐篷',
         item_type: 'material',
-        description: '2浜洪槻姘撮湶钀ュ笎绡?,
-        category: '闇茶惀',
+        description: '2人防水露营帐篷',
+        category: '露营',
         total_quantity: 10,
         available_quantity: 10,
         status: 'available',
@@ -727,10 +730,10 @@ async function initInventoryItems() {
         updated_at: new Date()
       },
       {
-        name: '鍓ф湰鏉€浣撻獙鍒?,
-        item_name: '鍓ф湰鏉€浣撻獙鍒?,
+        name: '剧本杀体验券',
+        item_name: '剧本杀体验券',
         item_type: 'exchange_good',
-        description: '绀惧洟娲诲姩鍏戞崲濂栧搧',
+        description: '社团活动兑换奖品',
         category: 'activity',
         total_quantity: 20,
         available_quantity: 20,
@@ -754,12 +757,12 @@ async function initInventoryItems() {
       }
     }
   } catch (error) {
-    console.log('缁熶竴搴撳瓨琛ㄥ垵濮嬪寲:', error.message);
+    console.log('统一库存表初始化:', error.message);
   }
 }
 
 /**
- * 瀵归綈鍏戞崲璁板綍瀛楁
+ * 对齐兑换记录字段
  */
 async function initExchangeRecords() {
   try {
@@ -787,14 +790,14 @@ async function initExchangeRecords() {
         }
       });
     }
-    console.log('鍏戞崲璁板綍瀛楁瀵归綈瀹屾垚');
+    console.log('兑换记录字段对齐完成');
   } catch (error) {
-    console.log('鍏戞崲璁板綍瀛楁瀵归綈:', error.message);
+    console.log('兑换记录字段对齐:', error.message);
   }
 }
 
 /**
- * 瀵归綈鍊熼槄璁板綍瀛楁
+ * 对齐借阅记录字段
  */
 async function initBorrowRecords() {
   try {
@@ -836,48 +839,49 @@ async function initBorrowRecords() {
           });
         }
       } catch (e) {
-        console.log('鍊熼槄璁板綍鍚屾 borrow_records:', e.message);
+        console.log('借阅记录同步 borrow_records:', e.message);
       }
     }
 
-    console.log('鍊熼槄璁板綍瀛楁瀵归綈瀹屾垚');
+    console.log('借阅记录字段对齐完成');
   } catch (error) {
-    console.log('鍊熼槄璁板綍瀛楁瀵归綈:', error.message);
+    console.log('借阅记录字段对齐:', error.message);
   }
 }
 
 /**
- * 鍒濆鍖?DUD 鍏抽敭璇? */
+ * 初始化 DUD 关键词
+ */
 async function initDudKeywords() {
   try {
     const keywords = [
       {
-        keyword: '浣犲ソ',
-        reply: '浣犲ソ锛佸緢楂樺叴璁よ瘑浣爚 馃槉',
+        keyword: '你好',
+        reply: '你好！很高兴认识你~ 😊',
         match_type: 'exact',
         created_at: new Date()
       },
       {
-        keyword: '璋㈣阿',
-        reply: '涓嶅姘旓紒寰堥珮鍏翠负浣犳湇鍔 馃憤',
+        keyword: '谢谢',
+        reply: '不客气！很高兴为你服务 👍',
         match_type: 'exact',
         created_at: new Date()
       },
       {
-        keyword: '甯姪',
-        reply: '鎴戝彲浠ュ府鍔╀綘浜嗚В搴旂敤鐨勫悇椤瑰姛鑳斤紝鏈変粈涔堥渶瑕佸府鍔╃殑鍚楋紵',
+        keyword: '帮助',
+        reply: '我可以帮助你了解应用的各项功能，有什么需要帮助的吗？',
         match_type: 'exact',
         created_at: new Date()
       },
       {
-        keyword: '绉垎',
-        reply: '鍙互閫氳繃瀹屾垚姣忔棩璋滈銆佸弬鍔犳椿鍔ㄧ瓑鏂瑰紡鑾峰緱绉垎鍝︼紒',
+        keyword: '积分',
+        reply: '可以通过完成每日谜题、参加活动等方式获得积分哦！',
         match_type: 'fuzzy',
         created_at: new Date()
       },
       {
-        keyword: '鎺掕',
-        reply: '鍓嶅線銆屾帓琛屾銆嶉〉闈㈠彲浠ユ煡鐪嬪疄鏃舵帓鍚嶆儏鍐祣',
+        keyword: '排行',
+        reply: '前往「排行榜」页面可以查看实时排名情况~',
         match_type: 'fuzzy',
         created_at: new Date()
       }
@@ -888,24 +892,25 @@ async function initDudKeywords() {
         const res = await db.collection('dud_keywords').where({ keyword: keyword.keyword }).get();
         if (res.data.length === 0) {
           await db.collection('dud_keywords').add({ data: keyword });
-          console.log(`鉁?鍏抽敭璇?"${keyword.keyword}" 娣诲姞鎴愬姛`);
+          console.log(`✅ 关键词 "${keyword.keyword}" 添加成功`);
         }
       } catch (e) {
         if (e.errCode === -502005 || e.message.includes('not exist')) {
           await db.collection('dud_keywords').add({ data: keyword });
-          console.log(`鉁?鍏抽敭璇?"${keyword.keyword}" 娣诲姞鎴愬姛`);
+          console.log(`✅ 关键词 "${keyword.keyword}" 添加成功`);
         } else {
           throw e;
         }
       }
     }
   } catch (error) {
-    console.log('DUD鍏抽敭璇嶈〃鍒濆鍖?', error.message);
+    console.log('DUD关键词表初始化:', error.message);
   }
 }
 
 /**
- * 瀵归綈 Dud 鍏抽敭璇嶈鍒欏瓧娈? */
+ * 对齐 Dud 关键词规则字段
+ */
 async function initDudRules() {
   try {
     const res = await db.collection('dud_keywords').limit(100).get();
@@ -913,8 +918,8 @@ async function initDudRules() {
     for (const item of res.data || []) {
       const keywords = Array.isArray(item.keywords)
         ? item.keywords.map(keyword => String(keyword || '').trim()).filter(Boolean)
-        : String(item.keyword || '').split(/[,锛孿n]/).map(keyword => keyword.trim()).filter(Boolean);
-      const firstKeyword = keywords[0] || item.keyword || '鍏抽敭璇?;
+        : String(item.keyword || '').split(/[,，\n]/).map(keyword => keyword.trim()).filter(Boolean);
+      const firstKeyword = keywords[0] || item.keyword || '关键词';
       const reply_content = item.reply_content || item.reply || '';
       const match_type = item.match_type || 'exact';
       const created_at = item.created_at || new Date();
@@ -937,14 +942,15 @@ async function initDudRules() {
       });
     }
 
-    console.log('Dud 鍏抽敭璇嶈鍒欏瓧娈靛榻愬畬鎴?);
+    console.log('Dud 关键词规则字段对齐完成');
   } catch (error) {
-    console.log('Dud 鍏抽敭璇嶈鍒欏瓧娈靛榻?', error.message);
+    console.log('Dud 关键词规则字段对齐:', error.message);
   }
 }
 
 /**
- * 瀵归綈鍙嶉琛ㄥ瓧娈? */
+ * 对齐反馈表字段
+ */
 async function initFeedback() {
   try {
     const res = await db.collection('feedback').limit(100).get();
@@ -973,21 +979,22 @@ async function initFeedback() {
       });
     }
 
-    console.log('鍙嶉琛ㄥ瓧娈靛榻愬畬鎴?);
+    console.log('反馈表字段对齐完成');
   } catch (error) {
-    console.log('鍙嶉琛ㄥ垵濮嬪寲:', error.message);
+    console.log('反馈表初始化:', error.message);
   }
 }
 
 /**
- * 瀵归綈鎺ㄨ崘鍐呭琛ㄥ瓧娈? */
+ * 对齐推荐内容表字段
+ */
 async function initRecommendations() {
   try {
     const res = await db.collection('recommendations').limit(100).get();
 
     for (const item of res.data || []) {
-      const title = item.title || '鎺ㄨ崘鍐呭';
-      const recommender_name = item.recommender_name || item.recommender || 'NK鎺ㄥ崗';
+      const title = item.title || '推荐内容';
+      const recommender_name = item.recommender_name || item.recommender || 'NK推协';
       const article_url = item.article_url || item.link_url || '';
       const cover_url = item.cover_url || item.image || '';
       const published_at = item.published_at || item.created_at || new Date();
@@ -1014,14 +1021,14 @@ async function initRecommendations() {
       });
     }
 
-    console.log('鎺ㄨ崘鍐呭琛ㄥ瓧娈靛榻愬畬鎴?);
+    console.log('推荐内容表字段对齐完成');
   } catch (error) {
-    console.log('鎺ㄨ崘鍐呭琛ㄥ垵濮嬪寲:', error.message);
+    console.log('推荐内容表初始化:', error.message);
   }
 }
 
 /**
- * 瀵归綈浜嬩欢濮旀墭鐩稿叧瀛楁
+ * 对齐事件委托相关字段
  */
 async function initCommissions() {
   try {
@@ -1093,14 +1100,14 @@ async function initCommissions() {
       });
     }
 
-    console.log('浜嬩欢濮旀墭瀛楁瀵归綈瀹屾垚');
+    console.log('事件委托字段对齐完成');
   } catch (error) {
-    console.log('浜嬩欢濮旀墭瀛楁瀵归綈:', error.message);
+    console.log('事件委托字段对齐:', error.message);
   }
 }
 
 /**
- * 瀵归綈鍚庡彴鎿嶄綔鏃ュ織瀛楁
+ * 对齐后台操作日志字段
  */
 async function initAdminLogs() {
   try {
@@ -1129,14 +1136,14 @@ async function initAdminLogs() {
       });
     }
 
-    console.log('鍚庡彴鎿嶄綔鏃ュ織瀛楁瀵归綈瀹屾垚');
+    console.log('后台操作日志字段对齐完成');
   } catch (error) {
-    console.log('鍚庡彴鎿嶄綔鏃ュ織瀛楁瀵归綈:', error.message);
+    console.log('后台操作日志字段对齐:', error.message);
   }
 }
 
 /**
- * 鐢熸垚鎴栧榻愭帓琛屾蹇収
+ * 生成或对齐排行榜快照
  */
 async function initRankingSnapshots() {
   try {
@@ -1163,14 +1170,14 @@ async function initRankingSnapshots() {
         await db.collection('ranking_snapshots').doc(addRes._id).update({ data: { snapshot_id: addRes._id } });
       }
     }
-    console.log('鎺掕姒滃揩鐓у瓧娈靛榻愬畬鎴?);
+    console.log('排行榜快照字段对齐完成');
   } catch (error) {
-    console.log('鎺掕姒滃揩鐓у瓧娈靛榻?', error.message);
+    console.log('排行榜快照字段对齐:', error.message);
   }
 }
 
 /**
- * 瀵归綈绯荤粺璁剧疆瀛楁
+ * 对齐系统设置字段
  */
 async function initSystemSettings() {
   try {
@@ -1192,7 +1199,7 @@ async function initSystemSettings() {
           setting_key: 'global',
           settings,
           setting_value: settings,
-          description: item.description || '绯荤粺鍏ㄥ眬璁剧疆',
+          description: item.description || '系统全局设置',
           created_at: item.created_at || new Date(),
           updated_at: new Date()
         }
@@ -1204,16 +1211,16 @@ async function initSystemSettings() {
           setting_key: 'global',
           settings: defaultSettings,
           setting_value: defaultSettings,
-          description: '绯荤粺鍏ㄥ眬璁剧疆',
+          description: '系统全局设置',
           created_at: new Date(),
           updated_at: new Date()
         }
       });
       await db.collection('system_settings').doc(addRes._id).update({ data: { setting_id: addRes._id } });
     }
-    console.log('绯荤粺璁剧疆瀛楁瀵归綈瀹屾垚');
+    console.log('系统设置字段对齐完成');
   } catch (error) {
-    console.log('绯荤粺璁剧疆瀛楁瀵归綈:', error.message);
+    console.log('系统设置字段对齐:', error.message);
   }
 }
 
