@@ -1,0 +1,21 @@
+@startuml
+title 借阅物资状态机图
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+
+state "维护/下架" as Maintenance
+
+[*] --> 在库
+在库 --> 传递中 : 用户申请
+传递中 --> 已借出 : 管理员确认
+传递中 --> 在库 : 借阅人取消
+已借出 --> 在库 : 归还入库
+在库 --> Maintenance : 管理员下架
+Maintenance --> 在库 : 恢复上架
+
+note bottom of 传递中
+  约束：传递中状态下，只有借阅人可取消；
+  其他用户只能看到状态，不可再次借阅。
+end note
+@enduml

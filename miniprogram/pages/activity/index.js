@@ -248,7 +248,10 @@ Page({
 
   async handleRegisterResult(result) {
     if (result.success) {
-      wx.showToast({ title: '报名成功', icon: 'success' });
+      wx.showToast({
+        title: result.idempotent ? '您已报名过此活动' : '报名成功',
+        icon: result.idempotent ? 'none' : 'success'
+      });
       this.setData({ show_register_modal: false });
       await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       return;

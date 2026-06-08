@@ -234,11 +234,36 @@ async function getCurrentUser(openid) {
 
 async function getActiveRegistration(user, activity_id) {
   if (!user || !user._id || !activity_id) return null;
-  const res = await db.collection('activity_registrations')
-    .where({ user_id: user._id, activity_id })
-    .limit(10)
-    .get();
-  return (res.data || []).find(item => !['cancelled', 'failed'].includes(item.status)) || null;
+  try {
+    const res = await db.collection('activity_registrations')
+      .where({ user_id: user._id, activity_id })
+      .limit(10)
+      .get();
+    return (res.data || []).find(item => !['cancelled', 'failed'].includes(item.status)) || null;
+  } catch (error) {
+    if (isCollectionMissing(error)) return null;
+    throw error;
+  }
+}
+
+async function getUserRegistrationsMap(user_id, activity_ids) {
+  if (!user_id || !activity_ids || activity_ids.length === 0) return new Map();
+  try {
+    const res = await db.collection('activity_registrations')
+      .where({ user_id, activity_id: _.in(activity_ids) })
+      .limit(activity_ids.length)
+      .get();
+    const map = new Map();
+    for (const item of res.data || []) {
+      if (!['cancelled', 'failed'].includes(item.status)) {
+        map.set(item.activity_id, normalizeRegistration(item));
+      }
+    }
+    return map;
+  } catch (error) {
+    if (isCollectionMissing(error)) return new Map();
+    throw error;
+  }
 }
 
 async function listMyRegistrations(user, page, page_size) {
@@ -256,6 +281,7 @@ async function listMyRegistrations(user, page, page_size) {
 
 async function activity_getActivities(event) {
   try {
+    const wx_context = cloud.getWXContext();
     const page = Math.max(numberValue(event.page, 1), 1);
     const page_size = Math.min(Math.max(numberValue(event.page_size, 10), 1), 50);
     const res = await db.collection('activities')
@@ -266,8 +292,19 @@ async function activity_getActivities(event) {
       .get();
     const count_res = await db.collection('activities').where({ status: _.neq('cancelled') }).count();
 
+    const list = (res.data || []).map(normalizeActivity);
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (user && list.length > 0) {
+      const regMap = await getUserRegistrationsMap(user._id, list.map(item => item.activity_id).filter(Boolean));
+      list.forEach(activity => {
+        const reg = regMap.get(activity.activity_id) || null;
+        activity.user_registration = reg;
+        activity.is_registered = !!reg;
+      });
+    }
+
     return ok({
-      list: (res.data || []).map(normalizeActivity),
+      list,
       total: count_res.total,
       page,
       page_size,

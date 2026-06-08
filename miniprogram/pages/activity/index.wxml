@@ -63,9 +63,10 @@
           </view>
 
           <view class="activity-actions">
+            <button class="btn-registered" wx:if="{{item.is_registered}}">已报名</button>
             <button
               class="btn-register"
-              wx:if="{{!item.is_full}}"
+              wx:elif="{{!item.is_full}}"
               bindtap="showRegisterModal"
               data-id="{{item.activity_id}}">
               <text class="btn-text">立即报名</text>

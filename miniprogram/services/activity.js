@@ -58,7 +58,9 @@ class ActivityService {
       }
       return {
         success: true,
-        registration_id: result.data && result.data.registration_id
+        registration_id: result.data && result.data.registration_id,
+        idempotent: !!(result.data && result.data.idempotent),
+        message: result.message || '报名成功'
       };
     } catch (error) {
       console.error('Failed to register activity:', error);
