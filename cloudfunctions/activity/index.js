@@ -13,6 +13,14 @@ function fail(message, code = -1) {
   return { code, message };
 }
 
+function isCollectionMissing(error) {
+  return error && (
+    error.errCode === -502005 ||
+    String(error.message || '').includes('not exist') ||
+    String(error.message || '').includes('collection not exists')
+  );
+}
+
 function numberValue(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
@@ -72,11 +80,16 @@ async function getCurrentUser(openid) {
 
 async function getActiveRegistration(user, activity_id) {
   if (!user || !user._id || !activity_id) return null;
-  const res = await db.collection('activity_registrations')
-    .where({ user_id: user._id, activity_id, status: _.neq('cancelled') })
-    .limit(1)
-    .get();
-  return res.data[0] || null;
+  try {
+    const res = await db.collection('activity_registrations')
+      .where({ user_id: user._id, activity_id, status: _.neq('cancelled') })
+      .limit(1)
+      .get();
+    return res.data[0] || null;
+  } catch (error) {
+    if (isCollectionMissing(error)) return null;
+    throw error;
+  }
 }
 
 async function listMyRegistrations(user, page, page_size) {
@@ -92,8 +105,25 @@ async function listMyRegistrations(user, page, page_size) {
   return { list: res.data || [], total: count_res.total };
 }
 
+async function getUserRegistrationsMap(userId, activityIds) {
+  if (!userId || !activityIds || !activityIds.length) return new Map();
+  try {
+    const res = await db.collection('activity_registrations')
+      .where({ user_id: userId, activity_id: _.in(activityIds), status: _.neq('cancelled') })
+      .get();
+    const map = new Map();
+    for (const item of res.data || []) {
+      map.set(item.activity_id, normalizeRegistration(item));
+    }
+    return map;
+  } catch (error) {
+    return new Map();
+  }
+}
+
 async function activity_getActivities(event) {
   try {
+    const wx_context = cloud.getWXContext();
     const page = Math.max(numberValue(event.page, 1), 1);
     const page_size = Math.min(Math.max(numberValue(event.page_size, 10), 1), 50);
     const res = await db.collection('activities')
@@ -104,8 +134,20 @@ async function activity_getActivities(event) {
       .get();
     const count_res = await db.collection('activities').where({ status: _.neq('cancelled') }).count();
 
+    const list = (res.data || []).map(normalizeActivity);
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (user && list.length > 0) {
+      const activityIds = list.map(a => a.activity_id).filter(Boolean);
+      const regMap = await getUserRegistrationsMap(user._id, activityIds);
+      list.forEach(activity => {
+        const reg = regMap.get(activity.activity_id) || null;
+        activity.user_registration = reg;
+        activity.is_registered = reg !== null;
+      });
+    }
+
     return ok({
-      list: (res.data || []).map(normalizeActivity),
+      list,
       total: count_res.total,
       page,
       page_size,
@@ -150,7 +192,8 @@ async function activity_getMyActivities(event) {
 }
 
 async function activity_registerActivity(event) {
-  let registration_id = '';
+  let count_incremented = false;
+  let stable_id = '';
   try {
     const wx_context = cloud.getWXContext();
     const user = await getCurrentUser(wx_context.OPENID);
@@ -163,6 +206,8 @@ async function activity_registerActivity(event) {
 
     const act_res = await db.collection('activities').doc(activity_id).get();
     const activity = normalizeActivity(act_res.data);
+
+    // 快速路径：查询已有报名记录
     const existing_registration = await getActiveRegistration(user, activity_id);
     if (existing_registration) return fail('您已经报名过此活动');
 
@@ -175,6 +220,38 @@ async function activity_registerActivity(event) {
       return fail('活动已满员');
     }
 
+    // 幂等防重：用 user_id + activity_id 拼接稳定 _id
+    // 微信云数据库 _id 唯一，并发重复 add 第二次必失败 → 天然防重
+    stable_id = `ar_${user._id}_${activity_id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+
+    // 1) 先插入报名记录（稳定 _id 作为数据库层去重锁）
+    try {
+      await db.collection('activity_registrations').add({
+        data: {
+          _id: stable_id,
+          registration_id: stable_id,
+          user_id: user._id,
+          activity_id,
+          reason,
+          status: 'registered',
+          can_not_cancel_confirm: confirmed,
+          registered_at: db.serverDate(),
+          updated_at: db.serverDate()
+        }
+      });
+    } catch (error) {
+      // _id 冲突：说明已被并发写入或曾经报名过，幂等返回
+      const dup = await getActiveRegistration(user, activity_id);
+      if (dup) {
+        return ok({
+          registration_id: dup.registration_id || dup._id,
+          idempotent: true
+        }, '您已经报名过此活动');
+      }
+      throw error;
+    }
+
+    // 2) 原子增加活动报名人数
     const update_res = await db.collection('activities')
       .where({
         _id: activity_id,
@@ -189,37 +266,23 @@ async function activity_registerActivity(event) {
       });
 
     if (update_res.stats && update_res.stats.updated === 0) {
+      // 报名人数已达上限：回滚已插入的报名记录
+      await db.collection('activity_registrations').doc(stable_id).update({
+        data: { status: 'cancelled', cancelled_at: db.serverDate(), updated_at: db.serverDate() }
+      });
       return fail('活动已满员或状态已变化');
     }
+    count_incremented = true;
 
-    try {
-      const add_res = await db.collection('activity_registrations').add({
-        data: {
-          user_id: user._id,
-          activity_id,
-          reason,
-          status: 'registered',
-          can_not_cancel_confirm: confirmed,
-          registered_at: db.serverDate(),
-          updated_at: db.serverDate()
-        }
-      });
-      registration_id = add_res._id;
-      await db.collection('activity_registrations').doc(registration_id).update({
-        data: { registration_id }
-      });
-    } catch (error) {
-      await db.collection('activities').doc(activity_id).update({
-        data: {
-          registered_count: _.inc(-1),
-          updated_at: db.serverDate()
-        }
-      });
-      throw error;
-    }
-
-    return ok({ registration_id }, '报名成功');
+    return ok({ registration_id: stable_id }, '报名成功');
   } catch (error) {
+    if (count_incremented && stable_id) {
+      try {
+        await db.collection('activity_registrations').doc(stable_id).update({
+          data: { status: 'cancelled', cancelled_at: db.serverDate(), updated_at: db.serverDate() }
+        });
+      } catch (e) { /* 回滚失败静默 */ }
+    }
     return fail('报名失败: ' + error.message);
   }
 }

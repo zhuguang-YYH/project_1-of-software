@@ -83,7 +83,9 @@ Page({
         ? Number(item.remaining_capacity)
         : Math.max(0, capacity - registered_count),
       is_full: capacity > 0 && registered_count >= capacity,
-      is_expired: end_date ? end_date < new Date() : false
+      is_expired: end_date ? end_date < new Date() : false,
+      is_registered: !!item.is_registered,
+      user_registration: item.user_registration || null
     };
   },
 
@@ -157,6 +159,11 @@ Page({
     const activity_id = event.currentTarget.dataset.id;
     const activity = this.data.activities.find(item => item.activity_id === activity_id);
     if (!activity) return;
+
+    if (activity.is_registered) {
+      wx.showToast({ title: '您已报名此活动', icon: 'none' });
+      return;
+    }
 
     if (activity.remaining_capacity <= 0) {
       wx.showToast({ title: '活动已满员', icon: 'none' });
@@ -234,7 +241,11 @@ Page({
 
   async handleRegisterResult(result) {
     if (result.code === 0) {
-      wx.showToast({ title: '报名成功', icon: 'success' });
+      if (result.idempotent) {
+        wx.showToast({ title: '您已报名过此活动', icon: 'none' });
+      } else {
+        wx.showToast({ title: '报名成功', icon: 'success' });
+      }
       this.setData({ show_register_modal: false });
       await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       return;

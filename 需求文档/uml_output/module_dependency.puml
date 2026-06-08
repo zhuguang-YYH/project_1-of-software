@@ -1,0 +1,37 @@
+@startuml
+title 功能模块依赖图
+left to right direction
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+component "登录与权限" as Auth #dbeafe
+component "每日谜题" as Puzzle #fff7ed
+component "积分账户" as Credit #ecfdf5
+component "排行榜" as Rank #fef3c7
+component "积分商城" as Shop #ecfdf5
+component "库存管理" as Inventory #e0f2fe
+component "借阅系统" as Borrow #fff7ed
+component "活动报名" as Activity #fce7f3
+component "事件委托" as Commission #ede9fe
+component "Dud关键词回复" as Dud #cffafe
+component "推荐/反馈/名片" as Profile #f1f5f9
+
+Auth --> Puzzle : 授权
+Puzzle --> Credit : 答对加分
+Credit --> Rank : 累计积分
+Credit --> Shop : 可兑换积分
+Shop --> Inventory : 库存扣减
+Borrow --> Inventory : 物资状态
+Auth --> Activity : 身份校验
+Auth --> Borrow : 身份校验
+Commission --> Credit : 报酬转移
+Dud --> Auth : 频率限制
+Profile --> Auth : 用户资料
+
+note bottom
+  模块依赖图用于辅助后续架构设计，
+  突出权限、积分与库存三个共享核心。
+end note
+@enduml

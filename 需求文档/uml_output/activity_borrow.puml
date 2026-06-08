@@ -1,0 +1,24 @@
+@startuml
+title 剧本杀/书籍借阅活动图
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+
+start
+:用户进入借阅页面;
+:浏览库存与所在校区;
+if (物资是否在库？) then (否)
+  :仅展示状态：借出/传递中;
+  stop
+else (是)
+  :用户提交借阅申请;
+  :状态改为传递中;
+endif
+if (社团管理层是否确认？) then (取消)
+  :借阅人取消申请;
+else (确认)
+  :管理员确认实物借出;
+endif
+:更新借阅记录与物资状态;
+stop
+@enduml

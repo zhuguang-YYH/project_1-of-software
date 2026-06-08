@@ -1,0 +1,75 @@
+@startuml
+title nk推协侦探管理系统 - 用例图
+left to right direction
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #fff7ed
+  BorderColor #344e41
+  FontColor #172554
+}
+skinparam actor {
+  BorderColor #334155
+  FontColor #1f2937
+}
+
+actor "普通用户/侦探" as User
+actor "管理员/社团管理层" as Admin
+
+rectangle "系统边界：微信小程序与管理后台" {
+  usecase "微信授权登录" as UCLogin
+  usecase "每日谜题答题" as UCPuzzle
+  usecase "查看积分榜" as UCRank
+  usecase "兑换积分商品" as UCShop
+  usecase "活动报名/取消" as UCActivity
+  usecase "提交反馈建议" as UCFeedback
+  usecase "维护侦探名片" as UCCard
+  usecase "借阅剧本/书籍" as UCBorrow
+  usecase "浏览推荐内容" as UCRecommend
+  usecase "Dud关键词互动" as UCDud
+  usecase "发布事件委托" as UCPost
+  usecase "接收/完成委托" as UCAccept
+
+  usecase "预设每日谜题" as AdminPuzzle #ecfeff
+  usecase "配置Dud回复规则" as AdminDud #ecfeff
+  usecase "确认借阅流转" as AdminBorrow #ecfeff
+  usecase "维护库存/商城" as AdminInventory #ecfeff
+  usecase "维护活动参数" as AdminActivity #ecfeff
+  usecase "查看反馈与审计" as AdminAudit #ecfeff
+}
+
+User --> UCLogin
+User --> UCPuzzle
+User --> UCRank
+User --> UCShop
+User --> UCActivity
+User --> UCFeedback
+User --> UCCard
+User --> UCBorrow
+User --> UCRecommend
+User --> UCDud
+User --> UCPost
+User --> UCAccept
+
+Admin --> AdminPuzzle
+Admin --> AdminDud
+Admin --> AdminBorrow
+Admin --> AdminInventory
+Admin --> AdminActivity
+Admin --> AdminAudit
+Admin --|> User
+
+UCPuzzle ..> UCLogin : <<include>>
+UCShop ..> UCLogin : <<include>>
+UCBorrow ..> UCLogin : <<include>>
+UCPost ..> UCLogin : <<include>>
+UCAccept ..> UCPost : <<extend>>
+AdminBorrow ..> UCBorrow : <<include>>
+AdminInventory ..> UCShop : <<include>>
+
+note bottom
+  普通用户通过微信授权进入核心业务；
+  管理员继承普通用户权限，并额外维护谜题、规则、库存、活动与借阅状态。
+end note
+@enduml

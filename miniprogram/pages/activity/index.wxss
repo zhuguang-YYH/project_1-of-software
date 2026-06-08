@@ -220,6 +220,28 @@
   border: 2rpx solid #fecaca !important;
 }
 
+.btn-registered {
+  flex: 1;
+  height: 80rpx !important;
+  line-height: 80rpx !important;
+  padding: 0 !important;
+  font-size: 27rpx !important;
+  border-radius: 14rpx !important;
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  border: 2rpx solid #bbf7d0 !important;
+  font-weight: 600 !important;
+}
+
+.btn-registered::after { border: none !important; }
+
+.btn-registered text {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
 .btn-register::after,
 .btn-cancel::after,
 .btn-confirm-modal::after,

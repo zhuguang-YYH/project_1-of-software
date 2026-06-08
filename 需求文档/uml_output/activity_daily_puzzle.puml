@@ -1,0 +1,27 @@
+@startuml
+title 每日谜题答题活动图
+skinparam backgroundColor #f8fafc
+skinparam defaultFontName Microsoft YaHei
+skinparam shadowing false
+
+start
+:进入每日谜题页面;
+:检查微信登录状态;
+if (是否已登录？) then (否)
+  :跳转授权登录;
+else (是)
+endif
+:加载今日谜题;
+if (今日是否已答？) then (是)
+  :展示历史结果与解析;
+else (否)
+  :提交选项并校验;
+  if (是否答对？) then (是)
+    :增加个人积分;
+  else (否)
+  endif
+  :显示正确答案和解析;
+  :写入答题记录;
+endif
+stop
+@enduml
