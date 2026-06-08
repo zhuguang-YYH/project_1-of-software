@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container theme-{{theme}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
@@ -50,29 +50,38 @@
 
       <view class="goods-list">
         <view class="goods-card" wx:for="{{filtered_goods}}" wx:key="item_id">
-          <view class="goods-header">
-            <view class="goods-name">{{item.name}}</view>
-            <view class="goods-badge" wx:if="{{item.is_sold_out}}">已兑完</view>
-            <view class="goods-badge stock-low" wx:elif="{{item.available_quantity <= 3}}">仅剩{{item.available_quantity}}</view>
-          </view>
+          <view class="goods-main">
+            <image class="goods-cover" src="{{item.cover_url}}" mode="aspectFill" />
+            <view class="goods-content">
+              <view class="goods-header">
+                <view class="goods-name">{{item.name}}</view>
+                <view class="goods-badge" wx:if="{{item.is_sold_out}}">
+                  <image class="badge-icon" src="{{item.stock_icon}}" mode="aspectFit" />
+                  <text>已兑完</text>
+                </view>
+                <view class="goods-badge stock-low" wx:elif="{{item.available_quantity <= 3}}">仅剩{{item.available_quantity}}</view>
+              </view>
 
-          <view class="goods-details">
-            <view class="detail-item" wx:if="{{item.description}}">
-              <text class="detail-label">描述</text>
-              <text class="detail-value">{{item.description}}</text>
-            </view>
-            <view class="detail-item">
-              <text class="detail-label">库存</text>
-              <text class="detail-value">{{item.available_quantity}}件</text>
-            </view>
-          </view>
+              <view class="goods-details">
+                <view class="detail-item" wx:if="{{item.description}}">
+                  <text class="detail-label">描述</text>
+                  <text class="detail-value">{{item.description}}</text>
+                </view>
+                <view class="detail-item">
+                  <text class="detail-label">库存</text>
+                  <text class="detail-value">{{item.available_quantity}}件</text>
+                </view>
+              </view>
 
-          <view class="goods-pricing">
-            <view class="cost-section">
-              <text class="cost-label">积分价格</text>
-              <view class="cost-value">
-                <text class="cost-number">{{item.exchange_points}}</text>
-                <text class="cost-unit">积分</text>
+              <view class="goods-pricing">
+                <view class="cost-section">
+                  <text class="cost-label">积分价格</text>
+                  <view class="cost-value">
+                    <image class="cost-icon" src="{{item.points_icon}}" mode="aspectFit" />
+                    <text class="cost-number">{{item.exchange_points}}</text>
+                    <text class="cost-unit">积分</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>

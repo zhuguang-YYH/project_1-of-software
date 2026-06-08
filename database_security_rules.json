@@ -7,7 +7,7 @@
   },
 
   "profile_cards": {
-    "read": true,
+    "read": "doc.visibility != 'private' || (auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid)",
     "write": false
   },
 
@@ -52,6 +52,11 @@
   },
 
   "borrow_records": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "borrow_applications": {
     "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
     "write": false
   },

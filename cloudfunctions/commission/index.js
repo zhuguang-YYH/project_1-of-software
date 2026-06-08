@@ -26,6 +26,13 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function buildPublishRequestId(user_id, client_request_id) {
+  const raw = String(client_request_id || '').trim();
+  if (!raw) return '';
+  const safe = raw.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  return `commission_${user_id}_${safe}`;
+}
+
 function getCommissionId(event = {}) {
   return event.commission_id || '';
 }
@@ -244,15 +251,23 @@ async function commission_getCommissionDetail(event) {
 }
 
 async function commission_publishCommission(event) {
+  let lock_created = false;
+  let points_frozen = false;
+  let commission_doc_id = '';
+  let user_id = '';
+  let reward = 0;
+  let officialReward = false;
   try {
     const user = await getCurrentUser();
     if (!user) return fail('请先登录', 'USER_NOT_FOUND');
+    user_id = user._id;
 
     const title = String(event.title || '').trim();
     const content = String(event.content || event.description || '').trim();
-    const reward = Number(event.reward_points || event.reward || 0);
+    reward = Number(event.reward_points || event.reward || 0);
     const isPinned = event.is_pinned === true || event.isPinned === true;
-    const officialReward = isPinned && isAdminUser(user);
+    officialReward = isPinned && isAdminUser(user);
+    const client_request_id = String(event.client_request_id || '').trim();
 
     if (!title) return fail('委托标题不能为空');
     if (!content) return fail('委托内容不能为空');
@@ -260,10 +275,47 @@ async function commission_publishCommission(event) {
 
     await ensurePointAccount(user);
 
-    // 原子冻结发布者积分（非官方委托）
+    // 幂等锁：用 client_request_id 生成稳定 _id 创建 processing 占位委托。
+    // 防止跨前端去重窗口的重复提交导致重复发布 + 重复冻结积分（危险方向的重复扣减）。
+    if (client_request_id) {
+      commission_doc_id = buildPublishRequestId(user_id, client_request_id);
+      try {
+        await db.collection('commissions').add({
+          data: {
+            _id: commission_doc_id,
+            commission_id: commission_doc_id,
+            publisher_id: user_id,
+            publisher_name: user.nickname || '匿名侦探',
+            title,
+            content,
+            reward_points: reward,
+            status: 'processing',
+            client_request_id,
+            created_at: db.serverDate(),
+            updated_at: db.serverDate()
+          }
+        });
+        lock_created = true;
+      } catch (e) {
+        if (isCollectionMissing(e)) throw e;
+        // _id 冲突 → 已有同一请求记录，按其状态幂等返回
+        const existed = await db.collection('commissions').doc(commission_doc_id).get();
+        const old = existed.data || {};
+        if (['recruiting', 'in_progress', 'resolved'].includes(old.status)) {
+          return ok({ commission_id: old.commission_id || old._id, idempotent: true }, '发布成功');
+        }
+        if (old.status === 'processing') {
+          return fail('发布请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
+        }
+        // status === 'failed'：允许复用同一 _id 重试（继续往下冻结并回填）
+        lock_created = true;
+      }
+    }
+
+    // 原子冻结发布者积分（非官方委托）：仅当 available_points 足额才扣减并冻结。
     if (!officialReward) {
       const freezeRes = await db.collection('users').where({
-        _id: user._id,
+        _id: user_id,
         available_points: _.gte(reward)
       }).update({
         data: {
@@ -273,10 +325,18 @@ async function commission_publishCommission(event) {
         }
       });
       if (!freezeRes.stats || freezeRes.stats.updated === 0) {
+        if (lock_created && commission_doc_id) {
+          try {
+            await db.collection('commissions').doc(commission_doc_id).update({
+              data: { status: 'failed', error_message: '可兑换积分不足', updated_at: db.serverDate() }
+            });
+          } catch (e) { console.error('标记发布失败失败:', e); }
+        }
         return fail('可兑换积分不足，无法发布委托');
       }
+      points_frozen = true;
       try {
-        await db.collection('point_accounts').where({ user_id: user._id }).update({
+        await db.collection('point_accounts').where({ user_id }).update({
           data: {
             available_points: _.inc(-reward),
             frozen_points: _.inc(reward),
@@ -287,7 +347,7 @@ async function commission_publishCommission(event) {
     }
 
     const data = {
-      publisher_id: user._id,
+      publisher_id: user_id,
       publisher_name: user.nickname || '匿名侦探',
       title,
       content,
@@ -301,50 +361,62 @@ async function commission_publishCommission(event) {
       accepted_count: 0,
       completed_count: 0,
       resolved_at: '',
-      created_at: db.serverDate(),
+      client_request_id,
       updated_at: db.serverDate()
     };
 
-    let res;
-    try {
-      res = await db.collection('commissions').add({ data });
-    } catch (error) {
-      // 回滚冻结
-      if (!officialReward) {
-        try {
-          await db.collection('users').doc(user._id).update({
-            data: {
-              available_points: _.inc(reward),
-              frozen_points: _.inc(-reward),
-              updated_at: db.serverDate()
-            }
-          });
-          await db.collection('point_accounts').where({ user_id: user._id }).update({
-            data: {
-              available_points: _.inc(reward),
-              frozen_points: _.inc(-reward),
-              updated_at: db.serverDate()
-            }
-          });
-        } catch (e) { console.error('回滚发布积分失败:', e); }
-      }
-      throw error;
+    if (commission_doc_id) {
+      // 幂等锁路径：把占位记录补全为正式 recruiting 委托（保留原 created_at）
+      await db.collection('commissions').doc(commission_doc_id).update({
+        data: { ...data, commission_id: commission_doc_id }
+      });
+    } else {
+      const res = await db.collection('commissions').add({
+        data: { ...data, created_at: db.serverDate() }
+      });
+      commission_doc_id = res._id;
+      await db.collection('commissions').doc(res._id).update({ data: { commission_id: res._id } });
     }
-    await db.collection('commissions').doc(res._id).update({ data: { commission_id: res._id } });
 
     if (!officialReward) {
-      await addPointLog(user._id, {
+      await addPointLog(user_id, {
         amount: reward,
         type: 'freeze',
         point_type: 'frozen',
         business_type: 'commission_freeze',
-        related_id: res._id,
+        related_id: commission_doc_id,
         reason: `发布委托冻结积分 - ${title}`
       });
     }
 
-    return ok({ commission_id: res._id }, '发布成功');
+    return ok({ commission_id: commission_doc_id }, '发布成功');
   } catch (error) {
+    // 回滚冻结（非官方委托且确已冻结）
+    if (points_frozen && !officialReward && user_id && reward > 0) {
+      try {
+        await db.collection('users').doc(user_id).update({
+          data: {
+            available_points: _.inc(reward),
+            frozen_points: _.inc(-reward),
+            updated_at: db.serverDate()
+          }
+        });
+        await db.collection('point_accounts').where({ user_id }).update({
+          data: {
+            available_points: _.inc(reward),
+            frozen_points: _.inc(-reward),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (e) { console.error('回滚发布积分失败:', e); }
+    }
+    if (lock_created && commission_doc_id) {
+      try {
+        await db.collection('commissions').doc(commission_doc_id).update({
+          data: { status: 'failed', error_message: error.message || '发布失败', updated_at: db.serverDate() }
+        });
+      } catch (e) { console.error('标记发布失败失败:', e); }
+    }
     return fail('发布失败: ' + error.message);
   }
 }
@@ -608,7 +680,7 @@ async function commission_getMyCommissions(event) {
     const skip = (page - 1) * page_size;
 
     const publishedRes = await db.collection('commissions')
-      .where({ publisher_id: user._id })
+      .where({ publisher_id: user._id, status: _.nin(['processing', 'failed']) })
       .orderBy('created_at', 'desc')
       .skip(skip)
       .limit(page_size)

@@ -50,7 +50,8 @@ class PointsService {
         data: (result.data && result.data.list) || [],
         total: (result.data && result.data.total) || 0,
         page: result.data && result.data.page,
-        page_size: result.data && result.data.page_size
+        page_size: result.data && result.data.page_size,
+        has_more: !!(result.data && result.data.has_more)
       };
     } catch (error) {
       console.error('Failed to get points history:', error);

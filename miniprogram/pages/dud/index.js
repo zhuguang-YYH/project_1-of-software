@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const dudService = require('../../services/dud.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
   if (!value) return new Date();
@@ -33,24 +34,34 @@ Page({
     loading: true,
     sending: false,
     error: '',
+    theme: 'blue',
     scroll_into_view: '',
     quick_prompts: ['你好', '帮助', '积分', '排行', '活动']
   },
 
   onLoad() {
+    this.loadTheme();
     this.loadHistory();
+  },
+
+  onShow() {
+    this.loadTheme();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async loadHistory() {
     this.setData({ loading: true, error: '' });
     try {
-      const result = await request.callCloudFunction('dud_getChatHistory', {
+      const result = await dudService.getChatHistory({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || '加载历史失败');
+      if (!result.success) throw new Error(result.error || '加载历史失败');
 
-      const list = ((result.data && result.data.list) || []).map(normalizeMessage);
+      const list = (result.data || []).map(normalizeMessage);
       const messages = list.length > 0 ? list : [{
         message_id: 'welcome',
         type: 'dud',
@@ -105,18 +116,17 @@ Page({
     }, () => this.scrollToBottom());
 
     try {
-      const result = await request.callCloudFunction('dud_chat', { message });
-      if (!result.success) throw new Error(result.message || '发送失败');
+      const result = await dudService.chat(message);
+      if (!result.success) throw new Error(result.error || '发送失败');
 
-      const data = result.data || {};
       const dud_message = normalizeMessage({
         message_id: `local_dud_${Date.now()}`,
         type: 'dud',
-        message: data.reply_content || (data.dud_message && data.dud_message.message),
+        message: result.reply_content,
         created_at: new Date(),
-        matched_keyword: data.matched_keyword,
-        match_type: data.match_type,
-        rule_id: data.rule_id
+        matched_keyword: result.matched_keyword,
+        match_type: result.match_type,
+        rule_id: result.rule_id
       }, 0);
 
       this.setData({
@@ -161,6 +171,12 @@ Page({
     return {
       title: 'Dud 对话',
       path: '/pages/dud/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'Dud 对话'
     };
   }
 });

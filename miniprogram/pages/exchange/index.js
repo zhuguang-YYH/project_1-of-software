@@ -1,5 +1,14 @@
-const { callCloudFunction } = require('../../utils/request.js');
+const exchangeService = require('../../services/exchange.js');
+const pointsService = require('../../services/points.js');
+const subscribe = require('../../utils/subscribe.js');
 const format = require('../../utils/format.js');
+const { applyTheme } = require('../../utils/theme.js');
+
+const EXCHANGE_ASSETS = {
+  goodsDefault: '/images/exchange/goods-default.jpg',
+  pointsCoin: '/images/exchange/points-coin.jpg',
+  stockEmpty: '/images/exchange/stock-empty.jpg'
+};
 
 function formatTime(value) {
   if (!value) return '';
@@ -10,22 +19,26 @@ function formatTime(value) {
 
 function exchangeStatusText(status) {
   const map = {
+    processing: '处理中',
     pending: '处理中',
     shipped: '待领取',
     completed: '已完成',
     received: '已领取',
-    cancelled: '已取消'
+    cancelled: '已取消',
+    failed: '兑换失败'
   };
   return map[status] || status || '未知';
 }
 
 function exchangeStatusColor(status) {
   const map = {
+    processing: '#f39c12',
     pending: '#f39c12',
     shipped: '#5b6cff',
     completed: '#16a085',
     received: '#16a085',
-    cancelled: '#95a5a6'
+    cancelled: '#95a5a6',
+    failed: '#e74c3c'
   };
   return map[status] || '#5b6cff';
 }
@@ -39,6 +52,9 @@ function normalizeGoods(item = {}, available_points = 0) {
     ...item,
     item_id,
     name: item.name || item.item_name || '未命名商品',
+    cover_url: item.cover_url || item.image_url || item.image || EXCHANGE_ASSETS.goodsDefault,
+    points_icon: EXCHANGE_ASSETS.pointsCoin,
+    stock_icon: EXCHANGE_ASSETS.stockEmpty,
     exchange_points,
     available_quantity,
     max_exchange_quantity: exchange_points > 0
@@ -75,6 +91,7 @@ Page({
       frozen_points: 0
     },
     tab: 'available',
+    theme: 'blue',
     loading: false,
     error: '',
     refreshing: false,
@@ -87,13 +104,19 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.loadUserPoints();
     this.loadMyExchanges();
     if (this.data.goods.length === 0) this.loadGoods();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -103,15 +126,14 @@ Page({
 
   async loadUserPoints() {
     try {
-      const result = await callCloudFunction('points_getUserPoints', {});
-      if (!result.success) throw new Error(result.message || 'Load points failed');
+      const result = await pointsService.getUserPoints();
+      if (!result.success) throw new Error('Load points failed');
 
-      const data = result.data || {};
       this.setData({
         user_points: {
-          total_points: Number(data.total_points || 0),
-          available_points: Number(data.available_points || 0),
-          frozen_points: Number(data.frozen_points || 0)
+          total_points: Number(result.total_points || 0),
+          available_points: Number(result.available_points || 0),
+          frozen_points: Number(result.frozen_points || 0)
         }
       });
     } catch (err) {
@@ -122,13 +144,13 @@ Page({
   async loadGoods() {
     this.setData({ loading: true, error: '' });
     try {
-      const result = await callCloudFunction('exchange_getGoods', {
+      const result = await exchangeService.getProducts({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load exchange goods failed');
+      if (!result.success) throw new Error(result.error || 'Load exchange goods failed');
 
-      const list = (result.data && result.data.list) || [];
+      const list = result.data || [];
       const goods = list.map(item => normalizeGoods(item, this.data.user_points.available_points));
       this.setData({
         goods,
@@ -144,13 +166,13 @@ Page({
 
   async loadMyExchanges() {
     try {
-      const result = await callCloudFunction('exchange_getExchangeHistory', {
+      const result = await exchangeService.getExchangeHistory({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || 'Load exchange history failed');
+      if (!result.success) throw new Error(result.error || 'Load exchange history failed');
 
-      const list = (result.data && result.data.list) || [];
+      const list = result.data || [];
       this.setData({ my_exchanges: list.map(normalizeExchange) });
     } catch (err) {
       console.error('Load exchange history failed:', err);
@@ -246,13 +268,16 @@ Page({
       return;
     }
 
+    // 申请兑换通知订阅授权；须在点击手势栈内触发，用户拒绝不影响兑换
+    await subscribe.requestSubscribe(subscribe.TEMPLATES.EXCHANGE_NOTIFY);
+
     this.setData({ exchanging: true });
     try {
-      const result = await callCloudFunction('exchange_doExchange', {
-        item_id: selected_goods.item_id,
-        quantity: exchange_quantity
-      });
-      if (!result.success) throw new Error(result.message || '兑换失败');
+      const result = await exchangeService.exchange(
+        selected_goods.item_id,
+        exchange_quantity
+      );
+      if (!result.success) throw new Error(result.error || '兑换失败');
 
       wx.showToast({ title: '兑换成功', icon: 'success' });
       this.setData({ show_exchange_modal: false });
@@ -266,6 +291,19 @@ Page({
 
   onRetry() {
     this.initPage();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 积分兑换',
+      path: '/pages/exchange/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 积分兑换'
+    };
   },
 
   noop() {}

@@ -32,6 +32,7 @@ function buildUserFields(openid, overrides = {}) {
     avatar_url: overrides.avatar_url || '',
     signature: overrides.signature || '',
     interests: normalizeInterests(overrides.interests),
+    student_id: String(overrides.student_id || '').trim(),
     role: overrides.role || 'user',
     status: overrides.status || 'active',
     total_points: Number(overrides.total_points || 0),
@@ -53,6 +54,7 @@ function sanitizeUser(user = {}) {
     avatar_url: user.avatar_url || '',
     signature: user.signature || '',
     interests: Array.isArray(user.interests) ? user.interests : [],
+    student_id: user.student_id || '',
     role: user.role || 'user',
     status: user.status || 'active',
     total_points: Number(user.total_points || 0),
@@ -115,6 +117,7 @@ function incomingProfile(event = {}) {
     avatar_url: event.avatar_url || '',
     signature: event.signature || '',
     interests: event.interests,
+    student_id: event.student_id || '',
     campus: event.campus || '',
     grade: event.grade || '',
     major: event.major || '',
@@ -198,6 +201,7 @@ async function user_updateProfile(event) {
     if (incoming.avatar_url) data.avatar_url = incoming.avatar_url;
     if (event.signature !== undefined) data.signature = incoming.signature;
     if (event.interests !== undefined) data.interests = normalizeInterests(incoming.interests);
+    if (event.student_id !== undefined) data.student_id = String(incoming.student_id || '').trim();
 
     await db.collection('users').doc(user._id).update({ data });
     user = { ...user, ...data };

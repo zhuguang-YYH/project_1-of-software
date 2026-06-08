@@ -1,7 +1,7 @@
-<view class="container" wx:if="{{!loading}}">
+<view class="container theme-{{theme}}" wx:if="{{!loading}}">
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="onRetry">重新加载</button>
+    <button class="retry-btn" bindtap="onRetry">重试</button>
   </view>
 
   <view class="no-puzzle-state" wx:elif="{{!puzzle}}">
@@ -76,7 +76,7 @@
   </view>
 </view>
 
-<view class="loading-state" wx:elif="{{loading}}">
+<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
   <view class="loading-spinner"></view>
   <text class="loading-text">加载谜题中...</text>
 </view>

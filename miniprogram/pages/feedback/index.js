@@ -1,5 +1,6 @@
-const { callCloudFunction } = require('../../utils/request.js');
+const feedbackService = require('../../services/feedback.js');
 const format = require('../../utils/format.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function formatTime(value) {
   if (!value) return '';
@@ -54,6 +55,7 @@ Page({
     submitting: false,
     refreshing: false,
     error: '',
+    theme: 'blue',
     feedback_list: [],
     type_options: [
       { key: 'general', label: '一般反馈' },
@@ -70,7 +72,16 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
+  },
+
+  onShow() {
+    this.loadTheme();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -86,13 +97,13 @@ Page({
   },
 
   async loadMyFeedback() {
-    const result = await callCloudFunction('feedback_getMyFeedback', {
+    const result = await feedbackService.getMyFeedback({
       page: 1,
       page_size: 50
     });
-    if (!result.success) throw new Error(result.message || 'Load feedback failed');
+    if (!result.success) throw new Error(result.error || 'Load feedback failed');
 
-    const list = (result.data && result.data.list) || [];
+    const list = result.data || [];
     this.setData({ feedback_list: list.map(normalizeFeedback) });
   },
 
@@ -138,12 +149,12 @@ Page({
 
     this.setData({ submitting: true });
     try {
-      const result = await callCloudFunction('feedback_submit', {
+      const result = await feedbackService.submit({
         content,
         feedback_type: form.feedback_type,
         is_anonymous: form.is_anonymous
       });
-      if (!result.success) throw new Error(result.message || 'Submit failed');
+      if (!result.success) throw new Error(result.error || 'Submit failed');
 
       wx.showToast({ title: 'Submitted', icon: 'success' });
       this.setData({

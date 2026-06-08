@@ -1,5 +1,6 @@
 const { auth } = require('../../utils/auth');
 const { storage } = require('../../utils/storage');
+const { applyTheme } = require('../../utils/theme.js');
 
 const DEFAULT_SETTINGS = {
   puzzle_reminder: true,
@@ -8,23 +9,35 @@ const DEFAULT_SETTINGS = {
   commission_reminder: true,
   show_ranking: true,
   show_profile_card: true,
-  compact_mode: false
+  compact_mode: false,
+  theme: 'blue'
 };
 
 Page({
   data: {
     loading: true,
     userInfo: null,
+    theme: 'blue',
     settings: { ...DEFAULT_SETTINGS },
+    themeOptions: [
+      { key: 'blue', label: '侦探蓝', desc: '清爽日常' },
+      { key: 'gold', label: '黑金', desc: '沉浸展示' }
+    ],
     cacheText: '未计算'
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.loadUserInfo();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   initPage() {
@@ -58,6 +71,19 @@ Page({
     this.saveSettings({
       ...this.data.settings,
       [field]: e.detail.value
+    });
+  },
+
+  onThemeSelect(e) {
+    const theme = e.currentTarget.dataset.theme === 'gold' ? 'gold' : 'blue';
+    this.saveSettings({
+      ...this.data.settings,
+      theme
+    });
+    this.loadTheme();
+    wx.showToast({
+      title: theme === 'gold' ? '已切换黑金' : '已切换侦探蓝',
+      icon: 'none'
     });
   },
 

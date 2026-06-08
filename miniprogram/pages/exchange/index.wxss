@@ -147,6 +147,29 @@
   overflow: hidden;
 }
 
+.goods-main {
+  display: flex;
+  gap: 22rpx;
+  align-items: stretch;
+  margin-bottom: 16rpx;
+}
+
+.goods-cover {
+  width: 172rpx;
+  height: 216rpx;
+  flex-shrink: 0;
+  border-radius: 14rpx;
+  background: #f4f6fb;
+  box-shadow: 0 8rpx 18rpx rgba(26, 31, 58, 0.08);
+}
+
+.goods-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .goods-card::before,
 .exchange-card::before {
   content: '';
@@ -177,6 +200,9 @@
 
 .goods-badge,
 .exchange-status {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
   font-size: 22rpx;
   padding: 6rpx 16rpx;
   border-radius: 999rpx;
@@ -184,6 +210,12 @@
   font-weight: 600;
   background: #fee2e2;
   color: #991b1b;
+}
+
+.badge-icon {
+  width: 26rpx;
+  height: 26rpx;
+  flex-shrink: 0;
 }
 
 .goods-badge.stock-low {
@@ -247,8 +279,14 @@
 
 .cost-value {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6rpx;
+}
+
+.cost-icon {
+  width: 34rpx;
+  height: 34rpx;
+  flex-shrink: 0;
 }
 
 .cost-number {
@@ -525,4 +563,19 @@
   gap: 16rpx;
   padding: 24rpx 32rpx;
   border-top: 1rpx solid #f0f3f8;
+}
+
+@media (max-width: 340px) {
+  .goods-main {
+    gap: 16rpx;
+  }
+
+  .goods-cover {
+    width: 140rpx;
+    height: 180rpx;
+  }
+
+  .goods-name {
+    font-size: 28rpx;
+  }
 }

@@ -109,7 +109,7 @@ class BorrowService {
         min_players: options.min_players || '',
         max_players: options.max_players || '',
         difficulty: options.difficulty || '',
-        status: options.status || 'available'
+        status: options.status || ''
       });
 
       if (!result.success) return { success: false, data: [], error: result.message || '获取剧本杀列表失败' };

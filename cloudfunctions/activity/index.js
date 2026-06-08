@@ -13,9 +13,25 @@ function fail(message, code = -1) {
   return { code, message };
 }
 
+function isCollectionMissing(error) {
+  return error && (
+    error.errCode === -502005 ||
+    String(error.message || '').includes('not exist') ||
+    String(error.message || '').includes('collection not exists')
+  );
+}
+
 function numberValue(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function safeIdPart(value) {
+  return String(value || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+}
+
+function buildRegistrationId(user_id, activity_id) {
+  return `activity_reg_${safeIdPart(activity_id)}_${safeIdPart(user_id)}`;
 }
 
 function toDate(value) {
@@ -24,6 +40,152 @@ function toDate(value) {
   if (value.$date) return new Date(value.$date);
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+// 报名成功订阅消息模板
+const REGISTER_SUCCESS_TMPL = '2SAlGSbn0Ion8Dv94MobCQLf3r2T8P919gbHMMMCCI';
+// 活动开始提醒订阅消息模板
+const ACTIVITY_REMINDER_TMPL = 'SJizBGlxHBBon30-DOqXYlOFGHmDHlrA8z_l4a2acjg';
+// 默认开始前多少小时提醒（可用环境变量覆盖）
+const REMIND_AHEAD_HOURS = Number(process.env.REMIND_AHEAD_HOURS) || 24;
+// 单次定时运行最多处理多少条提醒，避免超时
+const REMIND_MAX_PER_RUN = 400;
+
+// 截断为 thing 类型可接受长度（≤20），空值兜底
+function asThing(value, max = 20) {
+  const text = String(value == null ? '' : value).trim();
+  return text ? text.slice(0, max) : '—';
+}
+
+// 下发订阅消息（best-effort：用户未授权/格式异常都不影响主流程）
+async function sendSubscribeMessage(touser, templateId, data, page) {
+  if (!touser) return false;
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser,
+      templateId,
+      page: page || 'pages/index/index',
+      miniprogramState: 'formal',
+      lang: 'zh_CN',
+      data
+    });
+    return true;
+  } catch (error) {
+    console.warn('[subscribe] send failed:', templateId, error && (error.errCode || error.errMsg || error.message));
+    return false;
+  }
+}
+
+// 把活动时间文本按"墙上时钟"解析为可比较的毫秒数（无时区时 Node 以 UTC 解析，
+// 与下面 Beijing-now 同样按 UTC 数值表达，比较一致）。无法解析返回 NaN。
+function parseWallClockTs(text) {
+  return Date.parse(String(text || '').replace(/\//g, '-'));
+}
+
+// 当前北京时间的"墙上时钟"毫秒（用于与 parseWallClockTs 比较）
+function beijingNowTs() {
+  return Date.now() + 8 * 3600 * 1000;
+}
+
+// 把墙上时钟毫秒格式化为 "YYYY-MM-DD HH:mm"（微信 time 类型可接受）
+function formatWallClock(ts) {
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+
+// 批量按 _id 取用户 openid，返回 { user_id: openid }
+async function mapUserOpenids(user_ids) {
+  const result = {};
+  const ids = Array.from(new Set(user_ids.filter(Boolean)));
+  for (let i = 0; i < ids.length; i += 20) {
+    const batch = ids.slice(i, i + 20);
+    try {
+      const res = await db.collection('users').where({ _id: _.in(batch) }).limit(20).get();
+      (res.data || []).forEach((u) => { if (u.openid) result[u._id] = u.openid; });
+    } catch (error) {
+      console.warn('[reminder] load users failed:', error && error.message);
+    }
+  }
+  return result;
+}
+
+// 定时触发：扫描"即将开始且未提醒"的活动报名，下发活动开始提醒。
+// 幂等：每条报名记录用 reminder_sent 标记，已发送的不再重复。
+async function runActivityReminder() {
+  const nowTs = beijingNowTs();
+  const windowTs = nowTs + REMIND_AHEAD_HOURS * 3600 * 1000;
+  const summary = { scanned_activities: 0, due_activities: 0, sent: 0, failed: 0, skipped_unparsable: 0 };
+
+  let activities = [];
+  try {
+    const res = await db.collection('activities')
+      .where({ status: _.neq('cancelled') })
+      .orderBy('start_time', 'asc')
+      .limit(100)
+      .get();
+    activities = res.data || [];
+  } catch (error) {
+    if (isCollectionMissing(error)) return ok(summary, '无活动');
+    return fail('扫描活动失败: ' + error.message);
+  }
+  summary.scanned_activities = activities.length;
+
+  for (const act of activities) {
+    if (summary.sent >= REMIND_MAX_PER_RUN) break;
+
+    const startTs = parseWallClockTs(act.start_time);
+    if (Number.isNaN(startTs)) { summary.skipped_unparsable += 1; continue; }
+    // 只提醒"现在 ~ 现在+N小时"内即将开始的活动
+    if (!(startTs > nowTs && startTs <= windowTs)) continue;
+    summary.due_activities += 1;
+
+    let regs = [];
+    try {
+      const regRes = await db.collection('activity_registrations')
+        .where({
+          activity_id: act._id,
+          status: _.nin(['cancelled', 'failed', 'processing']),
+          reminder_sent: _.neq(true)
+        })
+        .limit(REMIND_MAX_PER_RUN)
+        .get();
+      regs = regRes.data || [];
+    } catch (error) {
+      if (!isCollectionMissing(error)) console.warn('[reminder] load regs failed:', error && error.message);
+      continue;
+    }
+    if (regs.length === 0) continue;
+
+    const openidMap = await mapUserOpenids(regs.map(r => r.user_id));
+    const timeText = formatWallClock(startTs);
+
+    for (const reg of regs) {
+      if (summary.sent >= REMIND_MAX_PER_RUN) break;
+      const touser = openidMap[reg.user_id];
+      if (!touser) continue;
+
+      const sent = await sendSubscribeMessage(touser, ACTIVITY_REMINDER_TMPL, {
+        thing9: { value: asThing(act.title || '活动', 20) },
+        time2: { value: timeText },
+        thing4: { value: asThing(act.location || '待定', 20) },
+        thing5: { value: asThing('活动即将开始，请准时参加', 20) }
+      }, 'pages/activity/index');
+
+      if (sent) {
+        summary.sent += 1;
+        try {
+          await db.collection('activity_registrations').doc(reg._id).update({
+            data: { reminder_sent: true, reminder_sent_at: db.serverDate(), updated_at: db.serverDate() }
+          });
+        } catch (e) { console.warn('[reminder] mark sent failed:', e && e.message); }
+      } else {
+        summary.failed += 1;
+      }
+    }
+  }
+
+  return ok(summary, '提醒任务完成');
 }
 
 function normalizeActivity(activity = {}) {
@@ -73,10 +235,10 @@ async function getCurrentUser(openid) {
 async function getActiveRegistration(user, activity_id) {
   if (!user || !user._id || !activity_id) return null;
   const res = await db.collection('activity_registrations')
-    .where({ user_id: user._id, activity_id, status: _.neq('cancelled') })
-    .limit(1)
+    .where({ user_id: user._id, activity_id })
+    .limit(10)
     .get();
-  return res.data[0] || null;
+  return (res.data || []).find(item => !['cancelled', 'failed'].includes(item.status)) || null;
 }
 
 async function listMyRegistrations(user, page, page_size) {
@@ -151,6 +313,8 @@ async function activity_getMyActivities(event) {
 
 async function activity_registerActivity(event) {
   let registration_id = '';
+  let count_incremented = false;
+  let lock_ready = false;
   try {
     const wx_context = cloud.getWXContext();
     const user = await getCurrentUser(wx_context.OPENID);
@@ -164,7 +328,12 @@ async function activity_registerActivity(event) {
     const act_res = await db.collection('activities').doc(activity_id).get();
     const activity = normalizeActivity(act_res.data);
     const existing_registration = await getActiveRegistration(user, activity_id);
-    if (existing_registration) return fail('您已经报名过此活动');
+    if (existing_registration) {
+      if (existing_registration.status === 'registered') {
+        return ok({ registration_id: existing_registration.registration_id || existing_registration._id, idempotent: true }, '报名成功');
+      }
+      return fail('报名请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
+    }
 
     const cancel_deadline = toDate(activity.cancel_deadline);
     if (cancel_deadline && new Date() > cancel_deadline && !confirmed) {
@@ -173,6 +342,44 @@ async function activity_registerActivity(event) {
 
     if (activity.capacity > 0 && activity.registered_count >= activity.capacity) {
       return fail('活动已满员');
+    }
+
+    registration_id = buildRegistrationId(user._id, activity_id);
+    const lockPatch = {
+      registration_id,
+      user_id: user._id,
+      activity_id,
+      reason,
+      status: 'processing',
+      can_not_cancel_confirm: confirmed,
+      registered_at: db.serverDate(),
+      updated_at: db.serverDate()
+    };
+    const lockData = { _id: registration_id, ...lockPatch };
+
+    try {
+      await db.collection('activity_registrations').add({ data: lockData });
+      lock_ready = true;
+    } catch (error) {
+      const existed = await db.collection('activity_registrations').doc(registration_id).get();
+      const old = existed.data || {};
+      if (old.status === 'registered') {
+        return ok({ registration_id, idempotent: true }, '报名成功');
+      }
+      if (old.status === 'processing') {
+        return fail('报名请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
+      }
+      if (['cancelled', 'failed'].includes(old.status)) {
+        const reuseRes = await db.collection('activity_registrations')
+          .where({ _id: registration_id, status: old.status })
+          .update({ data: lockPatch });
+        if (!reuseRes.stats || reuseRes.stats.updated === 0) {
+          return fail('报名请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
+        }
+        lock_ready = true;
+      } else {
+        return fail('您已经报名过此活动');
+      }
     }
 
     const update_res = await db.collection('activities')
@@ -189,37 +396,58 @@ async function activity_registerActivity(event) {
       });
 
     if (update_res.stats && update_res.stats.updated === 0) {
+      await db.collection('activity_registrations').doc(registration_id).update({
+        data: { status: 'cancelled', updated_at: db.serverDate() }
+      });
       return fail('活动已满员或状态已变化');
     }
+    count_incremented = true;
 
-    try {
-      const add_res = await db.collection('activity_registrations').add({
-        data: {
-          user_id: user._id,
-          activity_id,
-          reason,
-          status: 'registered',
-          can_not_cancel_confirm: confirmed,
-          registered_at: db.serverDate(),
-          updated_at: db.serverDate()
-        }
-      });
-      registration_id = add_res._id;
-      await db.collection('activity_registrations').doc(registration_id).update({
-        data: { registration_id }
-      });
-    } catch (error) {
-      await db.collection('activities').doc(activity_id).update({
-        data: {
-          registered_count: _.inc(-1),
-          updated_at: db.serverDate()
-        }
-      });
-      throw error;
+    await db.collection('activity_registrations').doc(registration_id).update({
+      data: {
+        reason,
+        status: 'registered',
+        can_not_cancel_confirm: confirmed,
+        registered_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+
+    // 报名成功通知（best-effort）：仅当用户已填纯数字学号且活动时间存在时下发
+    const student_id = String(user.student_id || '').trim();
+    if (/^\d{4,20}$/.test(student_id) && activity.start_time) {
+      await sendSubscribeMessage(wx_context.OPENID, REGISTER_SUCCESS_TMPL, {
+        thing2: { value: asThing(activity.title || '活动', 20) },
+        date4: { value: asThing(activity.start_time, 20) },
+        number11: { value: student_id },
+        thing31: { value: asThing(activity.location || '待定', 20) },
+        phrase8: { value: '报名成功' }
+      }, 'pages/activity/index');
     }
 
     return ok({ registration_id }, '报名成功');
   } catch (error) {
+    if (count_incremented && registration_id) {
+      try {
+        await db.collection('activities').doc(event.activity_id).update({
+          data: {
+            registered_count: _.inc(-1),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (rollbackError) {
+        console.error('回滚活动报名人数失败:', rollbackError);
+      }
+    }
+    if (lock_ready && registration_id) {
+      try {
+        await db.collection('activity_registrations').doc(registration_id).update({
+          data: { status: 'failed', updated_at: db.serverDate(), error_message: error.message || '报名失败' }
+        });
+      } catch (markError) {
+        console.error('标记报名失败失败:', markError);
+      }
+    }
     return fail('报名失败: ' + error.message);
   }
 }
@@ -316,6 +544,11 @@ async function activity_getStats() {
 }
 
 exports.main = async (event, context) => {
+  // 定时触发器：扫描即将开始的活动并下发提醒
+  if (event && event.Type === 'timer') {
+    return runActivityReminder();
+  }
+
   const { action = 'getActivities', ...data } = event || {};
   const actions = {
     getActivities: activity_getActivities,

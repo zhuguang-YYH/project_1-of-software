@@ -1,5 +1,9 @@
-const { callCloudFunction } = require('../../utils/request');
+const puzzleService = require('../../services/puzzle.js');
+const rankingService = require('../../services/ranking.js');
+const recommendationService = require('../../services/recommendation.js');
+const pointsService = require('../../services/points.js');
 const { storage } = require('../../utils/storage');
+const { applyTheme } = require('../../utils/theme.js');
 
 function normalizeRankUser(item, index) {
   const rankNo = Number(item.rank_no || index + 1);
@@ -32,6 +36,8 @@ Page({
     topThree: [],
     recommendations: [],
     myPoints: 0,
+    theme: 'blue',
+    rankingCardTheme: 'light',
     loading: true,
     refreshing: false,
     error: ''
@@ -42,6 +48,7 @@ Page({
   },
 
   onShow() {
+    this.loadTheme();
     this.checkLogin();
     this.refreshTopThree();
   },
@@ -50,6 +57,7 @@ Page({
     this.setData({ loading: true, error: '' });
 
     try {
+      this.loadTheme();
       this.checkLogin();
 
       await Promise.all([
@@ -75,6 +83,10 @@ Page({
     });
   },
 
+  loadTheme() {
+    applyTheme(this);
+  },
+
   async loadDailyPuzzle() {
     if (!this.data.isLoggedIn) {
       this.setData({ dailyPuzzle: null });
@@ -82,8 +94,8 @@ Page({
     }
 
     try {
-      const result = await callCloudFunction('puzzle_getTodayPuzzle', {});
-      const puzzle = result.data || result || {};
+      const result = await puzzleService.getTodayPuzzle();
+      const puzzle = result.data || {};
       this.setData({
         dailyPuzzle: {
           ...puzzle,
@@ -98,7 +110,7 @@ Page({
 
   async loadTopThree() {
     try {
-      const result = await callCloudFunction('ranking_getTopThree', {});
+      const result = await rankingService.getTopThree();
       const list = Array.isArray(result.data) ? result.data : [];
       this.setData({ topThree: list.slice(0, 3).map(normalizeRankUser) });
     } catch (err) {
@@ -109,10 +121,10 @@ Page({
 
   async loadRecommendations() {
     try {
-      const result = await callCloudFunction('recommendation_getRecommendations', {
-        limit: 5
+      const result = await recommendationService.getRecommendations({
+        page_size: 5
       });
-      const list = (result.data && result.data.list) || result.data || [];
+      const list = result.data || [];
       this.setData({
         recommendations: Array.isArray(list) ? list.slice(0, 3).map(normalizeRecommendation) : []
       });
@@ -129,9 +141,8 @@ Page({
     }
 
     try {
-      const result = await callCloudFunction('points_getUserPoints', {});
-      const account = result.data || result || {};
-      this.setData({ myPoints: Number(account.available_points || 0) });
+      const result = await pointsService.getUserPoints();
+      this.setData({ myPoints: Number(result.available_points || 0) });
     } catch (err) {
       console.error('Load user points failed:', err);
     }
@@ -202,5 +213,18 @@ Page({
 
   onRetry() {
     this.initPage();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 侦探集结地',
+      path: '/pages/index/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 侦探集结地'
+    };
   }
 });

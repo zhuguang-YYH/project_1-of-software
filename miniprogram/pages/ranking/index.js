@@ -1,5 +1,7 @@
-const { request } = require('../../utils/request.js');
+const rankingService = require('../../services/ranking.js');
+const profileService = require('../../services/profile.js');
 const { storage } = require('../../utils/storage.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function normalizeRankUser(item = {}, index = 0) {
   const rank_no = Number(item.rank_no || index + 1);
@@ -52,6 +54,8 @@ Page({
     full_ranking: [],
     user_ranking: null,
     my_points: 0,
+    theme: 'blue',
+    rankingCardTheme: 'light',
     loading: true,
     refreshing: false,
     error: '',
@@ -62,11 +66,17 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.loadMyRanking();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -87,7 +97,7 @@ Page({
 
   async loadTopThree() {
     try {
-      const result = await request.callCloudFunction('ranking_getTopThree', {});
+      const result = await rankingService.getTopThree();
       const list = Array.isArray(result.data) ? result.data : [];
       this.setData({ top_three: list.slice(0, 3).map(normalizeRankUser) });
     } catch (err) {
@@ -98,11 +108,11 @@ Page({
 
   async loadFullRanking() {
     try {
-      const result = await request.callCloudFunction('ranking_getFullRanking', {
+      const result = await rankingService.getFullRanking({
         page: 1,
         page_size: 100
       });
-      const list = (result.data && result.data.list) || [];
+      const list = result.data || [];
       this.setData({ full_ranking: list.map(normalizeRankUser) });
     } catch (err) {
       console.error('Load full ranking failed:', err);
@@ -118,7 +128,7 @@ Page({
     }
 
     try {
-      const result = await request.callCloudFunction('ranking_getUserRanking', {});
+      const result = await rankingService.getUserRanking();
       const user_ranking = normalizeRankUser(result.data || {}, 0);
       this.setData({
         user_ranking,
@@ -167,7 +177,7 @@ Page({
     });
 
     try {
-      const result = await request.callCloudFunction('profile_getPublicCard', { user_id });
+      const result = await profileService.getPublicCard(user_id);
       this.setData({ selected_card: normalizePublicCard(result.data || {}, fallback) });
     } catch (err) {
       wx.showToast({ title: err.message || 'Load card failed', icon: 'none' });
@@ -186,6 +196,19 @@ Page({
 
   onRetry() {
     this.initPage();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 侦探排行榜',
+      path: '/pages/ranking/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 侦探排行榜'
+    };
   },
 
   noop() {}

@@ -8,6 +8,10 @@ Component({
       type: String,
       value: 'list'
     },
+    theme: {
+      type: String,
+      value: 'light'
+    },
     showRank: {
       type: Boolean,
       value: true

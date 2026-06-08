@@ -1,4 +1,4 @@
-<view class="detective-item variant-{{variant}}" bindtap="handleTap">
+<view class="detective-item variant-{{variant}} theme-{{theme}}" bindtap="handleTap">
   <view class="rank-mark" wx:if="{{showRank}}">
     <text>{{user.rank_no || '-'}}</text>
   </view>

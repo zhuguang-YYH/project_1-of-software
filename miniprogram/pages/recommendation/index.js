@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const recommendationService = require('../../services/recommendation.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -54,6 +55,7 @@ Page({
     refreshing: false,
     loading_more: false,
     error: '',
+    theme: 'blue',
     list: [],
     page: 1,
     page_size: 10,
@@ -72,8 +74,17 @@ Page({
   },
 
   onLoad(options) {
+    this.loadTheme();
     this._highlightId = options && options.highlight ? options.highlight : null;
     this.loadRecommendations(true);
+  },
+
+  onShow() {
+    this.loadTheme();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async loadRecommendations(reset = false) {
@@ -87,23 +98,22 @@ Page({
     });
 
     try {
-      const result = await request.callCloudFunction('recommendation_getRecommendations', {
+      const result = await recommendationService.getRecommendations({
         page: next_page,
         page_size: this.data.page_size,
         category: this.data.active_category,
         keyword: this.data.keyword.trim()
       });
 
-      if (!result.success) throw new Error(result.message || '获取推荐失败');
+      if (!result.success) throw new Error(result.error || '获取推荐失败');
 
-      const data = result.data || {};
-      const items = (data.list || []).map(normalizeItem);
+      const items = (result.data || []).map(normalizeItem);
       const list = reset ? items : this.data.list.concat(items);
 
       this.setData({
         list,
         page: next_page,
-        has_more: Boolean(data.has_more),
+        has_more: Boolean(result.has_more),
         error: ''
       });
 
@@ -158,7 +168,7 @@ Page({
     if (!recommendation_id) return;
 
     try {
-      const result = await request.callCloudFunction('recommendation_getDetail', { recommendation_id });
+      const result = await recommendationService.getDetail(recommendation_id);
       if (result.success && result.data) {
         this.setData({ selected: normalizeItem(result.data) });
       }
@@ -197,5 +207,18 @@ Page({
 
   onRetry() {
     this.loadRecommendations(true);
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 好物推荐',
+      path: '/pages/recommendation/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 好物推荐'
+    };
   }
 });

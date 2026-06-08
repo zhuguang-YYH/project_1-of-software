@@ -24,11 +24,11 @@ class RecommendationService {
     }
   }
 
-  async getDetail(item_id) {
-    if (!item_id) return { success: false, error: '内容编号不能为空' };
+  async getDetail(recommendation_id) {
+    if (!recommendation_id) return { success: false, error: '内容编号不能为空' };
 
     try {
-      const result = await callFunction(CONFIG.api.recommendation.getDetail, { item_id });
+      const result = await callFunction(CONFIG.api.recommendation.getDetail, { recommendation_id });
       if (!result.success) return { success: false, error: result.message || '获取详情失败' };
       return { success: true, data: result.data };
     } catch (error) {

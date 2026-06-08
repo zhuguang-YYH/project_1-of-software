@@ -120,6 +120,113 @@
   border-bottom: 0;
 }
 
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+  padding: 8rpx 0 24rpx;
+}
+
+.theme-option {
+  position: relative;
+  min-height: 190rpx;
+  border-radius: 18rpx;
+  padding: 18rpx;
+  border: 2rpx solid #e2e6f3;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.theme-option.active {
+  border-color: #5b6cff;
+  box-shadow: 0 10rpx 24rpx rgba(91, 108, 255, 0.14);
+}
+
+.theme-preview {
+  height: 92rpx;
+  border-radius: 14rpx;
+  padding: 16rpx;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.theme-blue .theme-preview {
+  background: linear-gradient(135deg, #3a4cd1 0%, #5b6cff 65%, #6c5bff 100%);
+}
+
+.theme-gold .theme-preview {
+  background:
+    radial-gradient(circle at 90% 0%, rgba(212, 175, 55, 0.24), transparent 46%),
+    linear-gradient(135deg, #0a0a0a 0%, #171717 58%, #252019 100%);
+}
+
+.theme-preview-bar {
+  width: 84rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.theme-gold .theme-preview-bar {
+  background: #d4af37;
+}
+
+.theme-preview-line {
+  margin-top: 14rpx;
+  width: 120rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.theme-preview-line.short {
+  width: 74rpx;
+}
+
+.theme-copy {
+  margin-top: 14rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.theme-name {
+  color: #1a1f3a;
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.theme-desc {
+  color: #8a96a8;
+  font-size: 22rpx;
+}
+
+.theme-check {
+  position: absolute;
+  top: 14rpx;
+  right: 16rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #5b6cff;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-option.theme-gold.active {
+  border-color: #d4af37;
+  box-shadow: 0 10rpx 24rpx rgba(212, 175, 55, 0.18);
+}
+
+.theme-option.theme-gold .theme-check {
+  background: #d4af37;
+  color: #17110a;
+}
+
 .action-row {
   transition: background 0.15s;
 }

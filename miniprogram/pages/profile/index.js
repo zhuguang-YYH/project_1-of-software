@@ -1,6 +1,10 @@
-const { request } = require('../../utils/request');
 const { storage } = require('../../utils/storage');
 const { auth } = require('../../utils/auth');
+const upload = require('../../utils/upload');
+const userService = require('../../services/user');
+const profileService = require('../../services/profile');
+const rankingService = require('../../services/ranking');
+const { applyTheme } = require('../../utils/theme.js');
 
 function isDefaultName(name) {
   return !name || ['未知用户', '未设置昵称'].includes(String(name).trim());
@@ -16,14 +20,6 @@ function isProfileIncomplete(userInfo) {
   return isDefaultName(userInfo.nickname) || !userInfo.avatar_url;
 }
 
-function shouldUploadAvatar(path) {
-  if (!path) return false;
-  return !path.startsWith('cloud://')
-    && !path.startsWith('http://')
-    && !path.startsWith('https://')
-    && !path.startsWith('/images/');
-}
-
 Page({
   data: {
     userInfo: null,
@@ -31,6 +27,7 @@ Page({
     card: null,
     myPoints: 0,
     myRank: 0,
+    theme: 'blue',
     loading: true,
     editMode: false,
     savingProfile: false,
@@ -40,17 +37,24 @@ Page({
       nickname: '',
       avatar_url: '',
       signature: '',
-      interests: ''
+      interests: '',
+      student_id: ''
     }
   },
 
   onLoad() {
     this.profileLoaded = false;
+    this.loadTheme();
     this.loadProfile();
   },
 
   onShow() {
+    this.loadTheme();
     if (this.profileLoaded) this.loadProfile();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async loadProfile() {
@@ -63,7 +67,7 @@ Page({
         const loginResult = await auth.wxLogin();
         userInfo = loginResult && loginResult.success ? loginResult.data.userInfo : null;
       } else {
-        const refreshResult = await request.callCloudFunction('user_getUserInfo', {});
+        const refreshResult = await userService.getUserInfo();
         if (refreshResult.success && refreshResult.data) {
           userInfo = refreshResult.data;
           storage.setUserInfo(userInfo);
@@ -108,7 +112,8 @@ Page({
       nickname: isDefaultName(userInfo.nickname) ? '' : (userInfo.nickname || ''),
       avatar_url: userInfo.avatar_url || '',
       signature: userInfo.signature || '',
-      interests: normalizeInterests(userInfo.interests).join('、')
+      interests: normalizeInterests(userInfo.interests).join('、'),
+      student_id: userInfo.student_id || ''
     };
   },
 
@@ -118,7 +123,7 @@ Page({
 
   async loadCard() {
     try {
-      const result = await request.callCloudFunction('profile_getCard', {});
+      const result = await profileService.getCard();
       if (result.success) this.setData({ card: result.data || null });
     } catch (err) {
       console.error('Load card failed:', err);
@@ -127,7 +132,7 @@ Page({
 
   async loadMyPoints() {
     try {
-      const result = await request.callCloudFunction('profile_getMyPoints', {});
+      const result = await profileService.getMyPoints();
       if (result.success) {
         this.setData({ myPoints: Number(result.data.available_points || 0) });
       }
@@ -138,7 +143,7 @@ Page({
 
   async loadMyRanking() {
     try {
-      const result = await request.callCloudFunction('ranking_getUserRanking', {});
+      const result = await rankingService.getUserRanking();
       if (result.success) {
         this.setData({ myRank: Number(result.data.rank_no || 101) });
       }
@@ -193,14 +198,16 @@ Page({
   },
 
   async uploadAvatarIfNeeded(avatarUrl) {
-    if (!shouldUploadAvatar(avatarUrl)) return avatarUrl;
+    if (!upload.isLocalTempPath(avatarUrl)) return avatarUrl;
 
     const userInfo = this.data.userInfo || storage.getUserInfo() || {};
-    const userId = userInfo.user_id || 'user';
-    const suffix = avatarUrl.includes('.png') ? 'png' : 'jpg';
-    const cloudPath = `avatars/${userId}_${Date.now()}.${suffix}`;
-    const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: avatarUrl });
-    return uploadRes.fileID || avatarUrl;
+    const result = await upload.uploadToCloud(avatarUrl, {
+      dir: 'avatars',
+      owner: userInfo.user_id || 'user'
+    });
+    // 上传失败时抛出，由 saveEdit 统一提示并中断保存，避免误存本地临时路径
+    if (!result.success) throw new Error(result.error || '头像上传失败');
+    return result.fileID;
   },
 
   async saveEdit() {
@@ -208,20 +215,27 @@ Page({
     const rawAvatarUrl = this.data.form.avatar_url || '';
     const signature = (this.data.form.signature || '').trim();
     const interests = normalizeInterests(this.data.form.interests);
+    const student_id = (this.data.form.student_id || '').trim();
 
     if (!nickname) {
       wx.showToast({ title: '昵称不能为空', icon: 'none' });
       return;
     }
 
+    if (student_id && !/^\d{4,20}$/.test(student_id)) {
+      wx.showToast({ title: '学号需为 4-20 位数字', icon: 'none' });
+      return;
+    }
+
     try {
       this.setData({ savingProfile: true });
       const avatarUrl = await this.uploadAvatarIfNeeded(rawAvatarUrl);
-      const result = await request.callCloudFunction('user_updateProfile', {
+      const result = await userService.updateProfile({
         nickname,
         avatar_url: avatarUrl,
         signature,
-        interests
+        interests,
+        student_id
       });
 
       if (!result.success) throw new Error(result.message || '保存失败');
@@ -232,7 +246,8 @@ Page({
         nickname,
         avatar_url: avatarUrl,
         signature,
-        interests
+        interests,
+        student_id
       };
       storage.setUserInfo(userInfo);
 

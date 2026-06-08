@@ -1,7 +1,7 @@
-<view class="page">
+<view class="page theme-{{theme}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
-    <text class="loading-text">加载中…</text>
+    <text class="loading-text">加载中...</text>
   </view>
 
   <scroll-view

@@ -1,12 +1,27 @@
+page {
+  background: #0a0a0a;
+  overflow: hidden;
+}
+
 .page {
   min-height: 100vh;
+  width: 100vw;
   background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 100%);
   color: #1a1f3a;
+  overflow: hidden;
 }
 
 .scroll-view {
   height: 100vh;
+  width: 100vw;
   box-sizing: border-box;
+  overflow-x: hidden;
+  background: transparent;
+}
+
+.page view,
+.page scroll-view {
+  max-width: 100%;
 }
 
 .loading-state {
@@ -47,6 +62,8 @@
 }
 
 .stats-grid {
+  width: 100%;
+  box-sizing: border-box;
   padding: 24rpx;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -419,4 +436,71 @@
   text-align: center;
   color: #8a96a8;
   font-size: 26rpx;
+}
+
+/* 黑金主题：后台页面可读性优化 */
+.theme-gold .num,
+.theme-gold .num.warn {
+  color: #d4af37 !important;
+  text-shadow: 0 0 16rpx rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .label,
+.theme-gold .field text,
+.theme-gold .tab-item,
+.theme-gold .ops-meta,
+.theme-gold .ops-desc,
+.theme-gold .ops-line,
+.theme-gold .feedback-content,
+.theme-gold .feedback-time,
+.theme-gold .log-time,
+.theme-gold .log-target,
+.theme-gold .log-admin,
+.theme-gold .switch-desc,
+.theme-gold .empty {
+  color: rgba(244, 236, 214, 0.76) !important;
+}
+
+.theme-gold .panel-title,
+.theme-gold .ops-title,
+.theme-gold .feedback-title,
+.theme-gold .log-operation,
+.theme-gold .switch-title {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .field input,
+.theme-gold .field textarea {
+  color: #f4ecd6 !important;
+  background: #101010 !important;
+  border-color: rgba(212, 175, 55, 0.30) !important;
+}
+
+.theme-gold .field input:focus,
+.theme-gold .field textarea:focus {
+  border-color: rgba(212, 175, 55, 0.62) !important;
+  box-shadow: 0 0 0 4rpx rgba(212, 175, 55, 0.10);
+}
+
+.theme-gold .section-divider,
+.theme-gold .ops-card,
+.theme-gold .feedback-card,
+.theme-gold .log-card,
+.theme-gold .switch-row {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+  background-color: transparent !important;
+}
+
+.theme-gold .small-btn,
+.theme-gold .small-btn.success {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 8rpx 20rpx rgba(212, 175, 55, 0.24);
+}
+
+.theme-gold .small-btn.ghost {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.10) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.22) !important;
+  box-shadow: none;
 }

@@ -125,3 +125,50 @@
   color: #c0c8d2;
   font-size: 34rpx;
 }
+
+.theme-dark {
+  background:
+    linear-gradient(135deg, rgba(212, 175, 55, 0.06), rgba(255, 255, 255, 0.02)),
+    #1b1b1b;
+}
+
+.theme-dark::before {
+  background: linear-gradient(180deg, #f6df88, #d4af37);
+  box-shadow: 0 0 12rpx rgba(212, 175, 55, 0.34);
+}
+
+.theme-dark:active {
+  background: #22201a;
+}
+
+.theme-dark .rank-mark {
+  color: #17110a;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%);
+  box-shadow: 0 8rpx 18rpx rgba(212, 175, 55, 0.28);
+}
+
+.theme-dark .avatar {
+  background: #272727;
+  border-color: rgba(212, 175, 55, 0.56);
+  box-shadow: 0 0 18rpx rgba(212, 175, 55, 0.18);
+}
+
+.theme-dark .name {
+  color: #f4ecd6;
+}
+
+.theme-dark .meta {
+  color: rgba(244, 236, 214, 0.58);
+}
+
+.theme-dark .score-value {
+  color: #d4af37;
+}
+
+.theme-dark .score-label {
+  color: rgba(244, 236, 214, 0.48);
+}
+
+.theme-dark .arrow {
+  color: rgba(212, 175, 55, 0.70);
+}

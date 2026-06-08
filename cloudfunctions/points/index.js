@@ -3,6 +3,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
 
 function ok(data = null, message = '操作成功') {
   return { code: 0, data, message };
@@ -87,18 +88,32 @@ async function ensurePointAccount(user) {
   return { _id: res._id, ...data };
 }
 
-async function syncPointAccountAndUser(user, next_points) {
-  const data = {
-    total_points: numberValue(next_points.total_points, 0),
-    available_points: numberValue(next_points.available_points, 0),
-    frozen_points: numberValue(next_points.frozen_points, 0),
-    used_points: numberValue(next_points.used_points, 0),
-    updated_at: db.serverDate()
-  };
+// 原子增量更新积分：对 users 与 point_accounts 同步 _.inc。
+// 取代"先读后写 + 绝对值覆盖"，避免并发丢更新，也避免覆盖其它云函数
+// （exchange/commission/puzzle/activity）对同一账户的原子 inc 变更。
+// guard 作为 users 表的附加条件（如扣减/冻结要求余额足额）；命中 0 行返回 false。
+async function applyPointsDelta(user_id, deltas, guard) {
+  const incData = { updated_at: db.serverDate() };
+  ['total_points', 'available_points', 'frozen_points', 'used_points'].forEach((key) => {
+    if (deltas[key]) incData[key] = _.inc(deltas[key]);
+  });
 
-  await db.collection('users').doc(user._id).update({ data });
+  const where = guard ? { _id: user_id, ...guard } : { _id: user_id };
+  const res = await db.collection('users').where(where).update({ data: incData });
+  if (!res.stats || res.stats.updated === 0) return false;
+
+  try {
+    await db.collection('point_accounts').where({ user_id }).update({ data: incData });
+  } catch (e) { if (!isCollectionMissing(e)) throw e; }
+  return true;
+}
+
+// 变更后回读权威积分快照用于返回
+async function reloadPoints(user_id) {
+  const user = await getUserById(user_id);
+  if (!user) return readPoints();
   const account = await ensurePointAccount(user);
-  await db.collection('point_accounts').doc(account._id).update({ data });
+  return readPoints(user, account);
 }
 
 async function addPointLog({ user, amount, type, point_type = 'available', business_type = 'admin_adjust', related_id = '', reason }) {
@@ -166,23 +181,21 @@ async function adjustPoints(event, direction) {
   const user = await getUserById(user_id);
   if (!user) return fail('用户不存在');
 
-  const account = await ensurePointAccount(user);
-  const current = readPoints(user, account);
-  if (direction === 'deduct' && current.available_points < delta) return fail('可用积分不足');
+  await ensurePointAccount(user);
 
-  const next_points = direction === 'add'
-    ? {
-        ...current,
-        total_points: current.total_points + delta,
-        available_points: current.available_points + delta
-      }
-    : {
-        ...current,
-        available_points: current.available_points - delta,
-        used_points: current.used_points + delta
-      };
+  // 原子加/扣：扣减时以 available_points 足额为条件，命中 0 行即余额不足。
+  let applied;
+  if (direction === 'add') {
+    applied = await applyPointsDelta(user._id, { total_points: delta, available_points: delta });
+  } else {
+    applied = await applyPointsDelta(
+      user._id,
+      { available_points: -delta, used_points: delta },
+      { available_points: _.gte(delta) }
+    );
+  }
+  if (!applied) return fail('可用积分不足');
 
-  await syncPointAccountAndUser(user, next_points);
   await addPointLog({
     user,
     amount: direction === 'add' ? delta : -delta,
@@ -192,7 +205,7 @@ async function adjustPoints(event, direction) {
     business_type: 'admin_adjust'
   });
 
-  return ok(next_points, direction === 'add' ? '增加成功' : '扣除成功');
+  return ok(await reloadPoints(user._id), direction === 'add' ? '增加成功' : '扣除成功');
 }
 
 async function points_addPoints(event) {
@@ -255,15 +268,18 @@ async function points_freezePoints(event) {
     if (!Number.isInteger(amount) || amount <= 0) return fail('冻结积分必须为正整数');
 
     const account = await ensurePointAccount(user);
-    const current = readPoints(user, account);
-    if (current.available_points < amount) return fail('可用积分不足');
+    if (numberValue(account.available_points || user.available_points, 0) < amount) {
+      // 快速失败提示；真正的并发安全由下方条件原子更新保证
+      return fail('可用积分不足');
+    }
 
-    const next_points = {
-      ...current,
-      available_points: current.available_points - amount,
-      frozen_points: current.frozen_points + amount
-    };
-    await syncPointAccountAndUser(user, next_points);
+    const applied = await applyPointsDelta(
+      user._id,
+      { available_points: -amount, frozen_points: amount },
+      { available_points: _.gte(amount) }
+    );
+    if (!applied) return fail('可用积分不足');
+
     await addPointLog({
       user,
       amount: -amount,
@@ -273,7 +289,7 @@ async function points_freezePoints(event) {
       reason: '积分冻结'
     });
 
-    return ok(next_points, '冻结成功');
+    return ok(await reloadPoints(user._id), '冻结成功');
   } catch (error) {
     return fail('冻结积分失败: ' + error.message);
   }
@@ -288,15 +304,30 @@ async function points_unfreezePoints(event) {
     if (!user) return fail('用户不存在');
     if (!Number.isInteger(amount) || amount <= 0) return fail('解冻积分必须为正整数');
 
-    const account = await ensurePointAccount(user);
-    const current = readPoints(user, account);
-    const release_amount = Math.min(amount, current.frozen_points);
-    const next_points = {
-      ...current,
-      available_points: current.available_points + release_amount,
-      frozen_points: current.frozen_points - release_amount
-    };
-    await syncPointAccountAndUser(user, next_points);
+    await ensurePointAccount(user);
+
+    // 优先原子解冻 amount（冻结额足额时）
+    let release_amount = amount;
+    let applied = await applyPointsDelta(
+      user._id,
+      { available_points: amount, frozen_points: -amount },
+      { frozen_points: _.gte(amount) }
+    );
+
+    // 冻结额不足 amount：按当前冻结额做 CAS 全额解冻，避免 frozen 变负
+    if (!applied) {
+      const account = await ensurePointAccount(user);
+      const frozen = numberValue(account.frozen_points, 0);
+      if (frozen <= 0) return ok(await reloadPoints(user._id), '解冻成功');
+      release_amount = frozen;
+      applied = await applyPointsDelta(
+        user._id,
+        { available_points: frozen, frozen_points: -frozen },
+        { frozen_points: frozen }
+      );
+      if (!applied) return fail('解冻失败，请重试');
+    }
+
     await addPointLog({
       user,
       amount: release_amount,
@@ -306,7 +337,7 @@ async function points_unfreezePoints(event) {
       reason: '积分解冻'
     });
 
-    return ok(next_points, '解冻成功');
+    return ok(await reloadPoints(user._id), '解冻成功');
   } catch (error) {
     return fail('解冻积分失败: ' + error.message);
   }

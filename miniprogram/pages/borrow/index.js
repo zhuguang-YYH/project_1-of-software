@@ -1,5 +1,6 @@
-const { callCloudFunction } = require('../../utils/request.js');
+const borrowService = require('../../services/borrow.js');
 const format = require('../../utils/format.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 const BORROW_ASSETS = {
   bookCover: '/images/borrow_jubensha/书籍默认封面.jpg',
@@ -128,6 +129,7 @@ Page({
     scripts: [],
     my_borrows: [],
     tab: 'available',
+    theme: 'blue',
     loading: false,
     error: '',
     refreshing: false,
@@ -141,12 +143,18 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.loadMyBorrows();
     if (this.data.items.length === 0) this.loadItems();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -156,13 +164,13 @@ Page({
   async loadItems() {
     this.setData({ loading: true, error: '' });
     try {
-      const result = await callCloudFunction('borrow_getItems', {
+      const result = await borrowService.getItems({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || '加载物资失败');
+      if (!result.success) throw new Error(result.error || '加载物资失败');
 
-      const list = (result.data && result.data.list) || result.data || [];
+      const list = result.data || [];
       this.setData({ items: list.map(normalizeItem) });
     } catch (err) {
       console.error('Load borrow items failed:', err);
@@ -174,13 +182,13 @@ Page({
 
   async loadMyBorrows() {
     try {
-      const result = await callCloudFunction('borrow_getBorrowHistory', {
+      const result = await borrowService.getBorrowHistory({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || '加载借阅记录失败');
+      if (!result.success) throw new Error(result.error || '加载借阅记录失败');
 
-      const list = (result.data && result.data.list) || [];
+      const list = result.data || [];
       this.setData({ my_borrows: list.map(normalizeBorrow) });
     } catch (err) {
       console.error('Load borrow history failed:', err);
@@ -190,13 +198,13 @@ Page({
   async loadScripts() {
     this.setData({ scripts_error: '' });
     try {
-      const result = await callCloudFunction('borrow_getScripts', {
+      const result = await borrowService.getScripts({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || '加载剧本杀库存失败');
+      if (!result.success) throw new Error(result.error || '加载剧本杀库存失败');
 
-      const list = (result.data && result.data.list) || [];
+      const list = result.data || [];
       this.setData({
         scripts: list.map(item => normalizeItem(item, 'script')),
         scripts_loaded: true
@@ -263,11 +271,8 @@ Page({
 
     this.setData({ applying: true });
     try {
-      const result = await callCloudFunction('borrow_applyBorrow', {
-        item_id: selected_item.item_id,
-        reason
-      });
-      if (!result.success) throw new Error(result.message || '申请失败');
+      const result = await borrowService.applyBorrow(selected_item.item_id, { reason });
+      if (!result.success) throw new Error(result.error || '申请失败');
 
       wx.showToast({ title: '申请成功', icon: 'success' });
       this.setData({ show_apply_modal: false });
@@ -299,8 +304,8 @@ Page({
   async cancelBorrow(application_id) {
     this.setData({ canceling_id: application_id });
     try {
-      const result = await callCloudFunction('borrow_cancelBorrow', { application_id });
-      if (!result.success) throw new Error(result.message || '取消失败');
+      const result = await borrowService.cancelBorrow(application_id);
+      if (!result.success) throw new Error(result.error || '取消失败');
 
       wx.showToast({ title: '已取消', icon: 'success' });
       await Promise.all([this.loadItems(), this.loadMyBorrows()]);
@@ -313,6 +318,19 @@ Page({
 
   onRetry() {
     this.initPage();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 物资借阅',
+      path: '/pages/borrow/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 物资借阅'
+    };
   },
 
   noop() {}

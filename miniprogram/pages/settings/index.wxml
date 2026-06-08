@@ -1,4 +1,4 @@
-<view class="page" wx:if="{{!loading}}">
+<view class="page theme-{{theme}}" wx:if="{{!loading}}">
   <scroll-view class="scroll-view" scroll-y>
     <view class="account-panel">
       <text class="panel-title">登录状态</text>
@@ -7,6 +7,30 @@
         <view class="account-meta">
           <text class="account-name">{{userInfo.nickname || '未登录'}}</text>
           <text class="account-role">{{userInfo.role === 'admin' ? '管理员' : (userInfo ? '普通用户' : '游客')}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">外观主题</text>
+      <view class="theme-grid">
+        <view
+          class="theme-option {{settings.theme === item.key ? 'active' : ''}} theme-{{item.key}}"
+          wx:for="{{themeOptions}}"
+          wx:key="key"
+          data-theme="{{item.key}}"
+          bindtap="onThemeSelect"
+        >
+          <view class="theme-preview">
+            <view class="theme-preview-bar"></view>
+            <view class="theme-preview-line"></view>
+            <view class="theme-preview-line short"></view>
+          </view>
+          <view class="theme-copy">
+            <text class="theme-name">{{item.label}}</text>
+            <text class="theme-desc">{{item.desc}}</text>
+          </view>
+          <text class="theme-check" wx:if="{{settings.theme === item.key}}">✓</text>
         </view>
       </view>
     </view>
@@ -99,7 +123,7 @@
   </scroll-view>
 </view>
 
-<view class="loading-state" wx:else>
+<view class="loading-state theme-{{theme}}" wx:else>
   <view class="loading-spinner"></view>
   <text>加载设置中...</text>
 </view>

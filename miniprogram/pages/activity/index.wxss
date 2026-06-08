@@ -431,3 +431,30 @@
   background: #fff;
   flex-shrink: 0;
 }
+
+/* 黑金主题：活动页按钮修正 */
+.theme-gold .btn-register,
+.theme-gold .btn-confirm-modal,
+.theme-gold .btn-confirm-modal[disabled] {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  border: none !important;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.26) !important;
+}
+
+.theme-gold .btn-register .btn-text,
+.theme-gold .btn-confirm-modal .btn-text,
+.theme-gold .btn-register text,
+.theme-gold .btn-confirm-modal text {
+  color: #17110a !important;
+}
+
+.theme-gold .btn-cancel,
+.theme-gold .btn-cancel-modal,
+.theme-gold .btn-full,
+.theme-gold .btn-confirmed {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.10) !important;
+  border-color: rgba(212, 175, 55, 0.22) !important;
+  box-shadow: none !important;
+}

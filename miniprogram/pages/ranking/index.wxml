@@ -1,7 +1,7 @@
-<view class="container page-bg-gradient" wx:if="{{!loading}}">
+<view class="container page-bg-gradient theme-{{theme}}" wx:if="{{!loading}}">
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="onRetry">重新加载</button>
+    <button class="retry-btn" bindtap="onRetry">重试</button>
   </view>
 
   <view class="tab-container" wx:else>
@@ -53,6 +53,7 @@
           wx:for="{{full_ranking}}"
           wx:key="user_id"
           user="{{item}}"
+          theme="{{rankingCardTheme}}"
           bind:cardtap="openDetectiveCard" />
       </view>
 
@@ -100,7 +101,7 @@
 
       <view class="card-loading" wx:if="{{card_loading}}">
         <view class="mini-spinner"></view>
-        <text>加载中…</text>
+        <text>加载中...</text>
       </view>
 
       <view class="detective-card" wx:if="{{selected_card}}">
@@ -145,7 +146,7 @@
   </view>
 </view>
 
-<view class="loading-state" wx:elif="{{loading}}">
+<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
   <view class="loading-spinner"></view>
   <text class="loading-text">加载排行中…</text>
 </view>

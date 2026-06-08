@@ -1,4 +1,4 @@
-<view class="page-bg-gradient page-root">
+<view class="page-bg-gradient page-root theme-{{theme}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
@@ -109,6 +109,7 @@
           wx:key="user_id"
           user="{{item}}"
           variant="compact"
+          theme="{{rankingCardTheme}}"
           bind:cardtap="openRankingUser"
         />
       </view>

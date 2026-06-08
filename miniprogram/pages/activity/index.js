@@ -1,4 +1,6 @@
-const request = require('../../utils/request.js');
+const activityService = require('../../services/activity.js');
+const subscribe = require('../../utils/subscribe.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -38,6 +40,7 @@ Page({
     visible_activities: [],
     my_activities: [],
     tab: 'all',
+    theme: 'blue',
     loading: false,
     error: '',
     refreshing: false,
@@ -49,12 +52,18 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.loadMyActivities();
     if (this.data.activities.length === 0) this.loadActivities();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -90,9 +99,9 @@ Page({
   async loadActivities(showLoading = true) {
     if (showLoading) this.setData({ loading: true, error: '' });
     try {
-      const result = await request.callCloudFunction('activity_getActivities', { page_size: 50 });
-      if (result.code !== 0) throw new Error(result.message || '加载活动失败');
-      const list = ((result.data && result.data.list) || []).map(item => this.mapActivity(item));
+      const result = await activityService.getActivities({ page_size: 50 });
+      if (!result.success) throw new Error(result.error || '加载活动失败');
+      const list = (result.data || []).map(item => this.mapActivity(item));
       this.setData({
         activities: list,
         visible_activities: list.filter(item => !item.is_expired)
@@ -107,10 +116,10 @@ Page({
 
   async loadMyActivities() {
     try {
-      const result = await request.callCloudFunction('activity_getMyActivities', { page_size: 50 });
-      if (result.code !== 0) return;
+      const result = await activityService.getMyActivities({ page_size: 50 });
+      if (!result.success) return;
 
-      const list = ((result.data && result.data.list) || []).map(item => {
+      const list = (result.data || []).map(item => {
         const activity = this.mapActivity(item.activity || {});
         const status = item.status || 'registered';
         const deadline_date = toDate(activity.cancel_deadline);
@@ -182,8 +191,7 @@ Page({
 
   async submitRegister(can_not_cancel_confirm = false) {
     const { selected_activity, register_reason } = this.data;
-    return request.callCloudFunction('activity_registerActivity', {
-      activity_id: selected_activity.activity_id,
+    return activityService.registerActivity(selected_activity.activity_id, {
       reason: register_reason.trim(),
       can_not_cancel_confirm
     });
@@ -195,10 +203,16 @@ Page({
       return;
     }
 
+    // 申请订阅授权（报名成功 + 活动开始提醒）；须在点击手势栈内触发，用户拒绝不影响报名
+    await subscribe.requestSubscribe([
+      subscribe.TEMPLATES.REGISTER_SUCCESS,
+      subscribe.TEMPLATES.ACTIVITY_REMINDER
+    ]);
+
     this.setData({ registering: true });
     try {
       const result = await this.submitRegister(false);
-      if (result.code === 'CANCEL_CONFIRM_REQUIRED') {
+      if (!result.success && result.code === 'CANCEL_CONFIRM_REQUIRED') {
         wx.showModal({
           title: '确认报名',
           content: '当前已超过最晚取消时间，报名成功后将不能取消。是否继续报名？',
@@ -233,13 +247,13 @@ Page({
   },
 
   async handleRegisterResult(result) {
-    if (result.code === 0) {
+    if (result.success) {
       wx.showToast({ title: '报名成功', icon: 'success' });
       this.setData({ show_register_modal: false });
       await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       return;
     }
-    wx.showToast({ title: result.message || '报名失败', icon: 'none' });
+    wx.showToast({ title: result.error || '报名失败', icon: 'none' });
   },
 
   showCancelConfirm(event) {
@@ -258,12 +272,12 @@ Page({
   async cancelRegister(activity_id) {
     this.setData({ canceling_id: activity_id });
     try {
-      const result = await request.callCloudFunction('activity_cancelRegister', { activity_id });
-      if (result.code === 0) {
+      const result = await activityService.cancelRegister(activity_id);
+      if (result.success) {
         wx.showToast({ title: '已取消报名', icon: 'success' });
         await Promise.all([this.loadActivities(false), this.loadMyActivities()]);
       } else {
-        wx.showToast({ title: result.message || '取消失败', icon: 'none' });
+        wx.showToast({ title: result.error || '取消失败', icon: 'none' });
       }
     } catch (error) {
       wx.showToast({ title: '网络错误', icon: 'none' });
@@ -275,5 +289,18 @@ Page({
 
   onRetry() {
     this.initPage();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'NK推协 · 活动报名',
+      path: '/pages/activity/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 活动报名'
+    };
   }
 });

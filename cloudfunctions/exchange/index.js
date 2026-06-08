@@ -26,6 +26,47 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+// 积分兑换通知订阅消息模板
+const EXCHANGE_NOTIFY_TMPL = 'd1_r_egCRaHIEqMg3mj-Z32-jli_O11ZjLa-fwhos3c';
+
+function asThing(value, max = 20) {
+  const text = String(value == null ? '' : value).trim();
+  return text ? text.slice(0, max) : '—';
+}
+
+// 当前北京时间（云函数运行在 UTC，+8h 后取 UTC 各字段）："YYYY-MM-DD HH:mm:ss"
+function nowCstText() {
+  const cst = new Date(Date.now() + 8 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${cst.getUTCFullYear()}-${p(cst.getUTCMonth() + 1)}-${p(cst.getUTCDate())} ${p(cst.getUTCHours())}:${p(cst.getUTCMinutes())}:${p(cst.getUTCSeconds())}`;
+}
+
+// 下发订阅消息（best-effort：用户未授权/格式异常都不影响主流程）
+async function sendSubscribeMessage(touser, templateId, data, page) {
+  if (!touser) return false;
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser,
+      templateId,
+      page: page || 'pages/index/index',
+      miniprogramState: 'formal',
+      lang: 'zh_CN',
+      data
+    });
+    return true;
+  } catch (error) {
+    console.warn('[subscribe] send failed:', templateId, error && (error.errCode || error.errMsg || error.message));
+    return false;
+  }
+}
+
+function buildExchangeRequestId(user_id, client_request_id) {
+  const raw = String(client_request_id || '').trim();
+  if (!raw) return '';
+  const safe = raw.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  return `exchange_${user_id}_${safe}`;
+}
+
 function normalizeGood(item = {}) {
   const item_id = item.item_id || item._id || '';
   const exchange_points = toNumber(item.exchange_points);
@@ -238,10 +279,13 @@ async function exchange_getProductDetail(event) {
 async function exchange_exchange(event) {
   let stock_decreased = false;
   let points_frozen = false;
+  let lock_created = false;
+  let exchange_doc_id = '';
   let item_id = '';
   let quantity = 1;
   let total_cost = 0;
   let user_id = '';
+  let client_request_id = '';
 
   try {
     const user = await getCurrentUser();
@@ -250,20 +294,43 @@ async function exchange_exchange(event) {
 
     item_id = event.item_id || event.goods_id;
     quantity = Math.max(1, Number(event.quantity) || 1);
-    const client_request_id = String(event.client_request_id || '').trim();
+    client_request_id = String(event.client_request_id || '').trim();
 
-    // 幂等：相同 client_request_id 已存在记录则直接返回
+    // 幂等锁：先用稳定 _id 创建占位记录，避免并发重复请求穿透到扣库存/扣积分。
     if (client_request_id) {
+      exchange_doc_id = buildExchangeRequestId(user_id, client_request_id);
       try {
-        const existed = await db.collection('exchange_records')
-          .where({ user_id, client_request_id })
-          .limit(1)
-          .get();
-        if (existed.data.length > 0) {
-          const old = existed.data[0];
-          return ok({ exchange_id: old._id, points_cost: toNumber(old.points_cost), idempotent: true }, '兑换成功');
+        await db.collection('exchange_records').add({
+          data: {
+            _id: exchange_doc_id,
+            exchange_id: exchange_doc_id,
+            user_id,
+            item_id,
+            quantity,
+            status: 'processing',
+            client_request_id,
+            created_at: db.serverDate(),
+            updated_at: db.serverDate()
+          }
+        });
+        lock_created = true;
+      } catch (e) {
+        if (isCollectionMissing(e)) throw e;
+
+        const existed = await db.collection('exchange_records').doc(exchange_doc_id).get();
+        const old = existed.data || {};
+        if (['pending', 'shipped', 'completed', 'received'].includes(old.status)) {
+          return ok({
+            exchange_id: old.exchange_id || old._id,
+            points_cost: toNumber(old.points_cost || old.total_cost),
+            idempotent: true
+          }, '兑换成功');
         }
-      } catch (e) { if (!isCollectionMissing(e)) throw e; }
+        if (old.status === 'processing') {
+          return fail('兑换请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
+        }
+        return fail(old.error_message || '该兑换请求已处理失败，请重新发起兑换', 'REQUEST_FAILED');
+      }
     }
 
     const good = await getGoodById(item_id);
@@ -300,10 +367,27 @@ async function exchange_exchange(event) {
       handled_at: '',
       updated_at: db.serverDate()
     };
-    const res = await db.collection('exchange_records').add({ data });
-    await db.collection('exchange_records').doc(res._id).update({ data: { exchange_id: res._id } });
+    if (exchange_doc_id) {
+      await db.collection('exchange_records').doc(exchange_doc_id).update({ data });
+    } else {
+      const res = await db.collection('exchange_records').add({ data });
+      exchange_doc_id = res._id;
+      await db.collection('exchange_records').doc(res._id).update({ data: { exchange_id: res._id } });
+    }
 
-    return ok({ exchange_id: res._id, points_cost: total_cost }, '兑换成功');
+    // 兑换通知（best-effort）：仅当用户已填学号时下发
+    const student_id = String((user && user.student_id) || '').trim();
+    if (student_id) {
+      await sendSubscribeMessage(cloud.getWXContext().OPENID, EXCHANGE_NOTIFY_TMPL, {
+        thing2: { value: asThing(good.item_name || '兑换商品', 20) },
+        number3: { value: quantity },
+        thing6: { value: '兑换成功，到货后请留意领取通知' },
+        character_string10: { value: student_id.slice(0, 32) },
+        time7: { value: nowCstText() }
+      }, 'pages/exchange/index');
+    }
+
+    return ok({ exchange_id: exchange_doc_id, points_cost: total_cost }, '兑换成功');
   } catch (error) {
     // 回滚：按已完成的步骤逆序回退
     if (points_frozen && user_id && total_cost > 0) {
@@ -311,6 +395,17 @@ async function exchange_exchange(event) {
     }
     if (stock_decreased && item_id && quantity > 0) {
       try { await updateStock(item_id, quantity); } catch (e) { console.error('回滚库存失败:', e); }
+    }
+    if (lock_created && exchange_doc_id) {
+      try {
+        await db.collection('exchange_records').doc(exchange_doc_id).update({
+          data: {
+            status: 'failed',
+            error_message: error.message || '兑换失败',
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (e) { console.error('标记兑换失败失败:', e); }
     }
     return fail('兑换失败: ' + error.message);
   }

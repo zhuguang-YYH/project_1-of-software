@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const puzzleService = require('../../services/puzzle.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 Page({
   data: {
@@ -9,19 +10,29 @@ Page({
     is_correct: false,
     loading: true,
     submitting: false,
+    theme: 'blue',
     error: ''
   },
 
   onLoad() {
+    this.loadTheme();
     this.loadPuzzle();
+  },
+
+  onShow() {
+    this.loadTheme();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async loadPuzzle() {
     try {
       this.setData({ loading: true, error: '' });
 
-      const result = await request.callCloudFunction('puzzle_getTodayPuzzle', {});
-      if (!result.success) throw new Error(result.message || '加载谜题失败');
+      const result = await puzzleService.getTodayPuzzle();
+      if (!result.success) throw new Error(result.error || '加载谜题失败');
 
       const puzzle = result.data || {};
       const DIFFICULTY_MAP = { easy: '简单', normal: '中等', medium: '中等', hard: '困难', extreme: '极限' };
@@ -66,11 +77,11 @@ Page({
     try {
       this.setData({ submitting: true });
 
-      const result = await request.callCloudFunction('puzzle_submitAnswer', {
-        puzzle_id: this.data.puzzle.puzzle_id,
-        option_id: this.data.selected_option_id
-      });
-      if (!result.success) throw new Error(result.message || '提交失败');
+      const result = await puzzleService.submitAnswer(
+        this.data.puzzle.puzzle_id,
+        this.data.selected_option_id
+      );
+      if (!result.success) throw new Error(result.error || '提交失败');
 
       const data = result.data || {};
       this.setData({
@@ -108,6 +119,12 @@ Page({
     return {
       title: '每日谜题挑战',
       path: '/pages/puzzle/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '每日谜题挑战'
     };
   }
 });

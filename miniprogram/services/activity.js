@@ -48,7 +48,7 @@ class ActivityService {
         activity_id,
         reason: options.reason || '',
         can_not_cancel_confirm: !!options.can_not_cancel_confirm
-      });
+      }, { idempotent: true });
       if (!result.success) {
         return {
           success: false,

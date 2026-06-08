@@ -130,6 +130,7 @@ D:\WeChatApp
 - `activities`
 - `activity_registrations`
 - `inventory_items`
+- `borrow_applications`
 - `borrow_records`
 - `exchange_records`
 - `commissions`

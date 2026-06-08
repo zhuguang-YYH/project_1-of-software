@@ -570,3 +570,424 @@ page {
   border-radius: 4rpx;
   background: linear-gradient(180deg, #5b6cff, #f5b041);
 }
+
+/* ===== Theme: black gold ===== */
+.theme-gold.page,
+.theme-gold.container,
+.theme-gold.page-root,
+.theme-gold.page-bg-gradient {
+  min-height: 100vh;
+  color: #f4ecd6;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(212, 175, 55, 0.20) 0%, rgba(212, 175, 55, 0.00) 36%),
+    radial-gradient(circle at 8% 30%, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.00) 32%),
+    linear-gradient(135deg, #0a0a0a 0%, #161616 48%, #202020 100%) !important;
+}
+
+.theme-gold .section,
+.theme-gold .panel,
+.theme-gold .card,
+.theme-gold .stat,
+.theme-gold .activity-card,
+.theme-gold .item-card,
+.theme-gold .borrow-card,
+.theme-gold .script-card,
+.theme-gold .goods-card,
+.theme-gold .exchange-card,
+.theme-gold .commission-card,
+.theme-gold .feedback-card,
+.theme-gold .recommend-card,
+.theme-gold .log-card,
+.theme-gold .my-ranking-card,
+.theme-gold .login-card,
+.theme-gold .user-card,
+.theme-gold .stats-row,
+.theme-gold .quick-menu,
+.theme-gold .about-section,
+.theme-gold .edit-form,
+.theme-gold .account-panel,
+.theme-gold .points-card,
+.theme-gold .summary,
+.theme-gold .modal,
+.theme-gold .modal-content,
+.theme-gold .detail-modal,
+.theme-gold .ranking-list,
+.theme-gold .item-details,
+.theme-gold .borrow-details,
+.theme-gold .goods-details,
+.theme-gold .script-info-grid,
+.theme-gold .cost-summary,
+.theme-gold .my-stat,
+.theme-gold .card-stat,
+.theme-gold .card-stats,
+.theme-gold .card-section,
+.theme-gold .reward-box {
+  color: #f4ecd6;
+  background:
+    linear-gradient(135deg, rgba(212, 175, 55, 0.055), rgba(255, 255, 255, 0.018)),
+    #171717 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 14rpx 36rpx rgba(0, 0, 0, 0.28);
+}
+
+.theme-gold .header,
+.theme-gold .header-bg,
+.theme-gold .profile-header,
+.theme-gold .my-ranking-header,
+.theme-gold .summary,
+.theme-gold .points-card {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(212, 175, 55, 0.22), transparent 42%),
+    linear-gradient(135deg, #111111 0%, #1c1c1c 62%, #2a2418 100%) !important;
+}
+
+.theme-gold .section-title,
+.theme-gold .panel-title,
+.theme-gold .setting-name,
+.theme-gold .activity-title,
+.theme-gold .item-name,
+.theme-gold .borrow-name,
+.theme-gold .script-title,
+.theme-gold .goods-name,
+.theme-gold .exchange-name,
+.theme-gold .commission-title,
+.theme-gold .feedback-title,
+.theme-gold .recommend-title,
+.theme-gold .modal-title,
+.theme-gold .user-name,
+.theme-gold .account-name,
+.theme-gold .my-ranking-title,
+.theme-gold .my-stat-value,
+.theme-gold .my-ranking-value,
+.theme-gold .stat-value,
+.theme-gold .menu-text,
+.theme-gold .about-title,
+.theme-gold .about-text,
+.theme-gold .info-value,
+.theme-gold .question-title,
+.theme-gold .puzzle-title {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .section-title::before,
+.theme-gold .panel-title::before,
+.theme-gold .detective-card::before {
+  background: linear-gradient(180deg, #f6df88, #d4af37) !important;
+  box-shadow: 0 0 14rpx rgba(212, 175, 55, 0.32);
+}
+
+.theme-gold .setting-desc,
+.theme-gold .detail-label,
+.theme-gold .detail-value,
+.theme-gold .item-desc,
+.theme-gold .borrow-desc,
+.theme-gold .script-desc,
+.theme-gold .goods-desc,
+.theme-gold .commission-desc,
+.theme-gold .feedback-content,
+.theme-gold .recommend-summary,
+.theme-gold .message-meta,
+.theme-gold .meta,
+.theme-gold .label,
+.theme-gold .empty-text,
+.theme-gold .loading-text,
+.theme-gold .account-role,
+.theme-gold .my-ranking-sub,
+.theme-gold .my-stat-label,
+.theme-gold .my-ranking-label,
+.theme-gold .stat-label,
+.theme-gold .user-id,
+.theme-gold .user-signature,
+.theme-gold .about-desc,
+.theme-gold .menu-arrow,
+.theme-gold .form-label,
+.theme-gold .info-label {
+  color: rgba(244, 236, 214, 0.64) !important;
+}
+
+.theme-gold .menu-item,
+.theme-gold .about-header,
+.theme-gold .form-field,
+.theme-gold .edit-avatar-section,
+.theme-gold .my-ranking-item {
+  border-color: rgba(212, 175, 55, 0.14) !important;
+}
+
+.theme-gold .menu-item:active {
+  background: rgba(212, 175, 55, 0.08) !important;
+}
+
+.theme-gold .stat-divider {
+  background: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .interest-tag,
+.theme-gold .nudge-text,
+.theme-gold .script-genre,
+.theme-gold .podium-points {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.12) !important;
+}
+
+.theme-gold .tab-nav,
+.theme-gold .tabs,
+.theme-gold .filter-row,
+.theme-gold .search-row,
+.theme-gold .search-box,
+.theme-gold .composer,
+.theme-gold .category-list {
+  background: rgba(23, 23, 23, 0.92) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.16);
+  box-shadow: 0 10rpx 26rpx rgba(0, 0, 0, 0.22);
+}
+
+.theme-gold .tab-item,
+.theme-gold .category-item,
+.theme-gold .filter-chip {
+  color: rgba(244, 236, 214, 0.68) !important;
+}
+
+.theme-gold .tab-item.active,
+.theme-gold .category-item.active,
+.theme-gold .filter-chip.active {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+}
+
+.theme-gold input,
+.theme-gold textarea,
+.theme-gold .input,
+.theme-gold .textarea,
+.theme-gold .form-input,
+.theme-gold .form-textarea {
+  color: #f4ecd6 !important;
+  background: #111111 !important;
+  border-color: rgba(212, 175, 55, 0.20) !important;
+}
+
+.theme-gold .primary-btn,
+.theme-gold .submit-btn,
+.theme-gold .confirm-btn,
+.theme-gold .action-btn.primary,
+.theme-gold .exchange-btn,
+.theme-gold .borrow-btn,
+.theme-gold .register-btn,
+.theme-gold .login-btn,
+.theme-gold .btn-apply,
+.theme-gold .btn-confirm-modal,
+.theme-gold .retry-btn,
+.theme-gold .form-save-btn,
+.theme-gold .card-edit-btn {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.28);
+}
+
+.theme-gold .secondary-btn,
+.theme-gold .cancel-btn,
+.theme-gold .ghost-btn,
+.theme-gold .action-btn,
+.theme-gold .btn-cancel,
+.theme-gold .btn-cancel-modal,
+.theme-gold .form-cancel-btn,
+.theme-gold .btn-unavailable {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.10) !important;
+  border-color: rgba(212, 175, 55, 0.22) !important;
+}
+
+.theme-gold .avatar-edit-badge,
+.theme-gold .status-icon {
+  background: #d4af37 !important;
+}
+
+.theme-gold .user-avatar,
+.theme-gold .borrow-cover,
+.theme-gold .script-cover,
+.theme-gold .podium-avatar {
+  background: #222 !important;
+  border-color: rgba(212, 175, 55, 0.42) !important;
+}
+
+.theme-gold .loading-spinner {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+  border-top-color: #d4af37 !important;
+}
+
+.theme-gold.loading-state {
+  min-height: 100vh !important;
+  color: #f4ecd6;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(212, 175, 55, 0.20) 0%, rgba(212, 175, 55, 0.00) 36%),
+    radial-gradient(circle at 8% 30%, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.00) 32%),
+    linear-gradient(135deg, #0a0a0a 0%, #161616 48%, #202020 100%) !important;
+}
+
+.theme-gold.loading-state .loading-spinner {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+  border-top-color: #d4af37 !important;
+}
+
+.theme-gold.loading-state .loading-text,
+.theme-gold .loading-state text,
+.theme-gold.loading-state text {
+  color: rgba(244, 236, 214, 0.68) !important;
+}
+
+.theme-gold .empty-state {
+  color: rgba(244, 236, 214, 0.68);
+  background: #171717 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 14rpx 36rpx rgba(0, 0, 0, 0.24);
+}
+
+/* Theme: black gold cross-page hardening */
+.theme-gold .activity-details,
+.theme-gold .exchange-details,
+.theme-gold .modal-section,
+.theme-gold .section-value,
+.theme-gold .reason-input,
+.theme-gold .message-input,
+.theme-gold .search-input,
+.theme-gold .qty-value,
+.theme-gold .answer-status,
+.theme-gold .analysis,
+.theme-gold .answer-card,
+.theme-gold .log-item,
+.theme-gold .history-card,
+.theme-gold .settings-panel,
+.theme-gold .setting-row,
+.theme-gold .theme-option {
+  color: #f4ecd6 !important;
+  background: #101010 !important;
+  border-color: rgba(212, 175, 55, 0.24) !important;
+}
+
+.theme-gold .modal-header,
+.theme-gold .modal-head,
+.theme-gold .modal-footer,
+.theme-gold .composer {
+  background: #111111 !important;
+  border-color: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .modal-overlay,
+.theme-gold .modal-mask {
+  background: rgba(0, 0, 0, 0.66) !important;
+}
+
+.theme-gold .card-title,
+.theme-gold .empty-title,
+.theme-gold .section-label,
+.theme-gold .modal-title,
+.theme-gold .question-text,
+.theme-gold .option-label,
+.theme-gold .log-reason,
+.theme-gold .setting-title {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .reason,
+.theme-gold .meta-row,
+.theme-gold .modal-meta,
+.theme-gold .detail-reason,
+.theme-gold .input-hint,
+.theme-gold .load-more,
+.theme-gold .empty-text,
+.theme-gold .setting-value,
+.theme-gold .card-desc,
+.theme-gold .card-meta,
+.theme-gold .log-time,
+.theme-gold .history-meta {
+  color: rgba(244, 236, 214, 0.68) !important;
+}
+
+.theme-gold .detail-value,
+.theme-gold .section-value,
+.theme-gold .card-section-value {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .from-dud .bubble,
+.theme-gold .typing-bubble {
+  color: #f4ecd6 !important;
+  background: rgba(20, 20, 20, 0.96) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.20);
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.28);
+}
+
+.theme-gold .from-user .bubble,
+.theme-gold .send-btn,
+.theme-gold .send-btn[disabled],
+.theme-gold .search-btn,
+.theme-gold .link-btn,
+.theme-gold .btn-exchange,
+.theme-gold .btn-submit,
+.theme-gold .publish-btn {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.26) !important;
+}
+
+.theme-gold .btn-submit[disabled],
+.theme-gold .send-btn[disabled] {
+  opacity: 0.72;
+}
+
+.theme-gold .prompt,
+.theme-gold .category-item,
+.theme-gold .icon-btn,
+.theme-gold .close-btn,
+.theme-gold .modal-close,
+.theme-gold .btn-back,
+.theme-gold .btn-full,
+.theme-gold .btn-confirmed,
+.theme-gold .btn-soldout,
+.theme-gold .btn-insufficient,
+.theme-gold .qty-btn {
+  color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.10) !important;
+  border-color: rgba(212, 175, 55, 0.22) !important;
+  box-shadow: none !important;
+}
+
+.theme-gold .category-item.active,
+.theme-gold .theme-option.active,
+.theme-gold .option-item.selected {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  border-color: rgba(212, 175, 55, 0.62) !important;
+}
+
+.theme-gold .cover,
+.theme-gold .detail-cover,
+.theme-gold .empty-cover,
+.theme-gold .puzzle-cover {
+  color: #d4af37 !important;
+  background:
+    linear-gradient(135deg, rgba(212, 175, 55, 0.10), rgba(255, 255, 255, 0.02)),
+    #151515 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .progress-bar {
+  background: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .progress-fill {
+  background: linear-gradient(90deg, #f8e7a8, #d4af37, #b98d1d) !important;
+}
+
+.theme-gold .activity-status,
+.theme-gold .registration-status,
+.theme-gold .badge,
+.theme-gold .status-tag {
+  color: #17110a !important;
+  background: #ead17a !important;
+}
+
+.theme-gold .error-banner {
+  color: #ffd2d2 !important;
+  background: rgba(127, 29, 29, 0.24) !important;
+  border-color: rgba(248, 113, 113, 0.42) !important;
+}

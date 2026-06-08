@@ -269,6 +269,10 @@ async function borrow_applyBorrow(event) {
 
     return ok({ application_id: app_res._id, borrow_id: app_res._id }, '申请成功');
   } catch (error) {
+    // 抢占物资（updateBorrowItemStatus 置 in_transit，条件 status='available'）是 try 的最后一步，
+    // 因此进入 catch 即代表本请求并未成功抢占该物资——绝不能在这里把物资释放为 available，
+    // 否则会清掉并发赢家的占用状态（status/current_borrower_id/current_application_id）。
+    // 这里只需把已创建的孤儿申请记录置为已取消。
     if (pending_application_id) {
       try {
         await db.collection('borrow_applications').doc(pending_application_id).update({
@@ -283,13 +287,6 @@ async function borrow_applyBorrow(event) {
           cancelled_at: db.serverDate(),
           updated_at: db.serverDate()
         });
-        if (target_item) {
-          await updateBorrowItemStatus(target_item, {
-            status: 'available',
-            current_borrower_id: '',
-            current_application_id: ''
-          });
-        }
       } catch (rollback_error) {
         console.log('rollback borrow application failed:', rollback_error.message);
       }
@@ -333,21 +330,41 @@ async function borrow_cancelBorrow(event) {
     if (app.user_id !== user._id) return fail('只能取消自己的借阅申请');
     if (!['applying', 'in_transit'].includes(app.status)) return fail('此状态不可取消');
 
-    const data = {
+    // 条件原子取消：仅当申请仍处于 applying/in_transit 时才置为 cancelled。
+    // 并发/双击下第二次必然命中 updated===0，避免重复释放物资。
+    const cancel_res = await db.collection('borrow_applications')
+      .where({ _id: application_id, status: _.in(['applying', 'in_transit']) })
+      .update({
+        data: {
+          status: 'cancelled',
+          cancelled_at: db.serverDate(),
+          updated_at: db.serverDate()
+        }
+      });
+    if (!cancel_res.stats || cancel_res.stats.updated === 0) {
+      return fail('该借阅申请当前状态不可取消（可能已被处理）');
+    }
+    await upsertBorrowRecord(application_id, {
       status: 'cancelled',
       cancelled_at: db.serverDate(),
       updated_at: db.serverDate()
-    };
-    await db.collection('borrow_applications').doc(application_id).update({ data });
-    await upsertBorrowRecord(application_id, data);
+    });
 
     if (app.item_id) {
-      const item = await getBorrowItemById(app.item_id);
-      await updateBorrowItemStatus(item, {
-        status: 'available',
-        current_borrower_id: '',
-        current_application_id: ''
-      });
+      // 仅当物资仍指向本申请时才释放，避免清掉已被管理员借出或被他人占用的物资状态。
+      const release_res = await db.collection('inventory_items')
+        .where({ _id: app.item_id, current_application_id: application_id })
+        .update({
+          data: {
+            status: 'available',
+            current_borrower_id: '',
+            current_application_id: '',
+            updated_at: db.serverDate()
+          }
+        });
+      if (release_res.stats && release_res.stats.updated === 0) {
+        console.log('borrow item not released (already advanced):', app.item_id);
+      }
     }
 
     return ok(null, '取消成功');

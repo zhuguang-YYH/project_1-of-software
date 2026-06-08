@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const adminService = require('../../services/admin.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function formatTime(value) {
   if (!value) return '';
@@ -63,6 +64,7 @@ Page({
     processing_id: '',
     error: '',
     tab: 'puzzle',
+    theme: 'blue',
     stats: {},
     feedback_list: [],
     log_list: [],
@@ -142,10 +144,15 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.setData({
       'puzzleForm.publish_date': todayText()
     });
     this.initPage();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -168,15 +175,15 @@ Page({
   },
 
   async loadDashboard() {
-    const result = await request.callCloudFunction('admin_getDashboard', {});
-    if (!result.success) throw new Error(result.message || '没有后台权限');
+    const result = await adminService.getDashboard();
+    if (!result.success) throw new Error(result.error || '没有后台权限');
     this.setData({ stats: result.data || {} });
   },
 
   async loadFeedback() {
-    const result = await request.callCloudFunction('admin_getFeedback', { status: 'all' });
+    const result = await adminService.getFeedback({ status: 'all' });
     if (!result.success) return;
-    const list = ((result.data && result.data.list) || []).map(item => ({
+    const list = (result.data || []).map(item => ({
       ...item,
       feedback_id: item.feedback_id || item._id,
       feedback_title: feedbackTypeText(item.feedback_type),
@@ -188,9 +195,9 @@ Page({
   },
 
   async loadLogs() {
-    const result = await request.callCloudFunction('admin_getLogs', { page: 1, page_size: 30 });
+    const result = await adminService.getLogs({ page: 1, page_size: 30 });
     if (!result.success) return;
-    const list = ((result.data && result.data.list) || []).map(item => ({
+    const list = (result.data || []).map(item => ({
       ...item,
       log_id: item.log_id || item._id,
       operation_text: item.operation_type || '',
@@ -202,9 +209,9 @@ Page({
   },
 
   async loadBorrowApplications() {
-    const result = await request.callCloudFunction('admin_getBorrowApplications', { status: 'active' });
+    const result = await adminService.getBorrowApplications({ status: 'active' });
     if (!result.success) return;
-    const list = ((result.data && result.data.list) || []).map(item => ({
+    const list = (result.data || []).map(item => ({
       ...item,
       application_id: item.application_id || item._id,
       created_text: formatTime(item.requested_at || item.created_at),
@@ -217,9 +224,9 @@ Page({
   },
 
   async loadExchangeRecords() {
-    const result = await request.callCloudFunction('admin_getExchangeRecords', { status: 'active' });
+    const result = await adminService.getExchangeRecords({ status: 'active' });
     if (!result.success) return;
-    const list = ((result.data && result.data.list) || []).map(item => ({
+    const list = (result.data || []).map(item => ({
       ...item,
       exchange_id: item.exchange_id || item._id,
       created_text: formatTime(item.created_at || item.exchange_time),
@@ -232,7 +239,7 @@ Page({
   },
 
   async loadSystemSettings() {
-    const result = await request.callCloudFunction('admin_getSystemSettings', {});
+    const result = await adminService.getSystemSettings();
     if (!result.success) return;
     const data = result.data || {};
     this.setData({
@@ -274,8 +281,8 @@ Page({
   async submitAction(action, payload, success_text) {
     this.setData({ saving: true });
     try {
-      const result = await request.callCloudFunction(`admin_${action}`, payload);
-      if (!result.success) throw new Error(result.message || '保存失败');
+      const result = await adminService.mutate(action, payload, '保存失败');
+      if (!result.success) throw new Error(result.error || '保存失败');
       wx.showToast({ title: success_text, icon: 'success' });
       await this.loadDashboard();
       return true;

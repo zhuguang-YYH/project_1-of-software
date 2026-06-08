@@ -1,4 +1,4 @@
-<view class="container" wx:if="{{!loading}}">
+<view class="container theme-{{theme}}" wx:if="{{!loading}}">
   <view class="login-card" wx:if="{{!userInfo}}">
     <image class="login-avatar" src="/images/icons/avatar.png" />
     <text class="login-title">建立侦探档案</text>
@@ -48,6 +48,10 @@
       <view class="form-field">
         <text class="form-label">兴趣标签</text>
         <input class="form-input" value="{{form.interests}}" placeholder="多个标签用顿号 、 分隔" data-field="interests" bindinput="onInput" />
+      </view>
+      <view class="form-field">
+        <text class="form-label">学号</text>
+        <input class="form-input" value="{{form.student_id}}" placeholder="用于活动/兑换通知（选填）" type="number" data-field="student_id" bindinput="onInput" maxlength="20" />
       </view>
       <view class="form-actions">
         <button class="form-save-btn" loading="{{savingProfile}}" disabled="{{savingProfile}}" bindtap="saveEdit">保存档案</button>
@@ -124,7 +128,7 @@
   </view>
 </view>
 
-<view class="loading-state" wx:elif="{{loading}}">
+<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
   <view class="loading-spinner"></view>
   <text class="loading-text">加载中...</text>
 </view>

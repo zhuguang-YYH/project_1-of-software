@@ -1,5 +1,7 @@
-const { request } = require('../../utils/request.js');
+const commissionService = require('../../services/commission.js');
+const pointsService = require('../../services/points.js');
 const format = require('../../utils/format.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -94,6 +96,7 @@ function normalizePublished(item = {}) {
 Page({
   data: {
     tab: 'available',
+    theme: 'blue',
     loading: true,
     refreshing: false,
     error: '',
@@ -122,11 +125,17 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
   },
 
   onShow() {
+    this.loadTheme();
     this.refreshCurrentTab();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -156,14 +165,13 @@ Page({
 
   async loadUserPoints() {
     try {
-      const result = await request.callCloudFunction('points_getUserPoints', {});
+      const result = await pointsService.getUserPoints();
       if (!result.success) return;
-      const data = result.data || {};
       this.setData({
         user_points: {
-          available_points: Number(data.available_points || 0),
-          frozen_points: Number(data.frozen_points || 0),
-          total_points: Number(data.total_points || 0)
+          available_points: Number(result.available_points || 0),
+          frozen_points: Number(result.frozen_points || 0),
+          total_points: Number(result.total_points || 0)
         }
       });
     } catch (err) {
@@ -173,13 +181,13 @@ Page({
 
   async loadCommissions() {
     try {
-      const result = await request.callCloudFunction('commission_getCommissions', {
+      const result = await commissionService.getCommissions({
         page: 1,
         page_size: 50
       });
-      if (!result.success) throw new Error(result.message || '加载委托列表失败');
+      if (!result.success) throw new Error(result.error || '加载委托列表失败');
 
-      const list = ((result.data && result.data.list) || []).map(normalizeCommission);
+      const list = (result.data || []).map(normalizeCommission);
       this.setData({ commissions: list, error: '' });
     } catch (err) {
       console.error('Load commissions failed:', err);
@@ -189,16 +197,12 @@ Page({
 
   async loadMyCommissions() {
     try {
-      const result = await request.callCloudFunction('commission_getMyCommissions', {
-        page: 1,
-        page_size: 50
-      });
+      const result = await commissionService.getMyCommissions();
       if (!result.success) return;
 
-      const data = result.data || {};
       this.setData({
-        published: (data.published || []).map(normalizePublished),
-        accepted: (data.accepted || []).map(normalizeAcceptance)
+        published: (result.published || []).map(normalizePublished),
+        accepted: (result.accepted || []).map(normalizeAcceptance)
       });
     } catch (err) {
       console.error('Load my commissions failed:', err);
@@ -270,13 +274,13 @@ Page({
 
     this.setData({ publishing: true });
     try {
-      const result = await request.callCloudFunction('commission_publishCommission', {
+      const result = await commissionService.publishCommission({
         title: form.title.trim(),
         content: form.description.trim(),
         reward_points,
         deadline: form.deadline.trim()
       });
-      if (!result.success) throw new Error(result.message || '发布失败');
+      if (!result.success) throw new Error(result.error || '发布失败');
 
       wx.showToast({ title: '发布成功', icon: 'success' });
       this.setData({ show_publish_modal: false, tab: 'published' });
@@ -292,8 +296,8 @@ Page({
     const commission_id = e.currentTarget.dataset.commission_id;
     this.setData({ accepting_id: commission_id });
     try {
-      const result = await request.callCloudFunction('commission_acceptCommission', { commission_id });
-      if (!result.success) throw new Error(result.message || '领取失败');
+      const result = await commissionService.acceptCommission(commission_id);
+      if (!result.success) throw new Error(result.error || '领取失败');
 
       wx.showToast({ title: '领取成功', icon: 'success' });
       await Promise.all([this.loadCommissions(), this.loadMyCommissions()]);
@@ -308,8 +312,8 @@ Page({
     const acceptance_id = e.currentTarget.dataset.acceptance_id;
     this.setData({ completing_id: acceptance_id });
     try {
-      const result = await request.callCloudFunction('commission_completeCommission', { acceptance_id });
-      if (!result.success) throw new Error(result.message || '提交失败');
+      const result = await commissionService.completeCommission(acceptance_id);
+      if (!result.success) throw new Error(result.error || '提交失败');
 
       wx.showToast({ title: '已提交', icon: 'success' });
       await this.loadMyCommissions();
@@ -359,12 +363,12 @@ Page({
 
     this.setData({ rewarding: true });
     try {
-      const result = await request.callCloudFunction('commission_allocateRewards', {
+      const result = await commissionService.allocateRewards({
         commission_id: target.commission_id,
         acceptance_id: target.acceptance_id,
         allocated_points
       });
-      if (!result.success) throw new Error(result.message || '发放失败');
+      if (!result.success) throw new Error(result.error || '发放失败');
 
       wx.showToast({ title: '已发放', icon: 'success' });
       this.setData({ show_reward_modal: false, reward_target: null, reward_points_input: '' });
@@ -384,6 +388,12 @@ Page({
     return {
       title: '推协委托',
       path: '/pages/commission/index'
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '推协委托'
     };
   },
 

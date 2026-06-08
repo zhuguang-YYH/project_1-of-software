@@ -1,4 +1,5 @@
-const { request } = require('../../utils/request');
+const pointsService = require('../../services/points.js');
+const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -52,6 +53,7 @@ Page({
     refreshing: false,
     loading_more: false,
     error: '',
+    theme: 'blue',
     points: {
       total_points: 0,
       available_points: 0,
@@ -71,7 +73,16 @@ Page({
   },
 
   onLoad() {
+    this.loadTheme();
     this.initPage();
+  },
+
+  onShow() {
+    this.loadTheme();
+  },
+
+  loadTheme() {
+    applyTheme(this);
   },
 
   async initPage() {
@@ -91,15 +102,14 @@ Page({
   },
 
   async loadPoints() {
-    const result = await request.callCloudFunction('points_getUserPoints', {});
-    if (!result.success) throw new Error(result.message || '获取积分失败');
-    const data = result.data || {};
+    const result = await pointsService.getUserPoints();
+    if (!result.success) throw new Error('获取积分失败');
     this.setData({
       points: {
-        total_points: Number(data.total_points || 0),
-        available_points: Number(data.available_points || 0),
-        frozen_points: Number(data.frozen_points || 0),
-        used_points: Number(data.used_points || 0)
+        total_points: Number(result.total_points || 0),
+        available_points: Number(result.available_points || 0),
+        frozen_points: Number(result.frozen_points || 0),
+        used_points: Number(result.used_points || 0)
       }
     });
   },
@@ -116,15 +126,14 @@ Page({
     if (this.data.filter !== 'all') params.type = this.data.filter;
 
     try {
-      const result = await request.callCloudFunction('points_getHistory', params);
-      if (!result.success) throw new Error(result.message || '获取流水失败');
+      const result = await pointsService.getPointsHistory(params);
+      if (!result.success) throw new Error(result.error || '获取流水失败');
 
-      const data = result.data || {};
-      const list = (data.list || []).map(normalizeLog);
+      const list = (result.data || []).map(normalizeLog);
       this.setData({
         logs: reset ? list : this.data.logs.concat(list),
         page,
-        has_more: Boolean(data.has_more),
+        has_more: Boolean(result.has_more),
         error: ''
       });
     } finally {
