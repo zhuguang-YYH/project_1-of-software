@@ -188,7 +188,8 @@ page {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.picker-box {
   width: 100%;
   box-sizing: border-box;
   border-radius: 14rpx;
@@ -203,9 +204,61 @@ page {
   padding: 0 22rpx;
 }
 
+.picker-box {
+  min-height: 80rpx;
+  padding: 0 22rpx;
+  display: flex;
+  align-items: center;
+  font-size: 27rpx;
+}
+
 .field textarea {
   min-height: 170rpx;
   padding: 18rpx 22rpx;
+}
+
+.option-grid {
+  align-items: start;
+}
+
+.date-time-title {
+  margin: 18rpx 0 12rpx;
+  color: #4a5577;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.upload-box {
+  padding: 16rpx;
+  border-radius: 16rpx;
+  background: #f4f6fb;
+  border: 2rpx dashed #d9e1ec;
+}
+
+.upload-preview,
+.upload-placeholder {
+  width: 100%;
+  height: 240rpx;
+  border-radius: 12rpx;
+}
+
+.upload-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a96a8;
+  background: #ffffff;
+  font-size: 25rpx;
+}
+
+.upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.reply-field {
+  margin-top: 18rpx;
 }
 
 .grid-2 {
@@ -470,7 +523,8 @@ page {
 }
 
 .theme-gold .field input,
-.theme-gold .field textarea {
+.theme-gold .field textarea,
+.theme-gold .picker-box {
   color: #f4ecd6 !important;
   background: #101010 !important;
   border-color: rgba(212, 175, 55, 0.30) !important;
@@ -480,6 +534,20 @@ page {
 .theme-gold .field textarea:focus {
   border-color: rgba(212, 175, 55, 0.62) !important;
   box-shadow: 0 0 0 4rpx rgba(212, 175, 55, 0.10);
+}
+
+.theme-gold .date-time-title {
+  color: rgba(244, 236, 214, 0.82) !important;
+}
+
+.theme-gold .upload-box {
+  background: rgba(16, 16, 16, 0.92) !important;
+  border-color: rgba(212, 175, 55, 0.28) !important;
+}
+
+.theme-gold .upload-placeholder {
+  color: rgba(244, 236, 214, 0.64) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 .theme-gold .section-divider,

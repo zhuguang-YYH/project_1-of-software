@@ -92,7 +92,28 @@ Page({
         ? Number(item.remaining_capacity)
         : Math.max(0, capacity - registered_count),
       is_full: capacity > 0 && registered_count >= capacity,
-      is_expired: end_date ? end_date < new Date() : false
+      is_expired: end_date ? end_date < new Date() : false,
+      is_registered: !!item.is_registered,
+      user_registration: item.user_registration || null
+    };
+  },
+
+  mergeRegistrationState(activities = this.data.activities, myActivities = this.data.my_activities) {
+    const registeredIds = new Set(
+      (myActivities || [])
+        .filter(item => isActiveRegistration(item.status))
+        .map(item => item.activity_id)
+        .filter(Boolean)
+    );
+
+    const merged = (activities || []).map(item => {
+      const is_registered = !!item.is_registered || registeredIds.has(item.activity_id);
+      return { ...item, is_registered };
+    });
+
+    return {
+      activities: merged,
+      visible_activities: merged.filter(item => !item.is_expired)
     };
   },
 
@@ -102,10 +123,7 @@ Page({
       const result = await activityService.getActivities({ page_size: 50 });
       if (!result.success) throw new Error(result.error || '加载活动失败');
       const list = (result.data || []).map(item => this.mapActivity(item));
-      this.setData({
-        activities: list,
-        visible_activities: list.filter(item => !item.is_expired)
-      });
+      this.setData(this.mergeRegistrationState(list, this.data.my_activities));
     } catch (error) {
       this.setData({ error: error.message || '网络错误，请重试' });
       console.error('Load activities failed:', error);
@@ -141,7 +159,10 @@ Page({
           can_cancel
         };
       });
-      this.setData({ my_activities: list });
+      this.setData({
+        my_activities: list,
+        ...this.mergeRegistrationState(this.data.activities, list)
+      });
     } catch (error) {
       console.error('Load my activities failed:', error);
     }
@@ -166,6 +187,11 @@ Page({
     const activity_id = event.currentTarget.dataset.id;
     const activity = this.data.activities.find(item => item.activity_id === activity_id);
     if (!activity) return;
+
+    if (activity.is_registered) {
+      wx.showToast({ title: '您已报名此活动', icon: 'none' });
+      return;
+    }
 
     if (activity.remaining_capacity <= 0) {
       wx.showToast({ title: '活动已满员', icon: 'none' });

@@ -1,5 +1,5 @@
 <view class="page theme-{{theme}}">
-  <view class="loading-state" wx:if="{{loading}}">
+  <view class="loading-state theme-{{theme}}" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text>加载后台中...</text>
   </view>
@@ -28,15 +28,35 @@
 
     <view class="panel" wx:if="{{!error && tab === 'puzzle'}}">
       <view class="panel-title">每日谜题</view>
-      <view class="field"><text>发布日期</text><input value="{{puzzleForm.publish_date}}" data-form="puzzleForm" data-field="publish_date" bindinput="onFormInput" /></view>
-      <view class="field"><text>题干</text><textarea value="{{puzzleForm.content}}" data-form="puzzleForm" data-field="content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
-      <view class="field"><text>选项</text><textarea value="{{puzzleForm.options_text}}" data-form="puzzleForm" data-field="options_text" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
-      <view class="field"><text>正确答案</text><input value="{{puzzleForm.correct_answer}}" data-form="puzzleForm" data-field="correct_answer" bindinput="onFormInput" placeholder="A 或完整选项内容" /></view>
-      <view class="field"><text>解析</text><textarea value="{{puzzleForm.answer_explanation}}" data-form="puzzleForm" data-field="answer_explanation" bindinput="onFormInput" maxlength="400" show-confirm-bar="{{false}}" /></view>
-      <view class="grid-2">
-        <view class="field"><text>难度</text><input value="{{puzzleForm.difficulty}}" data-form="puzzleForm" data-field="difficulty" bindinput="onFormInput" /></view>
-        <view class="field"><text>奖励积分</text><input type="number" value="{{puzzleForm.reward_points}}" data-form="puzzleForm" data-field="reward_points" bindinput="onFormInput" /></view>
+      <view class="field">
+        <text>发布日期</text>
+        <picker mode="date" value="{{puzzleForm.publish_date}}" data-form="puzzleForm" data-field="publish_date" bindchange="onDateChange">
+          <view class="picker-box">{{puzzleForm.publish_date || '请选择日期'}}</view>
+        </picker>
       </view>
+      <view class="field"><text>题干</text><textarea value="{{puzzleForm.content}}" data-form="puzzleForm" data-field="content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
+      <view class="grid-2 option-grid">
+        <view class="field"><text>选项 A</text><input value="{{puzzleForm.option_a}}" data-form="puzzleForm" data-field="option_a" bindinput="onFormInput" placeholder="填写 A 选项描述" /></view>
+        <view class="field"><text>选项 B</text><input value="{{puzzleForm.option_b}}" data-form="puzzleForm" data-field="option_b" bindinput="onFormInput" placeholder="填写 B 选项描述" /></view>
+        <view class="field"><text>选项 C</text><input value="{{puzzleForm.option_c}}" data-form="puzzleForm" data-field="option_c" bindinput="onFormInput" placeholder="填写 C 选项描述" /></view>
+        <view class="field"><text>选项 D</text><input value="{{puzzleForm.option_d}}" data-form="puzzleForm" data-field="option_d" bindinput="onFormInput" placeholder="填写 D 选项描述" /></view>
+      </view>
+      <view class="grid-2">
+        <view class="field">
+          <text>正确答案</text>
+          <picker range="{{answerOptions}}" range-key="label" data-form="puzzleForm" data-field="correct_answer" data-options="answerOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{puzzleForm.correct_answer || '请选择'}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <text>难度</text>
+          <picker range="{{difficultyOptions}}" range-key="label" data-form="puzzleForm" data-field="difficulty" data-options="difficultyOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{puzzleForm.difficulty === 'easy' ? '简单' : puzzleForm.difficulty === 'medium' ? '中等' : '困难'}}</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field"><text>解析</text><textarea value="{{puzzleForm.answer_explanation}}" data-form="puzzleForm" data-field="answer_explanation" bindinput="onFormInput" maxlength="400" show-confirm-bar="{{false}}" /></view>
+      <view class="field"><text>奖励积分</text><input type="number" value="{{puzzleForm.reward_points}}" data-form="puzzleForm" data-field="reward_points" bindinput="onFormInput" /></view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="savePuzzle">保存谜题</button>
     </view>
 
@@ -48,9 +68,32 @@
         <view class="field"><text>地点</text><input value="{{activityForm.location}}" data-form="activityForm" data-field="location" bindinput="onFormInput" /></view>
         <view class="field"><text>人数上限</text><input type="number" value="{{activityForm.capacity}}" data-form="activityForm" data-field="capacity" bindinput="onFormInput" /></view>
       </view>
-      <view class="field"><text>最晚取消时间</text><input value="{{activityForm.cancel_deadline}}" data-form="activityForm" data-field="cancel_deadline" bindinput="onFormInput" placeholder="2026-05-31 20:00" /></view>
-      <view class="field"><text>开始时间</text><input value="{{activityForm.start_time}}" data-form="activityForm" data-field="start_time" bindinput="onFormInput" placeholder="2026-05-31 19:00" /></view>
-      <view class="field"><text>结束时间</text><input value="{{activityForm.end_time}}" data-form="activityForm" data-field="end_time" bindinput="onFormInput" placeholder="2026-05-31 21:00" /></view>
+      <view class="field">
+        <text>活动封面</text>
+        <view class="upload-box">
+          <image wx:if="{{activityForm.cover_url}}" class="upload-preview" src="{{activityForm.cover_url}}" mode="aspectFill" />
+          <view wx:else class="upload-placeholder">未上传封面</view>
+          <view class="upload-actions">
+            <button class="small-btn" data-form="activityForm" data-field="cover_url" data-dir="admin/activity" loading="{{uploading_field === 'activityForm.cover_url'}}" disabled="{{uploading_field !== ''}}" bindtap="uploadFormImage">上传图片</button>
+            <button wx:if="{{activityForm.cover_url}}" class="small-btn ghost" data-form="activityForm" data-field="cover_url" bindtap="clearFormImage">清除</button>
+          </view>
+        </view>
+      </view>
+      <view class="date-time-title">最晚取消时间</view>
+      <view class="grid-2">
+        <view class="field"><picker mode="date" value="{{activityForm.cancel_date}}" data-form="activityForm" data-field="cancel_date" bindchange="onDateChange"><view class="picker-box">{{activityForm.cancel_date || '选择日期'}}</view></picker></view>
+        <view class="field"><picker mode="time" value="{{activityForm.cancel_time}}" data-form="activityForm" data-field="cancel_time" bindchange="onTimeChange"><view class="picker-box">{{activityForm.cancel_time || '选择时间'}}</view></picker></view>
+      </view>
+      <view class="date-time-title">开始时间</view>
+      <view class="grid-2">
+        <view class="field"><picker mode="date" value="{{activityForm.start_date}}" data-form="activityForm" data-field="start_date" bindchange="onDateChange"><view class="picker-box">{{activityForm.start_date || '选择日期'}}</view></picker></view>
+        <view class="field"><picker mode="time" value="{{activityForm.start_time_only}}" data-form="activityForm" data-field="start_time_only" bindchange="onTimeChange"><view class="picker-box">{{activityForm.start_time_only || '选择时间'}}</view></picker></view>
+      </view>
+      <view class="date-time-title">结束时间</view>
+      <view class="grid-2">
+        <view class="field"><picker mode="date" value="{{activityForm.end_date}}" data-form="activityForm" data-field="end_date" bindchange="onDateChange"><view class="picker-box">{{activityForm.end_date || '选择日期'}}</view></picker></view>
+        <view class="field"><picker mode="time" value="{{activityForm.end_time_only}}" data-form="activityForm" data-field="end_time_only" bindchange="onTimeChange"><view class="picker-box">{{activityForm.end_time_only || '选择时间'}}</view></picker></view>
+      </view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createActivity">创建活动</button>
     </view>
 
@@ -58,20 +101,51 @@
       <view class="panel-title">物资入库</view>
       <view class="field"><text>名称</text><input value="{{borrowForm.item_name}}" data-form="borrowForm" data-field="item_name" bindinput="onFormInput" /></view>
       <view class="field"><text>描述</text><textarea value="{{borrowForm.description}}" data-form="borrowForm" data-field="description" bindinput="onFormInput" maxlength="240" show-confirm-bar="{{false}}" /></view>
+      <view class="field">
+        <text>物资图片</text>
+        <view class="upload-box">
+          <image wx:if="{{borrowForm.cover_url}}" class="upload-preview" src="{{borrowForm.cover_url}}" mode="aspectFill" />
+          <view wx:else class="upload-placeholder">未上传图片</view>
+          <view class="upload-actions">
+            <button class="small-btn" data-form="borrowForm" data-field="cover_url" data-dir="admin/inventory" loading="{{uploading_field === 'borrowForm.cover_url'}}" disabled="{{uploading_field !== ''}}" bindtap="uploadFormImage">上传图片</button>
+            <button wx:if="{{borrowForm.cover_url}}" class="small-btn ghost" data-form="borrowForm" data-field="cover_url" bindtap="clearFormImage">清除</button>
+          </view>
+        </view>
+      </view>
       <view class="grid-2">
-        <view class="field"><text>物资类型</text><input value="{{borrowForm.item_type}}" data-form="borrowForm" data-field="item_type" bindinput="onFormInput" placeholder="book / script / supplies" /></view>
-        <view class="field"><text>分类</text><input value="{{borrowForm.category}}" data-form="borrowForm" data-field="category" bindinput="onFormInput" /></view>
+        <view class="field">
+          <text>物资类型</text>
+          <picker range="{{itemTypeOptions}}" range-key="label" data-form="borrowForm" data-field="item_type" data-options="itemTypeOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{borrowForm.item_type === 'book' ? '书籍' : borrowForm.item_type === 'script' ? '剧本杀' : '道具/物资'}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <text>分类</text>
+          <picker range="{{inventoryCategoryOptions}}" range-key="label" data-form="borrowForm" data-field="category" data-options="inventoryCategoryOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{borrowForm.category === 'book' ? '推理小说' : borrowForm.category === 'script' ? '剧本杀' : borrowForm.category === 'activity' ? '活动物资' : borrowForm.category === 'boardgame' ? '桌游道具' : '其他'}}</view>
+          </picker>
+        </view>
       </view>
       <view class="grid-2">
         <view class="field"><text>数量</text><input type="number" value="{{borrowForm.total_quantity}}" data-form="borrowForm" data-field="total_quantity" bindinput="onFormInput" /></view>
-        <view class="field"><text>剧本类型</text><input value="{{borrowForm.genre}}" data-form="borrowForm" data-field="genre" bindinput="onFormInput" placeholder="本格 / 机制 / 情感" /></view>
+        <view class="field">
+          <text>剧本类型</text>
+          <picker range="{{scriptGenreOptions}}" range-key="label" data-form="borrowForm" data-field="genre" data-options="scriptGenreOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{borrowForm.genre || '请选择'}}</view>
+          </picker>
+        </view>
       </view>
       <view class="grid-3">
         <view class="field"><text>最少人数</text><input type="number" value="{{borrowForm.min_players}}" data-form="borrowForm" data-field="min_players" bindinput="onFormInput" /></view>
         <view class="field"><text>最多人数</text><input type="number" value="{{borrowForm.max_players}}" data-form="borrowForm" data-field="max_players" bindinput="onFormInput" /></view>
         <view class="field"><text>时长分钟</text><input type="number" value="{{borrowForm.duration_minutes}}" data-form="borrowForm" data-field="duration_minutes" bindinput="onFormInput" /></view>
       </view>
-      <view class="field"><text>难度</text><input value="{{borrowForm.difficulty}}" data-form="borrowForm" data-field="difficulty" bindinput="onFormInput" placeholder="简单 / 中等 / 困难" /></view>
+      <view class="field">
+        <text>难度</text>
+        <picker range="{{difficultyOptions}}" range-key="label" data-form="borrowForm" data-field="difficulty" data-options="difficultyOptions" bindchange="onPickerChange">
+          <view class="picker-box">{{borrowForm.difficulty === 'easy' ? '简单' : borrowForm.difficulty === 'medium' ? '中等' : '困难'}}</view>
+        </picker>
+      </view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createBorrowItem">添加物资</button>
 
       <view class="section-divider"></view>
@@ -98,7 +172,23 @@
       <view class="panel-title">兑换商品</view>
       <view class="field"><text>名称</text><input value="{{exchangeForm.item_name}}" data-form="exchangeForm" data-field="item_name" bindinput="onFormInput" /></view>
       <view class="field"><text>描述</text><textarea value="{{exchangeForm.description}}" data-form="exchangeForm" data-field="description" bindinput="onFormInput" maxlength="240" show-confirm-bar="{{false}}" /></view>
-      <view class="field"><text>分类</text><input value="{{exchangeForm.category}}" data-form="exchangeForm" data-field="category" bindinput="onFormInput" /></view>
+      <view class="field">
+        <text>商品图片</text>
+        <view class="upload-box">
+          <image wx:if="{{exchangeForm.cover_url}}" class="upload-preview" src="{{exchangeForm.cover_url}}" mode="aspectFill" />
+          <view wx:else class="upload-placeholder">未上传图片</view>
+          <view class="upload-actions">
+            <button class="small-btn" data-form="exchangeForm" data-field="cover_url" data-dir="admin/exchange" loading="{{uploading_field === 'exchangeForm.cover_url'}}" disabled="{{uploading_field !== ''}}" bindtap="uploadFormImage">上传图片</button>
+            <button wx:if="{{exchangeForm.cover_url}}" class="small-btn ghost" data-form="exchangeForm" data-field="cover_url" bindtap="clearFormImage">清除</button>
+          </view>
+        </view>
+      </view>
+      <view class="field">
+        <text>分类</text>
+        <picker range="{{exchangeCategoryOptions}}" range-key="label" data-form="exchangeForm" data-field="category" data-options="exchangeCategoryOptions" bindchange="onPickerChange">
+          <view class="picker-box">{{exchangeForm.category === 'general' ? '通用' : exchangeForm.category === 'merch' ? '社团周边' : exchangeForm.category === 'activity' ? '活动奖励' : exchangeForm.category === 'book' ? '书籍/资料' : '其他'}}</view>
+        </picker>
+      </view>
       <view class="grid-3">
         <view class="field"><text>兑换积分</text><input type="number" value="{{exchangeForm.exchange_points}}" data-form="exchangeForm" data-field="exchange_points" bindinput="onFormInput" /></view>
         <view class="field"><text>原价</text><input type="number" value="{{exchangeForm.original_cost}}" data-form="exchangeForm" data-field="original_cost" bindinput="onFormInput" /></view>
@@ -132,12 +222,27 @@
       <view class="panel-title">推荐内容发布</view>
       <view class="field"><text>名称</text><input value="{{recommendationForm.title}}" data-form="recommendationForm" data-field="title" bindinput="onFormInput" /></view>
       <view class="grid-2">
-        <view class="field"><text>类型</text><input value="{{recommendationForm.category}}" data-form="recommendationForm" data-field="category" bindinput="onFormInput" placeholder="book / game / script" /></view>
+        <view class="field">
+          <text>类型</text>
+          <picker range="{{recommendationCategoryOptions}}" range-key="label" data-form="recommendationForm" data-field="category" data-options="recommendationCategoryOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{recommendationForm.category === 'book' ? '书籍' : recommendationForm.category === 'game' ? '游戏' : recommendationForm.category === 'script' ? '剧本' : recommendationForm.category === 'activity' ? '活动' : recommendationForm.category === 'media' ? '影视' : '其他'}}</view>
+          </picker>
+        </view>
         <view class="field"><text>推荐人</text><input value="{{recommendationForm.recommender_name}}" data-form="recommendationForm" data-field="recommender_name" bindinput="onFormInput" placeholder="默认 NK推协" /></view>
       </view>
       <view class="field"><text>推荐理由</text><textarea value="{{recommendationForm.reason}}" data-form="recommendationForm" data-field="reason" bindinput="onFormInput" maxlength="500" show-confirm-bar="{{false}}" /></view>
       <view class="field"><text>外链</text><input value="{{recommendationForm.link_url}}" data-form="recommendationForm" data-field="link_url" bindinput="onFormInput" placeholder="公众号文章或说明链接" /></view>
-      <view class="field"><text>封面图</text><input value="{{recommendationForm.cover_url}}" data-form="recommendationForm" data-field="cover_url" bindinput="onFormInput" placeholder="可选，图片 URL" /></view>
+      <view class="field">
+        <text>封面图</text>
+        <view class="upload-box">
+          <image wx:if="{{recommendationForm.cover_url}}" class="upload-preview" src="{{recommendationForm.cover_url}}" mode="aspectFill" />
+          <view wx:else class="upload-placeholder">未上传封面</view>
+          <view class="upload-actions">
+            <button class="small-btn" data-form="recommendationForm" data-field="cover_url" data-dir="admin/recommendation" loading="{{uploading_field === 'recommendationForm.cover_url'}}" disabled="{{uploading_field !== ''}}" bindtap="uploadFormImage">上传图片</button>
+            <button wx:if="{{recommendationForm.cover_url}}" class="small-btn ghost" data-form="recommendationForm" data-field="cover_url" bindtap="clearFormImage">清除</button>
+          </view>
+        </view>
+      </view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createRecommendation">发布推荐</button>
     </view>
 
@@ -146,7 +251,12 @@
       <view class="field"><text>关键词</text><input value="{{dudForm.keyword}}" data-form="dudForm" data-field="keyword" bindinput="onFormInput" /></view>
       <view class="field"><text>回复</text><textarea value="{{dudForm.reply_content}}" data-form="dudForm" data-field="reply_content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
       <view class="grid-2">
-        <view class="field"><text>匹配方式</text><input value="{{dudForm.match_type}}" data-form="dudForm" data-field="match_type" bindinput="onFormInput" placeholder="exact 或 fuzzy" /></view>
+        <view class="field">
+          <text>匹配方式</text>
+          <picker range="{{matchTypeOptions}}" range-key="label" data-form="dudForm" data-field="match_type" data-options="matchTypeOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{dudForm.match_type === 'exact' ? '精确匹配' : '模糊匹配'}}</view>
+          </picker>
+        </view>
         <view class="field"><text>优先级</text><input type="number" value="{{dudForm.priority}}" data-form="dudForm" data-field="priority" bindinput="onFormInput" /></view>
       </view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createDudKeyword">添加关键词</button>
@@ -154,14 +264,18 @@
 
     <view class="panel" wx:if="{{!error && tab === 'feedback'}}">
       <view class="panel-title">反馈处理</view>
-      <view class="feedback-card" wx:for="{{feedback_list}}" wx:key="feedback_id">
+      <view class="feedback-card" wx:for="{{feedback_list}}" wx:key="feedback_id" wx:for-index="index">
         <view class="feedback-head">
           <text class="feedback-title">{{item.feedback_title}}</text>
           <text class="badge {{item.status === 'resolved' ? 'done' : ''}}">{{item.status_text}}</text>
         </view>
         <text class="feedback-content">{{item.content}}</text>
         <text class="feedback-time">{{item.created_text}} {{item.anonymous_text}}</text>
-        <button wx:if="{{item.status !== 'resolved'}}" class="small-btn" data-id="{{item.feedback_id}}" bindtap="resolveFeedback">标记处理</button>
+        <view class="field reply-field">
+          <text>回复消息</text>
+          <textarea value="{{item.reply_draft}}" data-index="{{index}}" bindinput="onFeedbackReplyInput" maxlength="300" show-confirm-bar="{{false}}" placeholder="填写给用户看的处理回复" />
+        </view>
+        <button wx:if="{{item.status !== 'resolved'}}" class="small-btn" data-id="{{item.feedback_id}}" data-index="{{index}}" loading="{{processing_id === item.feedback_id && saving}}" disabled="{{saving}}" bindtap="resolveFeedback">回复并标记处理</button>
       </view>
       <view class="empty" wx:if="{{feedback_list.length === 0}}">暂无反馈</view>
     </view>
@@ -182,10 +296,20 @@
     <view class="panel" wx:if="{{!error && tab === 'settings'}}">
       <view class="panel-title">系统参数</view>
       <view class="grid-2">
-        <view class="field"><text>谜题发布时间</text><input value="{{systemSettingsForm.puzzle_publish_time}}" data-form="systemSettingsForm" data-field="puzzle_publish_time" bindinput="onFormInput" placeholder="09:00" /></view>
+        <view class="field">
+          <text>谜题发布时间</text>
+          <picker range="{{publishTimeOptions}}" range-key="label" data-form="systemSettingsForm" data-field="puzzle_publish_time" data-options="publishTimeOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{systemSettingsForm.puzzle_publish_time}}</view>
+          </picker>
+        </view>
         <view class="field"><text>默认谜题奖励</text><input type="number" value="{{systemSettingsForm.default_puzzle_reward}}" data-form="systemSettingsForm" data-field="default_puzzle_reward" bindinput="onFormInput" /></view>
       </view>
-      <view class="field"><text>活动取消提前小时数</text><input type="number" value="{{systemSettingsForm.activity_cancel_hours}}" data-form="systemSettingsForm" data-field="activity_cancel_hours" bindinput="onFormInput" /></view>
+      <view class="field">
+        <text>活动取消提前小时数</text>
+        <picker range="{{cancelHourOptions}}" range-key="label" data-form="systemSettingsForm" data-field="activity_cancel_hours" data-options="cancelHourOptions" bindchange="onPickerChange">
+          <view class="picker-box">{{systemSettingsForm.activity_cancel_hours}} 小时</view>
+        </picker>
+      </view>
       <view class="switch-row">
         <view>
           <text class="switch-title">推荐内容展示</text>

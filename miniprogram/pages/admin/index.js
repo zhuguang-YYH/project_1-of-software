@@ -1,4 +1,5 @@
 const adminService = require('../../services/admin.js');
+const upload = require('../../utils/upload.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 function formatTime(value) {
@@ -11,6 +12,38 @@ function formatTime(value) {
   const hour = String(date.getHours()).padStart(2, '0');
   const minute = String(date.getMinutes()).padStart(2, '0');
   return `${month}-${day} ${hour}:${minute}`;
+}
+
+function todayText() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function buildTimeOptions(step = 30) {
+  const list = [];
+  for (let minutes = 0; minutes < 24 * 60; minutes += step) {
+    const hour = String(Math.floor(minutes / 60)).padStart(2, '0');
+    const minute = String(minutes % 60).padStart(2, '0');
+    list.push({ label: `${hour}:${minute}`, value: `${hour}:${minute}` });
+  }
+  return list;
+}
+
+function buildHourOptions() {
+  return Array.from({ length: 24 }, (_, index) => {
+    const value = String(index + 1);
+    return { label: `${value} 小时`, value };
+  });
+}
+
+function combineDateTime(date, time) {
+  if (!date && !time) return '';
+  if (!date) return time || '';
+  return `${date} ${time || '00:00'}`;
+}
+
+function optionLabel(options, value, fallback = '请选择') {
+  const item = (options || []).find(current => current.value === value);
+  return item ? item.label : fallback;
 }
 
 function borrowStatusText(status) {
@@ -53,15 +86,12 @@ function feedbackStatusText(status) {
   })[status] || status || '待处理';
 }
 
-function todayText() {
-  return new Date().toISOString().split('T')[0];
-}
-
 Page({
   data: {
     loading: true,
     saving: false,
     processing_id: '',
+    uploading_field: '',
     error: '',
     tab: 'puzzle',
     theme: 'blue',
@@ -81,11 +111,66 @@ Page({
       { key: 'logs', label: '日志' },
       { key: 'settings', label: '设置' }
     ],
+    difficultyOptions: [
+      { label: '简单', value: 'easy' },
+      { label: '中等', value: 'medium' },
+      { label: '困难', value: 'hard' }
+    ],
+    answerOptions: [
+      { label: 'A', value: 'A' },
+      { label: 'B', value: 'B' },
+      { label: 'C', value: 'C' },
+      { label: 'D', value: 'D' }
+    ],
+    itemTypeOptions: [
+      { label: '书籍', value: 'book' },
+      { label: '剧本杀', value: 'script' },
+      { label: '道具/物资', value: 'supplies' }
+    ],
+    inventoryCategoryOptions: [
+      { label: '推理小说', value: 'book' },
+      { label: '剧本杀', value: 'script' },
+      { label: '活动物资', value: 'activity' },
+      { label: '桌游道具', value: 'boardgame' },
+      { label: '其他', value: 'other' }
+    ],
+    scriptGenreOptions: [
+      { label: '本格', value: '本格' },
+      { label: '变格', value: '变格' },
+      { label: '机制', value: '机制' },
+      { label: '情感', value: '情感' },
+      { label: '阵营', value: '阵营' },
+      { label: '欢乐', value: '欢乐' }
+    ],
+    exchangeCategoryOptions: [
+      { label: '通用', value: 'general' },
+      { label: '社团周边', value: 'merch' },
+      { label: '活动奖励', value: 'activity' },
+      { label: '书籍/资料', value: 'book' },
+      { label: '其他', value: 'other' }
+    ],
+    recommendationCategoryOptions: [
+      { label: '书籍', value: 'book' },
+      { label: '游戏', value: 'game' },
+      { label: '剧本', value: 'script' },
+      { label: '活动', value: 'activity' },
+      { label: '影视', value: 'media' },
+      { label: '其他', value: 'other' }
+    ],
+    matchTypeOptions: [
+      { label: '精确匹配', value: 'exact' },
+      { label: '模糊匹配', value: 'fuzzy' }
+    ],
+    publishTimeOptions: buildTimeOptions(30),
+    cancelHourOptions: buildHourOptions(),
     puzzleForm: {
       publish_date: '',
       content: '',
-      options_text: '选项A\n选项B\n选项C\n选项D',
-      correct_answer: '',
+      option_a: '',
+      option_b: '',
+      option_c: '',
+      option_d: '',
+      correct_answer: 'A',
       answer_explanation: '',
       difficulty: 'easy',
       reward_points: '10'
@@ -95,21 +180,26 @@ Page({
       description: '',
       location: '',
       capacity: '',
-      cancel_deadline: '',
-      start_time: '',
-      end_time: ''
+      cancel_date: '',
+      cancel_time: '20:00',
+      start_date: '',
+      start_time_only: '19:00',
+      end_date: '',
+      end_time_only: '21:00',
+      cover_url: ''
     },
     borrowForm: {
       item_name: '',
       description: '',
-      category: '',
+      category: 'book',
       item_type: 'book',
       total_quantity: '1',
-      genre: '',
+      genre: '本格',
       min_players: '',
       max_players: '',
       duration_minutes: '',
-      difficulty: ''
+      difficulty: 'easy',
+      cover_url: ''
     },
     exchangeForm: {
       item_name: '',
@@ -117,7 +207,8 @@ Page({
       category: 'general',
       exchange_points: '',
       original_cost: '',
-      total_quantity: ''
+      total_quantity: '',
+      cover_url: ''
     },
     recommendationForm: {
       title: '',
@@ -145,10 +236,18 @@ Page({
 
   onLoad() {
     this.loadTheme();
+    const today = todayText();
     this.setData({
-      'puzzleForm.publish_date': todayText()
+      'puzzleForm.publish_date': today,
+      'activityForm.cancel_date': today,
+      'activityForm.start_date': today,
+      'activityForm.end_date': today
     });
     this.initPage();
+  },
+
+  onShow() {
+    this.loadTheme();
   },
 
   loadTheme() {
@@ -183,13 +282,15 @@ Page({
   async loadFeedback() {
     const result = await adminService.getFeedback({ status: 'all' });
     if (!result.success) return;
-    const list = (result.data || []).map(item => ({
+    const list = (result.data || []).map((item, index) => ({
       ...item,
       feedback_id: item.feedback_id || item._id,
       feedback_title: feedbackTypeText(item.feedback_type),
       anonymous_text: item.is_anonymous ? '匿名' : '',
       created_text: formatTime(item.created_at),
-      status_text: feedbackStatusText(item.status)
+      status_text: feedbackStatusText(item.status),
+      reply_draft: item.admin_reply || item.admin_remark || '',
+      list_index: index
     }));
     this.setData({ feedback_list: list });
   },
@@ -265,25 +366,79 @@ Page({
   onFormInput(event) {
     const { form, field } = event.currentTarget.dataset;
     if (!form || !field) return;
-    this.setData({
-      [`${form}.${field}`]: event.detail.value
-    });
+    this.setData({ [`${form}.${field}`]: event.detail.value });
   },
 
   onFormSwitch(event) {
     const { form, field } = event.currentTarget.dataset;
     if (!form || !field) return;
-    this.setData({
-      [`${form}.${field}`]: event.detail.value
-    });
+    this.setData({ [`${form}.${field}`]: event.detail.value });
   },
 
-  async submitAction(action, payload, success_text) {
+  onPickerChange(event) {
+    const { form, field, options } = event.currentTarget.dataset;
+    const source = this.data[options] || [];
+    const item = source[Number(event.detail.value)];
+    if (!form || !field || !item) return;
+    this.setData({ [`${form}.${field}`]: item.value });
+  },
+
+  onDateChange(event) {
+    const { form, field } = event.currentTarget.dataset;
+    if (!form || !field) return;
+    this.setData({ [`${form}.${field}`]: event.detail.value });
+  },
+
+  onTimeChange(event) {
+    const { form, field } = event.currentTarget.dataset;
+    if (!form || !field) return;
+    this.setData({ [`${form}.${field}`]: event.detail.value });
+  },
+
+  pickerLabel(event) {
+    const { options, value } = event.currentTarget.dataset;
+    return optionLabel(this.data[options], value);
+  },
+
+  async uploadFormImage(event) {
+    const { form, field, dir } = event.currentTarget.dataset;
+    if (!form || !field) return;
+    const stateKey = `${form}.${field}`;
+    this.setData({ uploading_field: stateKey });
+    try {
+      const result = await upload.chooseAndUpload({
+        dir: dir || 'admin',
+        owner: form,
+        count: 1
+      });
+      if (!result.success) throw new Error(result.error || '上传失败');
+      this.setData({ [stateKey]: result.fileID });
+      wx.showToast({ title: '图片已上传', icon: 'success' });
+    } catch (error) {
+      wx.showToast({ title: error.message || '上传失败', icon: 'none' });
+    } finally {
+      this.setData({ uploading_field: '' });
+    }
+  },
+
+  clearFormImage(event) {
+    const { form, field } = event.currentTarget.dataset;
+    if (!form || !field) return;
+    this.setData({ [`${form}.${field}`]: '' });
+  },
+
+  onFeedbackReplyInput(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (!Number.isInteger(index)) return;
+    this.setData({ [`feedback_list[${index}].reply_draft`]: event.detail.value });
+  },
+
+  async submitAction(action, payload, successText) {
     this.setData({ saving: true });
     try {
       const result = await adminService.mutate(action, payload, '保存失败');
       if (!result.success) throw new Error(result.error || '保存失败');
-      wx.showToast({ title: success_text, icon: 'success' });
+      wx.showToast({ title: successText, icon: 'success' });
       await this.loadDashboard();
       return true;
     } catch (error) {
@@ -294,33 +449,73 @@ Page({
     }
   },
 
-  async savePuzzle() {
+  buildPuzzlePayload() {
     const form = this.data.puzzleForm;
-    const ok = await this.submitAction('savePuzzle', {
+    const options = [form.option_a, form.option_b, form.option_c, form.option_d].map(item => String(item || '').trim());
+    return {
       ...form,
+      options_text: options.join('\n'),
       reward_points: Number(form.reward_points)
-    }, '谜题已保存');
+    };
+  },
+
+  buildActivityPayload() {
+    const form = this.data.activityForm;
+    return {
+      title: form.title,
+      description: form.description,
+      location: form.location,
+      capacity: form.capacity,
+      cancel_deadline: combineDateTime(form.cancel_date, form.cancel_time),
+      start_time: combineDateTime(form.start_date, form.start_time_only),
+      end_time: combineDateTime(form.end_date, form.end_time_only),
+      cover_url: form.cover_url
+    };
+  },
+
+  async savePuzzle() {
+    const options = [
+      this.data.puzzleForm.option_a,
+      this.data.puzzleForm.option_b,
+      this.data.puzzleForm.option_c,
+      this.data.puzzleForm.option_d
+    ].map(item => String(item || '').trim());
+    if (options.some(item => !item)) {
+      wx.showToast({ title: '请完整填写 A-D 四个选项', icon: 'none' });
+      return;
+    }
+
+    const ok = await this.submitAction('savePuzzle', this.buildPuzzlePayload(), '谜题已保存');
     if (ok) {
       this.setData({
         'puzzleForm.content': '',
-        'puzzleForm.correct_answer': '',
+        'puzzleForm.option_a': '',
+        'puzzleForm.option_b': '',
+        'puzzleForm.option_c': '',
+        'puzzleForm.option_d': '',
+        'puzzleForm.correct_answer': 'A',
         'puzzleForm.answer_explanation': ''
       });
     }
   },
 
   async createActivity() {
-    const ok = await this.submitAction('createActivity', this.data.activityForm, '活动已创建');
+    const ok = await this.submitAction('createActivity', this.buildActivityPayload(), '活动已创建');
     if (ok) {
+      const today = todayText();
       this.setData({
         activityForm: {
           title: '',
           description: '',
           location: '',
           capacity: '',
-          cancel_deadline: '',
-          start_time: '',
-          end_time: ''
+          cancel_date: today,
+          cancel_time: '20:00',
+          start_date: today,
+          start_time_only: '19:00',
+          end_date: today,
+          end_time_only: '21:00',
+          cover_url: ''
         }
       });
     }
@@ -333,14 +528,15 @@ Page({
         borrowForm: {
           item_name: '',
           description: '',
-          category: '',
+          category: 'book',
           item_type: 'book',
           total_quantity: '1',
-          genre: '',
+          genre: '本格',
           min_players: '',
           max_players: '',
           duration_minutes: '',
-          difficulty: ''
+          difficulty: 'easy',
+          cover_url: ''
         }
       });
     }
@@ -356,7 +552,8 @@ Page({
           category: 'general',
           exchange_points: '',
           original_cost: '',
-          total_quantity: ''
+          total_quantity: '',
+          cover_url: ''
         }
       });
     }
@@ -405,11 +602,20 @@ Page({
   },
 
   async resolveFeedback(event) {
-    const feedback_id = event.currentTarget.dataset.id;
+    const { id, index } = event.currentTarget.dataset;
+    const item = this.data.feedback_list[Number(index)] || {};
+    const reply = String(item.reply_draft || '').trim();
+    if (!reply) {
+      wx.showToast({ title: '请先填写回复内容', icon: 'none' });
+      return;
+    }
+
     const ok = await this.submitAction('updateFeedback', {
-      feedback_id,
-      status: 'resolved'
-    }, '反馈已处理');
+      feedback_id: id,
+      status: 'resolved',
+      admin_remark: reply,
+      admin_reply: reply
+    }, '反馈已回复');
     if (ok) await this.loadFeedback();
   },
 
@@ -438,6 +644,10 @@ Page({
         this.loadDashboard()
       ]);
     }
+  },
+
+  difficultyLabel(value) {
+    return optionLabel(this.data.difficultyOptions, value);
   },
 
   async onPullDownRefresh() {

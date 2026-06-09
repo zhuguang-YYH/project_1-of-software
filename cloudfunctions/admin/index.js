@@ -370,6 +370,8 @@ async function admin_createActivity(event, admin_user) {
     cancel_deadline: toDateText(event.cancel_deadline),
     start_time: toDateText(event.start_time),
     end_time: toDateText(event.end_time),
+    cover_url: String(event.cover_url || '').trim(),
+    image: String(event.cover_url || event.image || '').trim(),
     status: 'recruiting',
     created_by: admin_user._id,
     created_at: db.serverDate(),
@@ -402,7 +404,8 @@ async function admin_createBorrowItem(event, admin_user) {
     max_players,
     player_range: min_players && max_players ? `${min_players}-${max_players}` : '',
     duration_minutes: event.duration_minutes,
-    difficulty: event.difficulty
+    difficulty: event.difficulty,
+    cover_url: event.cover_url
   });
   const res = await db.collection('inventory_items').add({ data });
   await logOperation(admin_user, 'create_inventory_item', 'inventory_items', res._id, data);
@@ -426,7 +429,8 @@ async function admin_createExchangeGood(event, admin_user) {
     total_quantity,
     available_quantity: total_quantity,
     exchange_points,
-    original_cost: event.original_cost || exchange_points
+    original_cost: event.original_cost || exchange_points,
+    cover_url: event.cover_url
   });
   const res = await db.collection('inventory_items').add({ data });
   await logOperation(admin_user, 'create_exchange_good', 'inventory_items', res._id, data);
@@ -703,6 +707,7 @@ async function admin_updateFeedback(event, admin_user) {
   const data = {
     status: event.status || 'resolved',
     admin_remark: String(event.admin_remark || '').trim(),
+    admin_reply: String(event.admin_reply || event.admin_remark || '').trim(),
     handled_by: admin_user._id,
     handled_at: db.serverDate(),
     updated_at: db.serverDate()
@@ -730,7 +735,7 @@ async function admin_saveSystemSettings(event, admin_user) {
     commission_enabled: event.commission_enabled !== false
   };
   if (data.default_puzzle_reward < 0) return fail('谜题奖励不能为负数');
-  if (data.activity_cancel_hours < 0) return fail('活动取消提前小时数不能为负数');
+  if (!Number.isInteger(data.activity_cancel_hours) || data.activity_cancel_hours < 1 || data.activity_cancel_hours > 24) return fail('活动取消提前小时数必须在 1-24 之间');
 
   const existed = await safeList('system_settings', { where: { setting_key: 'global' }, limit: 1 });
   let setting_id = '';

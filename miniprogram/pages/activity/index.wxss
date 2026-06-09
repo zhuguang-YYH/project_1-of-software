@@ -227,9 +227,9 @@
   padding: 0 !important;
   font-size: 27rpx !important;
   border-radius: 14rpx !important;
-  background: #dcfce7 !important;
-  color: #166534 !important;
-  border: 2rpx solid #bbf7d0 !important;
+  background: #edf1f7 !important;
+  color: #64748b !important;
+  border: 2rpx solid #d9e1ec !important;
   font-weight: 600 !important;
 }
 
@@ -473,10 +473,11 @@
 
 .theme-gold .btn-cancel,
 .theme-gold .btn-cancel-modal,
+.theme-gold .btn-registered,
 .theme-gold .btn-full,
 .theme-gold .btn-confirmed {
-  color: #d4af37 !important;
-  background: rgba(212, 175, 55, 0.10) !important;
-  border-color: rgba(212, 175, 55, 0.22) !important;
+  color: rgba(244, 236, 214, 0.60) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(244, 236, 214, 0.12) !important;
   box-shadow: none !important;
 }

@@ -1,0 +1,7 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 积分金币 -->
+  <circle cx="64" cy="64" r="50" fill="#F1C40F" stroke="#F39C12" stroke-width="4"/>
+  <circle cx="64" cy="64" r="40" fill="none" stroke="#F39C12" stroke-width="2" stroke-dasharray="4 4"/>
+  <!-- 中心星号 -->
+  <path d="M64 40L68 56H84L71 66L76 82L64 72L52 82L57 66L44 56H60L64 40Z" fill="white"/>
+</svg>
