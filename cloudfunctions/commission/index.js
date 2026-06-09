@@ -1,11 +1,11 @@
-const cloud = require('wx-server-sdk');
+﻿const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const _ = db.command;
 
-function ok(data = null, message = '操作成功') {
+function ok(data = null, message = '鎿嶄綔鎴愬姛') {
   return { code: 0, data, message };
 }
 
@@ -141,7 +141,7 @@ function publicCommission(item = {}, currentUserId = '') {
     id,
     commission_id: id,
     publisher_id: item.publisher_id || '',
-    publisher_name: item.publisher_name || '匿名侦探',
+    publisher_name: item.publisher_name || '鍖垮悕渚︽帰',
     title: item.title || '',
     content: item.content || '',
     description: item.content || '',
@@ -168,7 +168,7 @@ function publicAcceptance(item = {}) {
     acceptance_id: id,
     commission_id: item.commission_id || '',
     receiver_id: item.receiver_id || '',
-    receiver_name: item.receiver_name || '匿名侦探',
+    receiver_name: item.receiver_name || '鍖垮悕渚︽帰',
     title: item.title || '',
     publisher_id: item.publisher_id || '',
     status: item.status || 'accepted',
@@ -222,10 +222,10 @@ async function commission_getCommissions(event) {
     const countRes = await db.collection('commissions').where(where).count();
     const list = await Promise.all((res.data || []).map(item => getCommissionWithMeta(item, currentUser)));
 
-    return ok({ list, total: countRes.total, page, page_size }, '获取成功');
+    return ok({ list, total: countRes.total, page, page_size }, '鑾峰彇鎴愬姛');
   } catch (error) {
-    if (isCollectionMissing(error)) return ok({ list: [], total: 0, page: 1, page_size: 10 }, '获取成功');
-    return fail('获取委托失败: ' + error.message);
+    if (isCollectionMissing(error)) return ok({ list: [], total: 0, page: 1, page_size: 10 }, '鑾峰彇鎴愬姛');
+    return fail('鑾峰彇濮旀墭澶辫触: ' + error.message);
   }
 }
 
@@ -233,7 +233,7 @@ async function commission_getCommissionDetail(event) {
   try {
     const currentUser = await getCurrentUser();
     const commissionId = getCommissionId(event);
-    if (!commissionId) return fail('委托编号不能为空');
+    if (!commissionId) return fail('濮旀墭缂栧彿涓嶈兘涓虹┖');
 
     const commRes = await db.collection('commissions').doc(commissionId).get();
     const acceptanceRes = await db.collection('commission_acceptances')
@@ -244,9 +244,9 @@ async function commission_getCommissionDetail(event) {
     return ok({
       commission: await getCommissionWithMeta(commRes.data || {}, currentUser),
       acceptances: (acceptanceRes.data || []).map(publicAcceptance)
-    }, '获取成功');
+    }, '鑾峰彇鎴愬姛');
   } catch (error) {
-    return fail('获取委托详情失败: ' + error.message);
+    return fail('鑾峰彇濮旀墭璇︽儏澶辫触: ' + error.message);
   }
 }
 
@@ -259,7 +259,7 @@ async function commission_publishCommission(event) {
   let officialReward = false;
   try {
     const user = await getCurrentUser();
-    if (!user) return fail('请先登录', 'USER_NOT_FOUND');
+    if (!user) return fail('璇峰厛鐧诲綍', 'USER_NOT_FOUND');
     user_id = user._id;
 
     const title = String(event.title || '').trim();
@@ -269,14 +269,14 @@ async function commission_publishCommission(event) {
     officialReward = isPinned && isAdminUser(user);
     const client_request_id = String(event.client_request_id || '').trim();
 
-    if (!title) return fail('委托标题不能为空');
-    if (!content) return fail('委托内容不能为空');
-    if (!Number.isInteger(reward) || reward <= 0) return fail('奖励积分必须为正整数');
+    if (!title) return fail('濮旀墭鏍囬涓嶈兘涓虹┖');
+    if (!content) return fail('濮旀墭鍐呭涓嶈兘涓虹┖');
+    if (!Number.isInteger(reward) || reward <= 0) return fail('濂栧姳绉垎蹇呴』涓烘鏁存暟');
 
-    await ensurePointAccount(user);
+    const pointAccount = await ensurePointAccount(user);
 
-    // 幂等锁：用 client_request_id 生成稳定 _id 创建 processing 占位委托。
-    // 防止跨前端去重窗口的重复提交导致重复发布 + 重复冻结积分（危险方向的重复扣减）。
+    // 骞傜瓑閿侊細鐢?client_request_id 鐢熸垚绋冲畾 _id 鍒涘缓 processing 鍗犱綅濮旀墭銆?
+    // 闃叉璺ㄥ墠绔幓閲嶇獥鍙ｇ殑閲嶅鎻愪氦瀵艰嚧閲嶅鍙戝竷 + 閲嶅鍐荤粨绉垎锛堝嵄闄╂柟鍚戠殑閲嶅鎵ｅ噺锛夈€?
     if (client_request_id) {
       commission_doc_id = buildPublishRequestId(user_id, client_request_id);
       try {
@@ -285,7 +285,7 @@ async function commission_publishCommission(event) {
             _id: commission_doc_id,
             commission_id: commission_doc_id,
             publisher_id: user_id,
-            publisher_name: user.nickname || '匿名侦探',
+            publisher_name: user.nickname || '鍖垮悕渚︽帰',
             title,
             content,
             reward_points: reward,
@@ -298,33 +298,27 @@ async function commission_publishCommission(event) {
         lock_created = true;
       } catch (e) {
         if (isCollectionMissing(e)) throw e;
-        // _id 冲突 → 已有同一请求记录，按其状态幂等返回
+        // _id 鍐茬獊 鈫?宸叉湁鍚屼竴璇锋眰璁板綍锛屾寜鍏剁姸鎬佸箓绛夎繑鍥?
         const existed = await db.collection('commissions').doc(commission_doc_id).get();
         const old = existed.data || {};
         if (['recruiting', 'in_progress', 'resolved'].includes(old.status)) {
-          return ok({ commission_id: old.commission_id || old._id, idempotent: true }, '发布成功');
+          return ok({ commission_id: old.commission_id || old._id, idempotent: true }, '鍙戝竷鎴愬姛');
         }
         if (old.status === 'processing') {
           return fail('发布请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
         }
-        // status === 'failed'：允许复用同一 _id 重试（继续往下冻结并回填）
+        // status === 'failed'锛氬厑璁稿鐢ㄥ悓涓€ _id 閲嶈瘯锛堢户缁線涓嬪喕缁撳苟鍥炲～锛?
         lock_created = true;
       }
     }
 
-    // 原子冻结发布者积分（非官方委托）：仅当 available_points 足额才扣减并冻结。
+    // Freeze publisher points only when both users and point_accounts have enough available points.
     if (!officialReward) {
-      const freezeRes = await db.collection('users').where({
-        _id: user_id,
-        available_points: _.gte(reward)
-      }).update({
-        data: {
-          available_points: _.inc(-reward),
-          frozen_points: _.inc(reward),
-          updated_at: db.serverDate()
-        }
-      });
-      if (!freezeRes.stats || freezeRes.stats.updated === 0) {
+      const userAvailable = toNumber(user.available_points);
+      const accountAvailable = toNumber(pointAccount.available_points);
+      const effectiveAvailable = Math.min(userAvailable, accountAvailable);
+
+      if (effectiveAvailable < reward) {
         if (lock_created && commission_doc_id) {
           try {
             await db.collection('commissions').doc(commission_doc_id).update({
@@ -334,21 +328,64 @@ async function commission_publishCommission(event) {
         }
         return fail('可兑换积分不足，无法发布委托');
       }
+
+      const accountFreezeRes = await db.collection('point_accounts').where({
+        _id: pointAccount._id,
+        available_points: _.gte(reward)
+      }).update({
+        data: {
+          available_points: _.inc(-reward),
+          frozen_points: _.inc(reward),
+          updated_at: db.serverDate()
+        }
+      });
+      if (!accountFreezeRes.stats || accountFreezeRes.stats.updated === 0) {
+        if (lock_created && commission_doc_id) {
+          try {
+            await db.collection('commissions').doc(commission_doc_id).update({
+              data: { status: 'failed', error_message: '可兑换积分不足', updated_at: db.serverDate() }
+            });
+          } catch (e) { console.error('标记发布失败失败:', e); }
+        }
+        return fail('可兑换积分不足，无法发布委托');
+      }
+
+      const userFreezeRes = await db.collection('users').where({
+        _id: user_id,
+        available_points: _.gte(reward)
+      }).update({
+        data: {
+          available_points: _.inc(-reward),
+          frozen_points: _.inc(reward),
+          updated_at: db.serverDate()
+        }
+      });
+      if (!userFreezeRes.stats || userFreezeRes.stats.updated === 0) {
+        try {
+          await db.collection('point_accounts').doc(pointAccount._id).update({
+            data: {
+              available_points: _.inc(reward),
+              frozen_points: _.inc(-reward),
+              updated_at: db.serverDate()
+            }
+          });
+        } catch (e) { console.error('回滚积分账户冻结失败:', e); }
+        if (lock_created && commission_doc_id) {
+          try {
+            await db.collection('commissions').doc(commission_doc_id).update({
+              data: { status: 'failed', error_message: '可兑换积分不足', updated_at: db.serverDate() }
+            });
+          } catch (e) { console.error('标记发布失败失败:', e); }
+        }
+        return fail('可兑换积分不足，无法发布委托');
+      }
+
       points_frozen = true;
-      try {
-        await db.collection('point_accounts').where({ user_id }).update({
-          data: {
-            available_points: _.inc(-reward),
-            frozen_points: _.inc(reward),
-            updated_at: db.serverDate()
-          }
-        });
-      } catch (e) { if (!isCollectionMissing(e)) throw e; }
     }
 
     const data = {
       publisher_id: user_id,
-      publisher_name: user.nickname || '匿名侦探',
+      publisher_name: user.nickname || '鍖垮悕渚︽帰',
       title,
       content,
       reward_points: reward,
@@ -366,7 +403,7 @@ async function commission_publishCommission(event) {
     };
 
     if (commission_doc_id) {
-      // 幂等锁路径：把占位记录补全为正式 recruiting 委托（保留原 created_at）
+      // 骞傜瓑閿佽矾寰勶細鎶婂崰浣嶈褰曡ˉ鍏ㄤ负姝ｅ紡 recruiting 濮旀墭锛堜繚鐣欏師 created_at锛?
       await db.collection('commissions').doc(commission_doc_id).update({
         data: { ...data, commission_id: commission_doc_id }
       });
@@ -385,13 +422,13 @@ async function commission_publishCommission(event) {
         point_type: 'frozen',
         business_type: 'commission_freeze',
         related_id: commission_doc_id,
-        reason: `发布委托冻结积分 - ${title}`
+        reason: `鍙戝竷濮旀墭鍐荤粨绉垎 - ${title}`
       });
     }
 
-    return ok({ commission_id: commission_doc_id }, '发布成功');
+    return ok({ commission_id: commission_doc_id }, '鍙戝竷鎴愬姛');
   } catch (error) {
-    // 回滚冻结（非官方委托且确已冻结）
+    // 鍥炴粴鍐荤粨锛堥潪瀹樻柟濮旀墭涓旂‘宸插喕缁擄級
     if (points_frozen && !officialReward && user_id && reward > 0) {
       try {
         await db.collection('users').doc(user_id).update({
@@ -408,35 +445,35 @@ async function commission_publishCommission(event) {
             updated_at: db.serverDate()
           }
         });
-      } catch (e) { console.error('回滚发布积分失败:', e); }
+      } catch (e) { console.error('鍥炴粴鍙戝竷绉垎澶辫触:', e); }
     }
     if (lock_created && commission_doc_id) {
       try {
         await db.collection('commissions').doc(commission_doc_id).update({
-          data: { status: 'failed', error_message: error.message || '发布失败', updated_at: db.serverDate() }
+          data: { status: 'failed', error_message: error.message || '鍙戝竷澶辫触', updated_at: db.serverDate() }
         });
-      } catch (e) { console.error('标记发布失败失败:', e); }
+      } catch (e) { console.error('鏍囪鍙戝竷澶辫触澶辫触:', e); }
     }
-    return fail('发布失败: ' + error.message);
+    return fail('鍙戝竷澶辫触: ' + error.message);
   }
 }
 
 async function commission_acceptCommission(event) {
   try {
     const user = await getCurrentUser();
-    if (!user) return fail('请先登录', 'USER_NOT_FOUND');
+    if (!user) return fail('璇峰厛鐧诲綍', 'USER_NOT_FOUND');
 
     const commissionId = getCommissionId(event);
-    if (!commissionId) return fail('委托编号不能为空');
+    if (!commissionId) return fail('濮旀墭缂栧彿涓嶈兘涓虹┖');
 
     const commRes = await db.collection('commissions').doc(commissionId).get();
     const commission = commRes.data || {};
     if (!commission._id && !commission.commission_id) return fail('委托不存在');
     if (commission.publisher_id === user._id) return fail('不能领取自己发布的委托');
     if (!['recruiting', 'in_progress'].includes(commission.status)) return fail('该委托当前不可领取');
-    if (isExpired(commission.deadline)) return fail('该委托已超过截止时间');
+    if (isExpired(commission.deadline)) return fail('璇ュ鎵樺凡瓒呰繃鎴鏃堕棿');
 
-    // 用稳定 _id 防重复领取：同一 commission + 同一 receiver 第二次 add 必失败
+    // 鐢ㄧǔ瀹?_id 闃查噸澶嶉鍙栵細鍚屼竴 commission + 鍚屼竴 receiver 绗簩娆?add 蹇呭け璐?
     const stable_id = `ca_${commissionId}_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
 
     const data = {
@@ -444,7 +481,7 @@ async function commission_acceptCommission(event) {
       acceptance_id: stable_id,
       commission_id: commission.commission_id || commissionId,
       receiver_id: user._id,
-      receiver_name: user.nickname || '匿名侦探',
+      receiver_name: user.nickname || '鍖垮悕渚︽帰',
       title: commission.title || '',
       publisher_id: commission.publisher_id || '',
       status: 'accepted',
@@ -459,7 +496,7 @@ async function commission_acceptCommission(event) {
     try {
       await db.collection('commission_acceptances').add({ data });
     } catch (error) {
-      // _id 冲突 → 检查是否是已领取，决定幂等返回还是真正出错
+      // _id 鍐茬獊 鈫?妫€鏌ユ槸鍚︽槸宸查鍙栵紝鍐冲畾骞傜瓑杩斿洖杩樻槸鐪熸鍑洪敊
       const dup = await db.collection('commission_acceptances')
         .where({ _id: stable_id })
         .limit(1).get();
@@ -479,26 +516,26 @@ async function commission_acceptCommission(event) {
       }
     });
 
-    return ok({ acceptance_id: stable_id }, '领取成功');
+    return ok({ acceptance_id: stable_id }, '棰嗗彇鎴愬姛');
   } catch (error) {
-    return fail('领取失败: ' + error.message);
+    return fail('棰嗗彇澶辫触: ' + error.message);
   }
 }
 
 async function commission_completeCommission(event) {
   try {
     const user = await getCurrentUser();
-    if (!user) return fail('请先登录', 'USER_NOT_FOUND');
+    if (!user) return fail('璇峰厛鐧诲綍', 'USER_NOT_FOUND');
 
     const acceptanceId = getAcceptanceId(event);
-    if (!acceptanceId) return fail('领取记录编号不能为空');
+    if (!acceptanceId) return fail('棰嗗彇璁板綍缂栧彿涓嶈兘涓虹┖');
 
     const accRes = await db.collection('commission_acceptances').doc(acceptanceId).get();
     const acceptance = accRes.data || {};
     if (!acceptance._id && !acceptance.acceptance_id) return fail('领取记录不存在');
     if (acceptance.receiver_id !== user._id) return fail('只能完成自己领取的委托');
 
-    // 条件原子更新：必须当前 status='accepted' 才能流转到 'completed'
+    // 鏉′欢鍘熷瓙鏇存柊锛氬繀椤诲綋鍓?status='accepted' 鎵嶈兘娴佽浆鍒?'completed'
     const updateRes = await db.collection('commission_acceptances').where({
       _id: acceptanceId,
       status: 'accepted'
@@ -510,7 +547,7 @@ async function commission_completeCommission(event) {
       }
     });
     if (!updateRes.stats || updateRes.stats.updated === 0) {
-      return fail('该委托状态不可标记完成（可能已被处理）');
+      return fail('该委托状态不可标记完成，可能已被处理');
     }
     await db.collection('commissions').doc(acceptance.commission_id).update({
       data: {
@@ -521,21 +558,21 @@ async function commission_completeCommission(event) {
 
     return ok(null, '已提交完成，等待发布者确认');
   } catch (error) {
-    return fail('完成失败: ' + error.message);
+    return fail('瀹屾垚澶辫触: ' + error.message);
   }
 }
 
 async function commission_allocateRewards(event) {
   try {
     const publisher = await getCurrentUser();
-    if (!publisher) return fail('请先登录', 'USER_NOT_FOUND');
+    if (!publisher) return fail('璇峰厛鐧诲綍', 'USER_NOT_FOUND');
 
     const commissionId = getCommissionId(event);
     const acceptanceId = getAcceptanceId(event);
     const points = Number(event.allocated_points || event.points || 0);
 
     if (!commissionId || !acceptanceId) return fail('委托和领取记录不能为空');
-    if (!Number.isInteger(points) || points <= 0) return fail('分配积分必须为正整数');
+    if (!Number.isInteger(points) || points <= 0) return fail('鍒嗛厤绉垎蹇呴』涓烘鏁存暟');
 
     const commRes = await db.collection('commissions').doc(commissionId).get();
     const commission = commRes.data || {};
@@ -543,7 +580,7 @@ async function commission_allocateRewards(event) {
     if (commission.publisher_id !== publisher._id) return fail('只有发布者可以分配奖励');
 
     const remainingReward = toNumber(commission.remaining_reward);
-    if (points > remainingReward) return fail('分配积分不能超过剩余奖励');
+    if (points > remainingReward) return fail('鍒嗛厤绉垎涓嶈兘瓒呰繃鍓╀綑濂栧姳');
 
     const accRes = await db.collection('commission_acceptances').doc(acceptanceId).get();
     const acceptance = accRes.data || {};
@@ -552,13 +589,13 @@ async function commission_allocateRewards(event) {
     }
 
     const receiver = await getUserById(acceptance.receiver_id);
-    if (!receiver) return fail('领取者信息不存在');
+    if (!receiver) return fail('棰嗗彇鑰呬俊鎭笉瀛樺湪');
 
     const officialReward = commission.reward_source === 'official';
     const realCommissionId = commission.commission_id || commissionId;
 
-    // ===== 关键原子操作：状态流转 =====
-    // 1) acceptance：必须当前 status='completed' 才能转为 'rewarded'，防止双重发放
+    // ===== 鍏抽敭鍘熷瓙鎿嶄綔锛氱姸鎬佹祦杞?=====
+    // 1) acceptance锛氬繀椤诲綋鍓?status='completed' 鎵嶈兘杞负 'rewarded'锛岄槻姝㈠弻閲嶅彂鏀?
     const accUpdate = await db.collection('commission_acceptances').where({
       _id: acceptanceId,
       status: 'completed'
@@ -571,10 +608,10 @@ async function commission_allocateRewards(event) {
       }
     });
     if (!accUpdate.stats || accUpdate.stats.updated === 0) {
-      return fail('该领取记录当前状态不可分配奖励（可能已被发放）');
+      return fail('该领取记录当前状态不可分配奖励，可能已被发放');
     }
 
-    // 2) commission：必须 remaining_reward >= points 才扣减
+    // 2) commission锛氬繀椤?remaining_reward >= points 鎵嶆墸鍑?
     const commUpdate = await db.collection('commissions').where({
       _id: realCommissionId,
       remaining_reward: _.gte(points)
@@ -586,14 +623,14 @@ async function commission_allocateRewards(event) {
       }
     });
     if (!commUpdate.stats || commUpdate.stats.updated === 0) {
-      // 极端竞态：回滚 acceptance 状态
+      // 鏋佺绔炴€侊細鍥炴粴 acceptance 鐘舵€?
       await db.collection('commission_acceptances').doc(acceptanceId).update({
         data: { status: 'completed', reward_points: 0, rewarded_at: '', updated_at: db.serverDate() }
       });
       return fail('委托剩余奖励不足，分配失败');
     }
 
-    // 3) 领取者加分（原子 inc）
+    // 3) 棰嗗彇鑰呭姞鍒嗭紙鍘熷瓙 inc锛?
     await ensurePointAccount(receiver);
     await db.collection('users').doc(receiver._id).update({
       data: {
@@ -612,7 +649,7 @@ async function commission_allocateRewards(event) {
       });
     } catch (e) { if (!isCollectionMissing(e)) throw e; }
 
-    // 4) 发布者：非官方委托才解冻+计入已用
+    // 4) 鍙戝竷鑰咃細闈炲畼鏂瑰鎵樻墠瑙ｅ喕+璁″叆宸茬敤
     if (!officialReward) {
       await ensurePointAccount(publisher);
       await db.collection('users').doc(publisher._id).update({
@@ -633,7 +670,7 @@ async function commission_allocateRewards(event) {
       } catch (e) { if (!isCollectionMissing(e)) throw e; }
     }
 
-    // 5) 委托整体已分配完 → 标记 resolved
+    // 5) 濮旀墭鏁翠綋宸插垎閰嶅畬 鈫?鏍囪 resolved
     const nextRemainingReward = remainingReward - points;
     if (nextRemainingReward <= 0) {
       await db.collection('commissions').doc(realCommissionId).update({
@@ -641,7 +678,7 @@ async function commission_allocateRewards(event) {
       });
     }
 
-    // 6) 写分配记录 + 积分流水
+    // 6) 鍐欏垎閰嶈褰?+ 绉垎娴佹按
     const allocationRes = await db.collection('commission_allocations').add({
       data: {
         commission_id: realCommissionId,
@@ -661,19 +698,19 @@ async function commission_allocateRewards(event) {
       point_type: 'available',
       business_type: officialReward ? 'official_commission_reward' : 'commission_reward',
       related_id: realCommissionId,
-      reason: `委托奖励 - ${commission.title || ''}`
+      reason: `濮旀墭濂栧姳 - ${commission.title || ''}`
     });
 
-    return ok({ remaining_reward: nextRemainingReward }, '奖励分配成功');
+    return ok({ remaining_reward: nextRemainingReward }, '濂栧姳鍒嗛厤鎴愬姛');
   } catch (error) {
-    return fail('分配失败: ' + error.message);
+    return fail('鍒嗛厤澶辫触: ' + error.message);
   }
 }
 
 async function commission_getMyCommissions(event) {
   try {
     const user = await getCurrentUser();
-    if (!user) return ok({ published: [], accepted: [], page: 1, page_size: 20 }, '获取成功');
+    if (!user) return ok({ published: [], accepted: [], page: 1, page_size: 20 }, '鑾峰彇鎴愬姛');
 
     const page = Math.max(1, Number(event.page) || 1);
     const page_size = Math.min(50, Math.max(1, Number(event.page_size) || 20));
@@ -717,10 +754,10 @@ async function commission_getMyCommissions(event) {
       return { ...acceptance, commission };
     }));
 
-    return ok({ published, accepted, page, page_size }, '获取成功');
+    return ok({ published, accepted, page, page_size }, '鑾峰彇鎴愬姛');
   } catch (error) {
-    if (isCollectionMissing(error)) return ok({ published: [], accepted: [], page: 1, page_size: 20 }, '获取成功');
-    return fail('获取我的委托失败: ' + error.message);
+    if (isCollectionMissing(error)) return ok({ published: [], accepted: [], page: 1, page_size: 20 }, '鑾峰彇鎴愬姛');
+    return fail('鑾峰彇鎴戠殑濮旀墭澶辫触: ' + error.message);
   }
 }
 
@@ -740,6 +777,6 @@ exports.main = async (event, context) => {
   };
 
   const handler = actions[action];
-  if (!handler) return fail(`未知操作: ${action}`);
+  if (!handler) return fail(`鏈煡鎿嶄綔: ${action}`);
   return handler({ ...data }, context);
 };

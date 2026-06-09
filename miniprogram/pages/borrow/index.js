@@ -3,14 +3,14 @@ const format = require('../../utils/format.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 const BORROW_ASSETS = {
-  bookCover: '/images/borrow_jubensha/书籍默认封面.jpg',
-  scriptCover: '/images/borrow_jubensha/剧本杀默认封面.jpg',
-  statusAvailable: '/images/borrow_jubensha/在库状态图标.jpg',
-  statusTransit: '/images/borrow_jubensha/传递中状态图标.jpg',
-  statusBorrowed: '/images/borrow_jubensha/已借出状态图标.jpg',
-  players: '/images/borrow_jubensha/人数图标.jpg',
-  duration: '/images/borrow_jubensha/时长图标.jpg',
-  difficulty: '/images/borrow_jubensha/难度图标.jpg'
+  bookCover: '/pages/borrow/images/书籍默认封面.jpg',
+  scriptCover: '/pages/borrow/images/剧本杀默认封面.jpg',
+  statusAvailable: '/pages/borrow/images/在库状态图标.jpg',
+  statusTransit: '/pages/borrow/images/传递中状态图标.jpg',
+  statusBorrowed: '/pages/borrow/images/已借出状态图标.jpg',
+  players: '/pages/borrow/images/人数图标.jpg',
+  duration: '/pages/borrow/images/时长图标.jpg',
+  difficulty: '/pages/borrow/images/难度图标.jpg'
 };
 
 function formatTime(value) {

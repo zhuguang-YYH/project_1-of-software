@@ -5,9 +5,9 @@ const format = require('../../utils/format.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 const EXCHANGE_ASSETS = {
-  goodsDefault: '/images/exchange/goods-default.jpg',
-  pointsCoin: '/images/exchange/points-coin.jpg',
-  stockEmpty: '/images/exchange/stock-empty.jpg'
+  goodsDefault: '/pages/exchange/images/goods-default.jpg',
+  pointsCoin: '/pages/exchange/images/points-coin.jpg',
+  stockEmpty: '/pages/exchange/images/stock-empty.jpg'
 };
 
 function formatTime(value) {
