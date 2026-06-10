@@ -53,7 +53,10 @@ class PuzzleService {
         success: true,
         data: payload,
         is_correct: !!payload.is_correct,
-        score_gained: Number(payload.score_gained || 0)
+        score_gained: Number(payload.score_gained || 0),
+        streak_days: Number(payload.streak_days || payload.current_streak || 0),
+        streak_bonus_points: Number(payload.streak_bonus_points || 0),
+        total_score_gained: Number(payload.total_score_gained || payload.score_gained || 0)
       };
     } catch (error) {
       console.error('Failed to submit answer:', error);
@@ -103,7 +106,10 @@ class PuzzleService {
         total_answered: Number(payload.total_answered || 0),
         correct_count: Number(payload.correct_count || 0),
         correct_rate: Number(payload.correct_rate || 0),
-        current_streak: Number(payload.current_streak || 0)
+        current_streak: Number(payload.current_streak || 0),
+        streak_bonus_days: Number(payload.streak_bonus_days || 0),
+        streak_bonus_points: Number(payload.streak_bonus_points || 0),
+        next_streak_bonus_in: Number(payload.next_streak_bonus_in || 0)
       };
     } catch (error) {
       console.error('Failed to get puzzle stats:', error);

@@ -8,6 +8,8 @@ const _ = db.command;
 // Configure this with the template ID created in the WeChat public platform.
 const PUZZLE_DAILY_REMINDER_TMPL = process.env.PUZZLE_DAILY_REMINDER_TMPL || '';
 const PUZZLE_REMINDER_MAX_PER_RUN = 500;
+const PUZZLE_STREAK_BONUS_DAYS = Math.max(2, Number(process.env.PUZZLE_STREAK_BONUS_DAYS) || 3);
+const PUZZLE_STREAK_BONUS_POINTS = Math.max(0, Number(process.env.PUZZLE_STREAK_BONUS_POINTS) || 5);
 
 function success(data = null, message = '操作成功') {
   return { code: 0, data, message };
@@ -27,6 +29,12 @@ function isCollectionMissing(error) {
 
 function todayText() {
   return new Date().toISOString().split('T')[0];
+}
+
+function shiftDateText(dateText, deltaDays) {
+  const ts = Date.parse(`${dateText}T00:00:00Z`);
+  if (Number.isNaN(ts)) return '';
+  return new Date(ts + deltaDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
 function asThing(value, max = 20) {
@@ -81,12 +89,15 @@ function normalizeAnswerRecord(item = {}) {
     selected_option_id: item.selected_option_id || '',
     is_correct: !!item.is_correct,
     score_gained: numberValue(item.score_gained, 0),
+    streak_days: numberValue(item.streak_days, 0),
+    streak_bonus_points: numberValue(item.streak_bonus_points, 0),
+    total_score_gained: numberValue(item.total_score_gained || item.score_gained, 0),
     answered_at: item.answered_at || item.created_at || '',
     created_at: item.created_at || ''
   };
 }
 
-function normalizePuzzle(puzzle, options, answer_record) {
+function normalizePuzzle(puzzle, options, answer_record, streak_stats = {}) {
   const puzzle_id = puzzle.puzzle_id || puzzle._id;
   const user_answer = answer_record ? answer_record.selected_answer : '';
   const correct_option = options.find(item => item.is_correct);
@@ -110,7 +121,13 @@ function normalizePuzzle(puzzle, options, answer_record) {
     user_answer,
     selected_option_id: answer_record ? answer_record.selected_option_id : '',
     is_correct: answer_record ? !!answer_record.is_correct : false,
-    correct_answer: answer_record && correct_option ? correct_option.option_content : ''
+    correct_answer: answer_record && correct_option ? correct_option.option_content : '',
+    current_streak: numberValue(streak_stats.current_streak, 0),
+    streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+    streak_bonus_points: PUZZLE_STREAK_BONUS_POINTS,
+    next_streak_bonus_in: numberValue(streak_stats.next_streak_bonus_in, PUZZLE_STREAK_BONUS_DAYS),
+    last_streak_bonus_points: answer_record ? numberValue(answer_record.streak_bonus_points, 0) : 0,
+    total_score_gained: answer_record ? numberValue(answer_record.total_score_gained || answer_record.score_gained, 0) : 0
   };
 }
 
@@ -169,7 +186,10 @@ async function ensurePointAccount(user) {
   return { _id: add_res._id, ...data };
 }
 
-async function addPuzzlePoints(user, points, puzzle_id) {
+async function addPuzzlePoints(user, points, puzzle_id, options = {}) {
+  if (!points || points <= 0) return;
+  const reason = options.reason || '每日谜题答对奖励';
+  const business_type = options.business_type || 'daily_puzzle';
   await ensurePointAccount(user);
   // 原子加分：直接使用 _.inc，避免"先读后写"竞态
   await db.collection('users').doc(user._id).update({
@@ -193,13 +213,64 @@ async function addPuzzlePoints(user, points, puzzle_id) {
       change_amount: points,
       point_type: 'available',
       type: 'income',
-      business_type: 'daily_puzzle',
+      business_type,
       related_id: puzzle_id,
-      reason: '每日谜题答对奖励',
-      description: '每日谜题答对奖励',
+      reason,
+      description: reason,
       created_at: db.serverDate()
     }
   });
+}
+
+function calcNextStreakBonusIn(streak) {
+  const current = Math.max(0, Number(streak) || 0);
+  const remainder = current % PUZZLE_STREAK_BONUS_DAYS;
+  return remainder === 0 ? PUZZLE_STREAK_BONUS_DAYS : PUZZLE_STREAK_BONUS_DAYS - remainder;
+}
+
+function calcActiveCorrectStreak(list, current_date) {
+  const byDate = new Map();
+  (list || []).forEach((item) => {
+    const date = item.answer_date || '';
+    if (date && !byDate.has(date)) byDate.set(date, !!item.is_correct);
+  });
+
+  if (byDate.has(current_date) && !byDate.get(current_date)) return 0;
+
+  let cursor = byDate.get(current_date) ? current_date : shiftDateText(current_date, -1);
+  let streak = 0;
+  while (cursor && byDate.get(cursor) === true) {
+    streak += 1;
+    cursor = shiftDateText(cursor, -1);
+  }
+  return streak;
+}
+
+async function getPuzzleStreakStats(user, current_date = todayText()) {
+  const defaults = {
+    current_streak: 0,
+    streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+    streak_bonus_points: PUZZLE_STREAK_BONUS_POINTS,
+    next_streak_bonus_in: PUZZLE_STREAK_BONUS_DAYS
+  };
+  if (!user || !user._id) return defaults;
+
+  try {
+    const res = await db.collection('puzzle_answers')
+      .where({ user_id: user._id })
+      .orderBy('answer_date', 'desc')
+      .limit(100)
+      .get();
+    const current_streak = calcActiveCorrectStreak(res.data || [], current_date);
+    return {
+      ...defaults,
+      current_streak,
+      next_streak_bonus_in: calcNextStreakBonusIn(current_streak)
+    };
+  } catch (error) {
+    if (isCollectionMissing(error)) return defaults;
+    throw error;
+  }
 }
 
 async function getAnswerRecord(user, puzzle_id, answer_date) {
@@ -239,8 +310,9 @@ async function puzzle_getTodayPuzzle() {
     const user = await getCurrentUser(wx_context.OPENID);
     const options = await getPuzzleOptions(puzzle);
     const answer_record = await getAnswerRecord(user, puzzle._id, current_date);
+    const streak_stats = await getPuzzleStreakStats(user, current_date);
 
-    return success(normalizePuzzle(puzzle, options, answer_record), '获取成功');
+    return success(normalizePuzzle(puzzle, options, answer_record, streak_stats), '获取成功');
   } catch (error) {
     return fail('获取谜题失败: ' + error.message);
   }
@@ -266,12 +338,19 @@ async function puzzle_submitAnswer(event) {
     // 命中已有记录 → 直接返回历史结果（幂等）
     const existing = await getAnswerRecord(user, puzzle_id, current_date);
     if (existing) {
+      const streak_stats = await getPuzzleStreakStats(user, current_date);
       return success({
         answer_id: existing._id,
         is_correct: !!existing.is_correct,
         correct_answer: '',
         answer_explanation: '',
         score_gained: numberValue(existing.score_gained, 0),
+        streak_days: numberValue(existing.streak_days || streak_stats.current_streak, 0),
+        current_streak: numberValue(streak_stats.current_streak, 0),
+        streak_bonus_points: numberValue(existing.streak_bonus_points, 0),
+        total_score_gained: numberValue(existing.total_score_gained || existing.score_gained, 0),
+        streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+        next_streak_bonus_in: numberValue(streak_stats.next_streak_bonus_in, PUZZLE_STREAK_BONUS_DAYS),
         idempotent: true
       }, '您今天已经答过这道谜题了');
     }
@@ -314,20 +393,57 @@ async function puzzle_submitAnswer(event) {
       // _id 冲突：说明已被并发写入，幂等返回
       const dup = await getAnswerRecord(user, puzzle_id, current_date);
       if (dup) {
+        const streak_stats = await getPuzzleStreakStats(user, current_date);
         return success({
           answer_id: dup._id,
           is_correct: !!dup.is_correct,
           correct_answer,
           answer_explanation: puzzle.answer_explanation || '',
           score_gained: numberValue(dup.score_gained, 0),
+          streak_days: numberValue(dup.streak_days || streak_stats.current_streak, 0),
+          current_streak: numberValue(streak_stats.current_streak, 0),
+          streak_bonus_points: numberValue(dup.streak_bonus_points, 0),
+          total_score_gained: numberValue(dup.total_score_gained || dup.score_gained, 0),
+          streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+          next_streak_bonus_in: numberValue(streak_stats.next_streak_bonus_in, PUZZLE_STREAK_BONUS_DAYS),
           idempotent: true
         }, '您今天已经答过这道谜题了');
       }
       throw error;
     }
 
+    const streak_stats = await getPuzzleStreakStats(user, current_date);
+    const streak_days = is_correct ? streak_stats.current_streak : 0;
+    const streak_bonus_points = is_correct &&
+      PUZZLE_STREAK_BONUS_POINTS > 0 &&
+      streak_days > 0 &&
+      streak_days % PUZZLE_STREAK_BONUS_DAYS === 0
+      ? PUZZLE_STREAK_BONUS_POINTS
+      : 0;
+    const total_score_gained = score_gained + streak_bonus_points;
+
     if (score_gained > 0) {
       await addPuzzlePoints(user, score_gained, puzzle_id);
+    }
+    if (streak_bonus_points > 0) {
+      await addPuzzlePoints(user, streak_bonus_points, puzzle_id, {
+        business_type: 'daily_puzzle_streak',
+        reason: `连续答对 ${streak_days} 天奖励`
+      });
+    }
+
+    try {
+      await db.collection('puzzle_answers').doc(answer_doc_id).update({
+        data: {
+          streak_days,
+          streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+          streak_bonus_points,
+          total_score_gained,
+          updated_at: db.serverDate()
+        }
+      });
+    } catch (error) {
+      console.warn('[puzzle] update streak meta failed:', error && error.message);
     }
 
     return success({
@@ -335,7 +451,13 @@ async function puzzle_submitAnswer(event) {
       is_correct,
       correct_answer,
       answer_explanation: puzzle.answer_explanation || '',
-      score_gained
+      score_gained,
+      streak_days,
+      current_streak: streak_days,
+      streak_bonus_points,
+      total_score_gained,
+      streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+      next_streak_bonus_in: calcNextStreakBonusIn(streak_days)
     }, is_correct ? '答对了！' : '答错了，再接再厉');
   } catch (error) {
     return fail('提交答案失败: ' + error.message);
@@ -478,15 +600,6 @@ async function runDailyPuzzleReminder() {
   return success(summary, '每日谜题提醒任务完成');
 }
 
-function calcCurrentStreak(list) {
-  let streak = 0;
-  for (const item of list) {
-    if (!item.is_correct) break;
-    streak += 1;
-  }
-  return streak;
-}
-
 async function puzzle_getStats() {
   try {
     const wx_context = cloud.getWXContext();
@@ -500,12 +613,16 @@ async function puzzle_getStats() {
       .get();
     const list = res.data || [];
     const correct_count = list.filter(item => item.is_correct).length;
+    const streak_stats = await getPuzzleStreakStats(user);
 
     return success({
       total_answered: list.length,
       correct_count,
       correct_rate: list.length > 0 ? Math.round((correct_count / list.length) * 100) : 0,
-      current_streak: calcCurrentStreak(list)
+      current_streak: streak_stats.current_streak,
+      streak_bonus_days: PUZZLE_STREAK_BONUS_DAYS,
+      streak_bonus_points: PUZZLE_STREAK_BONUS_POINTS,
+      next_streak_bonus_in: streak_stats.next_streak_bonus_in
     }, '获取成功');
   } catch (error) {
     return fail('获取答题统计失败: ' + error.message);

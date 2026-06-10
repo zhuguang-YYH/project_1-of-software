@@ -70,8 +70,19 @@
     </view>
 
     <view class="reward-info" wx:if="{{puzzle.reward_points}}">
-      <text class="reward-label">答对可获得</text>
-      <text class="reward-points">+{{puzzle.reward_points}} 积分</text>
+      <view class="reward-line">
+        <text class="reward-label">答对可获得</text>
+        <text class="reward-points">+{{puzzle.reward_points}} 积分</text>
+      </view>
+      <view class="streak-line">
+        <text class="streak-text">连续打卡 {{puzzle.current_streak || 0}} 天</text>
+        <text class="streak-bonus" wx:if="{{puzzle.last_streak_bonus_points}}">
+          本次额外 +{{puzzle.last_streak_bonus_points}} 积分
+        </text>
+        <text class="streak-bonus" wx:elif="{{puzzle.next_streak_bonus_in && puzzle.streak_bonus_points}}">
+          再答对 {{puzzle.next_streak_bonus_in}} 天额外 +{{puzzle.streak_bonus_points}} 积分
+        </text>
+      </view>
     </view>
   </view>
 </view>

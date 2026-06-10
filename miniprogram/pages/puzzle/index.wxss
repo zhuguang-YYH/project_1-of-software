@@ -328,13 +328,21 @@
 .reward-info {
   margin: 0 32rpx 32rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14rpx;
+  gap: 10rpx;
   padding: 22rpx;
   background: linear-gradient(135deg, #fef3df, #ffd76b);
   border-radius: 16rpx;
   box-shadow: inset 0 0 0 2rpx rgba(245, 176, 65, 0.3);
+}
+
+.reward-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
 }
 
 .reward-label { font-size: 26rpx; color: #92580d; font-weight: 600; }
@@ -344,6 +352,24 @@
   color: #92580d;
   font-weight: 800;
   letter-spacing: 1rpx;
+}
+
+.streak-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10rpx 18rpx;
+  font-size: 23rpx;
+  color: #92580d;
+}
+
+.streak-text,
+.streak-bonus {
+  line-height: 1.4;
+}
+
+.streak-bonus {
+  font-weight: 700;
 }
 
 /* 加载 */

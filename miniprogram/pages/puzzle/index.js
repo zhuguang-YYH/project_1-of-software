@@ -90,19 +90,27 @@ Page({
       if (!result.success) throw new Error(result.error || '提交失败');
 
       const data = result.data || {};
+      const streakBonus = Number(data.streak_bonus_points || 0);
+      const totalScore = Number(data.total_score_gained || data.score_gained || 0);
       this.setData({
         answered: true,
         is_correct: !!data.is_correct,
         puzzle: {
           ...this.data.puzzle,
           correct_answer: data.correct_answer || '',
-          answer_explanation: data.answer_explanation || this.data.puzzle.answer_explanation || ''
+          answer_explanation: data.answer_explanation || this.data.puzzle.answer_explanation || '',
+          current_streak: Number(data.current_streak || data.streak_days || 0),
+          last_streak_bonus_points: streakBonus,
+          total_score_gained: totalScore,
+          streak_bonus_days: Number(data.streak_bonus_days || this.data.puzzle.streak_bonus_days || 0),
+          streak_bonus_points: Number(data.streak_bonus_points || this.data.puzzle.streak_bonus_points || 0),
+          next_streak_bonus_in: Number(data.next_streak_bonus_in || this.data.puzzle.next_streak_bonus_in || 0)
         },
         submitting: false
       });
 
       wx.showToast({
-        title: data.is_correct ? '答对了' : '回答错误',
+        title: data.is_correct ? (streakBonus > 0 ? `答对 +${totalScore}分` : '答对了') : '回答错误',
         icon: data.is_correct ? 'success' : 'none',
         duration: 2000
       });

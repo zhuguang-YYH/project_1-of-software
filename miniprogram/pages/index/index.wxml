@@ -44,9 +44,9 @@
           <text class="hero-stat-label">当前排名</text>
         </view>
         <view class="hero-stat-divider"></view>
-        <view class="hero-stat tap-feedback" bindtap="goToProfile">
-          <text class="hero-stat-value">编辑</text>
-          <text class="hero-stat-label">完善档案</text>
+        <view class="hero-stat tap-feedback" bindtap="goToPuzzle">
+          <text class="hero-stat-value">{{dailyPuzzle.current_streak || 0}}</text>
+          <text class="hero-stat-label">连续打卡</text>
         </view>
       </view>
 
@@ -63,7 +63,8 @@
       <view class="nav-item tap-feedback" bindtap="goToPuzzle">
         <view class="icon-circle is-gold">谜</view>
         <text class="nav-text">每日谜题</text>
-        <text class="nav-desc" wx:if="{{dailyPuzzle && dailyPuzzle.answered}}">今日已完成</text>
+        <text class="nav-desc" wx:if="{{dailyPuzzle && dailyPuzzle.answered && dailyPuzzle.current_streak}}">连续 {{dailyPuzzle.current_streak}} 天</text>
+        <text class="nav-desc" wx:elif="{{dailyPuzzle && dailyPuzzle.answered}}">今日已完成</text>
         <text class="nav-desc" wx:elif="{{dailyPuzzle}}">今日未完成</text>
         <text class="nav-desc" wx:else>进入答题</text>
         <view class="nav-dot" wx:if="{{dailyPuzzle && !dailyPuzzle.answered}}"></view>

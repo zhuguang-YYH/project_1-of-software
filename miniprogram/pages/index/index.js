@@ -95,6 +95,10 @@ Page({
 
     try {
       const result = await puzzleService.getTodayPuzzle();
+      if (!result.success) {
+        this.setData({ dailyPuzzle: null });
+        return;
+      }
       const puzzle = result.data || {};
       this.setData({
         dailyPuzzle: {
