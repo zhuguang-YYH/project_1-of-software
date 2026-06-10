@@ -25,7 +25,8 @@ const CONFIG = {
       getTodayPuzzle: 'puzzle_getTodayPuzzle',
       getPuzzleHistory: 'puzzle_getPuzzleHistory',
       submitAnswer: 'puzzle_submitAnswer',
-      getPuzzleDetail: 'puzzle_getPuzzleDetail'
+      getPuzzleDetail: 'puzzle_getPuzzleDetail',
+      subscribeDailyReminder: 'puzzle_subscribeDailyReminder'
     },
 
     // 排行榜

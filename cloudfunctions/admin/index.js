@@ -5,6 +5,9 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// Configure this with the template ID created in the WeChat public platform.
+const BORROW_STATUS_CHANGE_TMPL = process.env.BORROW_STATUS_CHANGE_TMPL || '';
+
 const DEFAULT_SYSTEM_SETTINGS = {
   puzzle_publish_time: '09:00',
   default_puzzle_reward: 10,
@@ -36,6 +39,35 @@ function toNumber(value, fallback = 0) {
 
 function toDateText(value) {
   return value || '';
+}
+
+function asThing(value, max = 20) {
+  const text = String(value == null ? '' : value).trim();
+  return text ? text.slice(0, max) : '—';
+}
+
+function nowCstText() {
+  const cst = new Date(Date.now() + 8 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${cst.getUTCFullYear()}-${p(cst.getUTCMonth() + 1)}-${p(cst.getUTCDate())} ${p(cst.getUTCHours())}:${p(cst.getUTCMinutes())}:${p(cst.getUTCSeconds())}`;
+}
+
+async function sendSubscribeMessage(touser, templateId, data, page) {
+  if (!touser || !templateId) return false;
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser,
+      templateId,
+      page: page || 'pages/index/index',
+      miniprogramState: 'formal',
+      lang: 'zh_CN',
+      data
+    });
+    return true;
+  } catch (error) {
+    console.warn('[subscribe] send failed:', templateId, error && (error.errCode || error.errMsg || error.message));
+    return false;
+  }
 }
 
 async function safeList(collection, options = {}) {
@@ -521,6 +553,19 @@ async function admin_updateBorrowStatus(event, admin_user) {
   if (application.item_id && inventory_data) await updateInventoryItem(application.item_id, inventory_data);
 
   await logOperation(admin_user, 'update_borrow_status', 'borrow_applications', application_id, { status });
+
+  if (['borrowed', 'returned'].includes(status)) {
+    const borrower = await getUserById(application.borrower_id || application.user_id || '');
+    if (borrower && borrower.openid) {
+      await sendSubscribeMessage(borrower.openid, BORROW_STATUS_CHANGE_TMPL, {
+        thing1: { value: asThing(application.item_name || '借阅物资', 20) },
+        phrase2: { value: status === 'borrowed' ? '已借出' : '已归还' },
+        time3: { value: nowCstText() },
+        thing4: { value: asThing(status === 'borrowed' ? '请按约定时间归还' : '借阅流程已完成', 20) }
+      }, 'pages/borrow/index');
+    }
+  }
+
   return ok(null, message);
 }
 

@@ -118,6 +118,19 @@ class PuzzleService {
       };
     }
   }
+
+  async subscribeDailyReminder() {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.subscribeDailyReminder, {});
+      if (!result.success) {
+        return { success: false, error: result.message || '订阅提醒登记失败' };
+      }
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to subscribe daily puzzle reminder:', error);
+      return { success: false, error: error.message || '订阅提醒登记失败' };
+    }
+  }
 }
 
 module.exports = new PuzzleService();

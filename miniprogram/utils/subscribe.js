@@ -9,7 +9,15 @@ const TEMPLATES = {
   // 活动开始提醒
   ACTIVITY_REMINDER: 'SJizBGlxHBBon30-DOqXYlOFGHmDHlrA8z_l4a2acjg',
   // 积分兑换通知
-  EXCHANGE_NOTIFY: 'd1_r_egCRaHIEqMg3mj-Z32-jli_O11ZjLa-fwhos3c'
+  EXCHANGE_NOTIFY: 'd1_r_egCRaHIEqMg3mj-Z32-jli_O11ZjLa-fwhos3c',
+  // 委托被领取通知：配置后通知发布者
+  COMMISSION_ACCEPTED: '',
+  // 委托奖励发放通知：配置后通知领取者
+  COMMISSION_REWARD: '',
+  // 借阅状态变更通知：配置后通知借阅人
+  BORROW_STATUS_CHANGE: '',
+  // 每日谜题发布提醒：配置后通知订阅用户
+  PUZZLE_DAILY_REMINDER: ''
 };
 
 // 申请一组模板的订阅授权。

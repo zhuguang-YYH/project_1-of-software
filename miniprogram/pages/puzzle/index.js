@@ -1,4 +1,5 @@
 const puzzleService = require('../../services/puzzle.js');
+const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 Page({
@@ -76,6 +77,11 @@ Page({
 
     try {
       this.setData({ submitting: true });
+
+      const subResult = await subscribe.requestSubscribe(subscribe.TEMPLATES.PUZZLE_DAILY_REMINDER);
+      if (subResult.accepted.includes(subscribe.TEMPLATES.PUZZLE_DAILY_REMINDER)) {
+        puzzleService.subscribeDailyReminder();
+      }
 
       const result = await puzzleService.submitAnswer(
         this.data.puzzle.puzzle_id,

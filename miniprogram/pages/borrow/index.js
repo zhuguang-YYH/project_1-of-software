@@ -1,5 +1,6 @@
 const borrowService = require('../../services/borrow.js');
 const format = require('../../utils/format.js');
+const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 const BORROW_ASSETS = {
@@ -271,6 +272,8 @@ Page({
 
     this.setData({ applying: true });
     try {
+      await subscribe.requestSubscribe(subscribe.TEMPLATES.BORROW_STATUS_CHANGE);
+
       const result = await borrowService.applyBorrow(selected_item.item_id, { reason });
       if (!result.success) throw new Error(result.error || '申请失败');
 

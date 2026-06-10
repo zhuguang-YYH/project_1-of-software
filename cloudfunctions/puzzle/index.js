@@ -3,6 +3,11 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
+
+// Configure this with the template ID created in the WeChat public platform.
+const PUZZLE_DAILY_REMINDER_TMPL = process.env.PUZZLE_DAILY_REMINDER_TMPL || '';
+const PUZZLE_REMINDER_MAX_PER_RUN = 500;
 
 function success(data = null, message = '操作成功') {
   return { code: 0, data, message };
@@ -22,6 +27,29 @@ function isCollectionMissing(error) {
 
 function todayText() {
   return new Date().toISOString().split('T')[0];
+}
+
+function asThing(value, max = 20) {
+  const text = String(value == null ? '' : value).trim();
+  return text ? text.slice(0, max) : '—';
+}
+
+async function sendSubscribeMessage(touser, templateId, data, page) {
+  if (!touser || !templateId) return false;
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser,
+      templateId,
+      page: page || 'pages/index/index',
+      miniprogramState: 'formal',
+      lang: 'zh_CN',
+      data
+    });
+    return true;
+  } catch (error) {
+    console.warn('[subscribe] send failed:', templateId, error && (error.errCode || error.errMsg || error.message));
+    return false;
+  }
 }
 
 function numberValue(value, fallback = 0) {
@@ -353,6 +381,103 @@ async function puzzle_getPuzzleDetail(event) {
   }
 }
 
+async function puzzle_subscribeDailyReminder() {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const subscription_id = `puzzle_sub_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+    const data = {
+      subscription_id,
+      user_id: user._id,
+      openid: wx_context.OPENID,
+      active: true,
+      updated_at: db.serverDate()
+    };
+
+    try {
+      await db.collection('puzzle_subscriptions').add({
+        data: {
+          _id: subscription_id,
+          ...data,
+          last_reminded_date: '',
+          created_at: db.serverDate()
+        }
+      });
+    } catch (error) {
+      if (isCollectionMissing(error)) throw error;
+      await db.collection('puzzle_subscriptions').doc(subscription_id).update({ data });
+    }
+
+    return success({ subscription_id }, '每日谜题提醒已订阅');
+  } catch (error) {
+    return fail('订阅提醒登记失败: ' + error.message);
+  }
+}
+
+async function runDailyPuzzleReminder() {
+  const current_date = todayText();
+  const summary = {
+    date: current_date,
+    sent: 0,
+    failed: 0,
+    skipped_no_template: !PUZZLE_DAILY_REMINDER_TMPL,
+    skipped_no_puzzle: false
+  };
+
+  if (!PUZZLE_DAILY_REMINDER_TMPL) return success(summary, '谜题提醒模板未配置');
+
+  const puzzle = await getPuzzleByDate(current_date);
+  if (!puzzle || puzzle.status !== 'published') {
+    summary.skipped_no_puzzle = true;
+    return success(summary, '今日谜题未发布');
+  }
+
+  let subscribers = [];
+  try {
+    const res = await db.collection('puzzle_subscriptions')
+      .where({
+        active: true,
+        last_reminded_date: _.neq(current_date)
+      })
+      .limit(PUZZLE_REMINDER_MAX_PER_RUN)
+      .get();
+    subscribers = res.data || [];
+  } catch (error) {
+    if (isCollectionMissing(error)) return success(summary, '暂无订阅用户');
+    throw error;
+  }
+
+  for (const item of subscribers) {
+    const sent = await sendSubscribeMessage(item.openid, PUZZLE_DAILY_REMINDER_TMPL, {
+      thing1: { value: asThing(puzzle.title || puzzle.content || '每日谜题', 20) },
+      date2: { value: current_date },
+      thing3: { value: asThing(puzzle.difficulty || '中等', 20) },
+      thing4: { value: asThing('今日谜题已发布，快来挑战', 20) }
+    }, 'pages/puzzle/index');
+
+    if (sent) {
+      summary.sent += 1;
+      try {
+        await db.collection('puzzle_subscriptions').doc(item._id).update({
+          data: {
+            last_reminded_date: current_date,
+            last_reminded_at: db.serverDate(),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (error) {
+        console.warn('[puzzle reminder] mark sent failed:', error && error.message);
+      }
+    } else {
+      summary.failed += 1;
+    }
+  }
+
+  return success(summary, '每日谜题提醒任务完成');
+}
+
 function calcCurrentStreak(list) {
   let streak = 0;
   for (const item of list) {
@@ -388,13 +513,19 @@ async function puzzle_getStats() {
 }
 
 exports.main = async (event, context) => {
+  if (event && event.Type === 'timer') {
+    return runDailyPuzzleReminder();
+  }
+
   const { action = 'getTodayPuzzle', ...data } = event || {};
   const actions = {
     getTodayPuzzle: puzzle_getTodayPuzzle,
     submitAnswer: puzzle_submitAnswer,
     getPuzzleHistory: puzzle_getPuzzleHistory,
     getPuzzleDetail: puzzle_getPuzzleDetail,
-    getStats: puzzle_getStats
+    getStats: puzzle_getStats,
+    subscribeDailyReminder: puzzle_subscribeDailyReminder,
+    runDailyReminder: runDailyPuzzleReminder
   };
 
   const handler = actions[action];

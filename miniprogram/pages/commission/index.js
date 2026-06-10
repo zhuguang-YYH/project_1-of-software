@@ -1,6 +1,7 @@
 const commissionService = require('../../services/commission.js');
 const pointsService = require('../../services/points.js');
 const format = require('../../utils/format.js');
+const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
 
 function toDate(value) {
@@ -274,6 +275,8 @@ Page({
 
     this.setData({ publishing: true });
     try {
+      await subscribe.requestSubscribe(subscribe.TEMPLATES.COMMISSION_ACCEPTED);
+
       const result = await commissionService.publishCommission({
         title: form.title.trim(),
         content: form.description.trim(),
@@ -296,6 +299,8 @@ Page({
     const commission_id = e.currentTarget.dataset.commission_id;
     this.setData({ accepting_id: commission_id });
     try {
+      await subscribe.requestSubscribe(subscribe.TEMPLATES.COMMISSION_REWARD);
+
       const result = await commissionService.acceptCommission(commission_id);
       if (!result.success) throw new Error(result.error || '领取失败');
 
@@ -312,6 +317,8 @@ Page({
     const acceptance_id = e.currentTarget.dataset.acceptance_id;
     this.setData({ completing_id: acceptance_id });
     try {
+      await subscribe.requestSubscribe(subscribe.TEMPLATES.COMMISSION_REWARD);
+
       const result = await commissionService.completeCommission(acceptance_id);
       if (!result.success) throw new Error(result.error || '提交失败');
 

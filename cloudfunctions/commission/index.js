@@ -5,6 +5,10 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// Configure these with the template IDs created in the WeChat public platform.
+const COMMISSION_ACCEPTED_TMPL = process.env.COMMISSION_ACCEPTED_TMPL || '';
+const COMMISSION_REWARD_TMPL = process.env.COMMISSION_REWARD_TMPL || '';
+
 function ok(data = null, message = '鎿嶄綔鎴愬姛') {
   return { code: 0, data, message };
 }
@@ -49,6 +53,35 @@ function isExpired(deadline) {
 
 function isAdminUser(user = {}) {
   return String(user.role || '').toLowerCase() === 'admin';
+}
+
+function asThing(value, max = 20) {
+  const text = String(value == null ? '' : value).trim();
+  return text ? text.slice(0, max) : '—';
+}
+
+function nowCstText() {
+  const cst = new Date(Date.now() + 8 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${cst.getUTCFullYear()}-${p(cst.getUTCMonth() + 1)}-${p(cst.getUTCDate())} ${p(cst.getUTCHours())}:${p(cst.getUTCMinutes())}:${p(cst.getUTCSeconds())}`;
+}
+
+async function sendSubscribeMessage(touser, templateId, data, page) {
+  if (!touser || !templateId) return false;
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser,
+      templateId,
+      page: page || 'pages/index/index',
+      miniprogramState: 'formal',
+      lang: 'zh_CN',
+      data
+    });
+    return true;
+  } catch (error) {
+    console.warn('[subscribe] send failed:', templateId, error && (error.errCode || error.errMsg || error.message));
+    return false;
+  }
 }
 
 async function getCurrentUser() {
@@ -516,6 +549,16 @@ async function commission_acceptCommission(event) {
       }
     });
 
+    const publisher = await getUserById(commission.publisher_id);
+    if (publisher && publisher.openid) {
+      await sendSubscribeMessage(publisher.openid, COMMISSION_ACCEPTED_TMPL, {
+        thing1: { value: asThing(commission.title || '委托', 20) },
+        thing2: { value: asThing(user.nickname || '匿名侦探', 20) },
+        time3: { value: nowCstText() },
+        thing4: { value: asThing('你的委托已被领取', 20) }
+      }, 'pages/commission/index');
+    }
+
     return ok({ acceptance_id: stable_id }, '棰嗗彇鎴愬姛');
   } catch (error) {
     return fail('棰嗗彇澶辫触: ' + error.message);
@@ -700,6 +743,15 @@ async function commission_allocateRewards(event) {
       related_id: realCommissionId,
       reason: `濮旀墭濂栧姳 - ${commission.title || ''}`
     });
+
+    if (receiver.openid) {
+      await sendSubscribeMessage(receiver.openid, COMMISSION_REWARD_TMPL, {
+        thing1: { value: asThing(commission.title || '委托奖励', 20) },
+        number2: { value: points },
+        time3: { value: nowCstText() },
+        thing4: { value: asThing('奖励积分已发放', 20) }
+      }, 'pages/commission/index');
+    }
 
     return ok({ remaining_reward: nextRemainingReward }, '濂栧姳鍒嗛厤鎴愬姛');
   } catch (error) {
