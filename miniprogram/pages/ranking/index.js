@@ -2,6 +2,7 @@ const rankingService = require('../../services/ranking.js');
 const profileService = require('../../services/profile.js');
 const { storage } = require('../../utils/storage.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
 
 function normalizeRankUser(item = {}, index = 0) {
   const rank_no = Number(item.rank_no || index + 1);
@@ -65,7 +66,11 @@ Page({
     selected_card: null
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
+    if (options.tab && ['top3', 'full', 'my'].includes(options.tab)) {
+      this.setData({ tab: options.tab });
+    }
     this.loadTheme();
     this.initPage();
   },
@@ -199,15 +204,21 @@ Page({
   },
 
   onShareAppMessage() {
+    const rank = this.data.user_ranking && this.data.user_ranking.rank_no;
+    const title = rank
+      ? `我在 NK推协侦探排行榜第 ${rank} 名`
+      : 'NK推协 · 侦探排行榜';
     return {
-      title: 'NK推协 · 侦探排行榜',
-      path: '/pages/ranking/index'
+      title,
+      path: share.appendShareParams('/pages/ranking/index', { tab: 'my' })
     };
   },
 
   onShareTimeline() {
+    const rank = this.data.user_ranking && this.data.user_ranking.rank_no;
     return {
-      title: 'NK推协 · 侦探排行榜'
+      title: rank ? `我在 NK推协侦探排行榜第 ${rank} 名` : 'NK推协 · 侦探排行榜',
+      query: share.appendShareParams('', { tab: 'my' }).replace(/^\?/, '')
     };
   },
 

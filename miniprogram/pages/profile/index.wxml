@@ -1,6 +1,6 @@
-<view class="container theme-{{theme}}" wx:if="{{!loading}}">
+<view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <view class="login-card" wx:if="{{!userInfo}}">
-    <image class="login-avatar" src="/images/icons/avatar.png" />
+    <image class="login-avatar" src="/images/icons/avatar.png" mode="aspectFill" lazy-load="{{true}}" />
     <text class="login-title">建立侦探档案</text>
     <text class="login-desc">登录后可保存积分、排行榜、委托和个人名片信息。</text>
     <button class="login-btn" bindtap="loginAndEdit">登录并完善资料</button>
@@ -11,7 +11,7 @@
 
     <view class="user-card" wx:if="{{!editMode}}">
       <view class="avatar-area">
-        <image class="user-avatar{{profileIncomplete ? ' user-avatar--incomplete' : ''}}" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
+        <image class="user-avatar{{profileIncomplete ? ' user-avatar--incomplete' : ''}}" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
       </view>
       <view class="user-info">
         <text class="user-name{{profileIncomplete ? ' user-name--dim' : ''}}">{{userInfo.nickname || '待完善昵称'}}</text>
@@ -32,10 +32,10 @@
     <view class="edit-form" wx:if="{{editMode}}">
       <view class="edit-avatar-section">
         <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-          <image class="user-avatar" src="{{form.avatar_url || '/images/icons/avatar.png'}}" />
+          <image class="user-avatar" src="{{form.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
           <view class="avatar-edit-badge">换</view>
         </button>
-        <text class="edit-avatar-hint">点击头像可更换</text>
+        <text class="edit-avatar-hint">点击头像可更换，建议使用 1:1 正方形头像</text>
       </view>
       <view class="form-field">
         <text class="form-label">昵称</text>
@@ -71,6 +71,17 @@
         <text class="stat-label">当前排名</text>
         <text class="stat-value">{{myRank > 100 ? '未入榜' : '第 ' + myRank + ' 名'}}</text>
       </view>
+    </view>
+  </view>
+
+  <view class="theme-panel">
+    <view class="theme-panel-copy">
+      <text class="theme-panel-title">外观主题</text>
+      <text class="theme-panel-desc">{{theme === 'gold' ? '当前为黑金模式' : '当前为侦探蓝模式'}}</text>
+    </view>
+    <view class="theme-switch" aria-role="radiogroup" aria-label="外观主题切换">
+      <button class="theme-choice {{theme === 'blue' ? 'active' : ''}}" aria-role="radio" aria-checked="{{theme === 'blue'}}" data-theme="blue" bindtap="switchTheme">侦探蓝</button>
+      <button class="theme-choice gold {{theme === 'gold' ? 'active' : ''}}" aria-role="radio" aria-checked="{{theme === 'gold'}}" data-theme="gold" bindtap="switchTheme">黑金</button>
     </view>
   </view>
 
@@ -128,7 +139,7 @@
   </view>
 </view>
 
-<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
+<view class="loading-state theme-{{theme}} {{a11yFontClass}}" wx:elif="{{loading}}">
   <view class="loading-spinner"></view>
   <text class="loading-text">加载中...</text>
 </view>

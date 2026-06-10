@@ -122,3 +122,189 @@ page {
   flex-direction: column;
   justify-content: flex-start;
 }
+
+/* 主题可读性与系统大字体适配 */
+.theme-blue {
+  color: #1a1f3a;
+}
+
+.theme-gold {
+  color: #f4ecd6;
+}
+
+.theme-gold input,
+.theme-gold textarea {
+  caret-color: #d4af37;
+}
+
+.theme-gold input::placeholder,
+.theme-gold textarea::placeholder {
+  color: rgba(244, 236, 214, 0.48);
+}
+
+.theme-gold button[disabled],
+.theme-blue button[disabled] {
+  opacity: 0.58;
+}
+
+.theme-blue .subtitle,
+.theme-blue .desc,
+.theme-blue .description,
+.theme-blue .meta,
+.theme-blue .label,
+.theme-blue .empty-text,
+.theme-blue .loading-text {
+  color: #4a5577 !important;
+}
+
+.theme-gold.page,
+.theme-gold.container,
+.theme-gold .scroll-view {
+  background-color: #0a0a0a !important;
+}
+
+.theme-gold .card,
+.theme-gold .section,
+.theme-gold .panel,
+.theme-gold .item-card,
+.theme-gold .goods-card,
+.theme-gold .borrow-card,
+.theme-gold .script-card,
+.theme-gold .recommend-card,
+.theme-gold .commission-card,
+.theme-gold .exchange-card,
+.theme-gold .my-ranking-card,
+.theme-gold .account-panel,
+.theme-gold .setting-row,
+.theme-gold .action-row {
+  background-color: #151515 !important;
+  border-color: rgba(212, 175, 55, 0.18) !important;
+}
+
+.theme-gold .title,
+.theme-gold .subtitle,
+.theme-gold .section-title,
+.theme-gold .section-title-inline,
+.theme-gold .panel-title,
+.theme-gold .card-title,
+.theme-gold .item-name,
+.theme-gold .goods-name,
+.theme-gold .borrow-name,
+.theme-gold .script-name,
+.theme-gold .name,
+.theme-gold .setting-name,
+.theme-gold .account-name,
+.theme-gold .modal-title {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .desc,
+.theme-gold .description,
+.theme-gold .meta,
+.theme-gold .label,
+.theme-gold .card-meta,
+.theme-gold .detail-label,
+.theme-gold .detail-value,
+.theme-gold .content,
+.theme-gold .reason,
+.theme-gold .setting-desc,
+.theme-gold .account-role,
+.theme-gold .empty-text,
+.theme-gold .loading-text {
+  color: rgba(244, 236, 214, 0.76) !important;
+}
+
+.theme-gold input,
+.theme-gold textarea,
+.theme-gold .picker-box,
+.theme-gold .search-input {
+  color: #f4ecd6 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(212, 175, 55, 0.22) !important;
+}
+
+.font-large .title,
+.font-large .panel-title,
+.font-large .section-title,
+.font-large .section-title-inline,
+.font-large .card-title,
+.font-large .modal-title,
+.font-large .user-name,
+.font-large .menu-text,
+.font-large .setting-name,
+.font-large .theme-panel-title {
+  font-size: 34rpx !important;
+  line-height: 1.35 !important;
+}
+
+.font-large .subtitle,
+.font-large .desc,
+.font-large .description,
+.font-large .meta,
+.font-large .card-meta,
+.font-large .content,
+.font-large .reason,
+.font-large .menu-desc,
+.font-large .setting-desc,
+.font-large .theme-panel-desc,
+.font-large .empty-text,
+.font-large .loading-text {
+  font-size: 27rpx !important;
+  line-height: 1.55 !important;
+}
+
+.font-large button,
+.font-large input,
+.font-large textarea,
+.font-large .button,
+.font-large .btn,
+.font-large .primary-btn,
+.font-large .small-btn,
+.font-large .tab-item,
+.font-large .picker-box {
+  font-size: 30rpx !important;
+  line-height: 1.35 !important;
+}
+
+.font-xlarge .title,
+.font-xlarge .panel-title,
+.font-xlarge .section-title,
+.font-xlarge .section-title-inline,
+.font-xlarge .card-title,
+.font-xlarge .modal-title,
+.font-xlarge .user-name,
+.font-xlarge .menu-text,
+.font-xlarge .setting-name,
+.font-xlarge .theme-panel-title {
+  font-size: 38rpx !important;
+  line-height: 1.38 !important;
+}
+
+.font-xlarge .subtitle,
+.font-xlarge .desc,
+.font-xlarge .description,
+.font-xlarge .meta,
+.font-xlarge .card-meta,
+.font-xlarge .content,
+.font-xlarge .reason,
+.font-xlarge .menu-desc,
+.font-xlarge .setting-desc,
+.font-xlarge .theme-panel-desc,
+.font-xlarge .empty-text,
+.font-xlarge .loading-text {
+  font-size: 30rpx !important;
+  line-height: 1.6 !important;
+}
+
+.font-xlarge button,
+.font-xlarge input,
+.font-xlarge textarea,
+.font-xlarge .button,
+.font-xlarge .btn,
+.font-xlarge .primary-btn,
+.font-xlarge .small-btn,
+.font-xlarge .tab-item,
+.font-xlarge .picker-box {
+  font-size: 32rpx !important;
+  line-height: 1.4 !important;
+}

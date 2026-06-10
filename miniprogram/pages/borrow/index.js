@@ -2,6 +2,7 @@ const borrowService = require('../../services/borrow.js');
 const format = require('../../utils/format.js');
 const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
 
 const BORROW_ASSETS = {
   bookCover: '/pages/borrow/images/书籍默认封面.jpg',
@@ -143,7 +144,8 @@ Page({
     scripts_error: ''
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.loadTheme();
     this.initPage();
   },
@@ -326,13 +328,14 @@ Page({
   onShareAppMessage() {
     return {
       title: 'NK推协 · 物资借阅',
-      path: '/pages/borrow/index'
+      path: share.appendShareParams('/pages/borrow/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: 'NK推协 · 物资借阅'
+      title: 'NK推协 · 物资借阅',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   },
 

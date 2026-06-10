@@ -18,6 +18,12 @@ function todayText() {
   return new Date().toISOString().split('T')[0];
 }
 
+function daysAgoText(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().split('T')[0];
+}
+
 function buildTimeOptions(step = 30) {
   const list = [];
   for (let minutes = 0; minutes < 24 * 60; minutes += step) {
@@ -83,6 +89,22 @@ function exchangeGoodTagText(tag_type, tag_text) {
   })[tag_type] || '').trim();
 }
 
+function isPastTime(value) {
+  if (!value) return true;
+  const date = new Date(String(value).replace(/-/g, '/'));
+  return !Number.isNaN(date.getTime()) && date <= new Date();
+}
+
+function activityRegStatusText(status) {
+  return ({
+    registered: '已报名',
+    confirmed: '已确认',
+    pending: '待确认',
+    attended: '已参加',
+    cancelled: '已取消'
+  })[status] || status || '未知';
+}
+
 function feedbackTypeText(type) {
   return ({
     general: '一般反馈',
@@ -102,6 +124,33 @@ function feedbackStatusText(status) {
   })[status] || status || '待处理';
 }
 
+function csvEscape(value) {
+  const text = String(value == null ? '' : value).replace(/\r?\n/g, ' ');
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+function buildCsv(headers, rows) {
+  const lines = [
+    headers.map(item => csvEscape(item.label)).join(','),
+    ...rows.map(row => headers.map(header => csvEscape(row[header.key])).join(','))
+  ];
+  return `\uFEFF${lines.join('\n')}`;
+}
+
+function normalizeTrend(trend = {}) {
+  const max = Math.max(1, Number(trend.max || 0));
+  return {
+    ...trend,
+    points: (trend.points || []).map(item => ({
+      ...item,
+      registration_height: Math.max(8, Math.round(Number(item.registrations || 0) / max * 120)),
+      exchange_height: Math.max(8, Math.round(Number(item.exchanges || 0) / max * 120)),
+      active_height: Math.max(8, Math.round(Number(item.active_users || 0) / max * 120))
+    }))
+  };
+}
+
 Page({
   data: {
     loading: true,
@@ -112,8 +161,11 @@ Page({
     tab: 'puzzle',
     theme: 'blue',
     stats: {},
+    dashboard_trend: { points: [] },
     feedback_list: [],
     log_list: [],
+    activity_registrations: [],
+    activity_waitlist: [],
     borrow_applications: [],
     exchange_records: [],
     exchange_goods: [],
@@ -184,6 +236,48 @@ Page({
       { label: '精确匹配', value: 'exact' },
       { label: '模糊匹配', value: 'fuzzy' }
     ],
+    feedbackFilterOptions: [
+      { label: '处理中', value: 'active' },
+      { label: '全部', value: 'all' },
+      { label: '待处理', value: 'pending' },
+      { label: '处理中', value: 'processing' },
+      { label: '已处理', value: 'resolved' },
+      { label: '已关闭', value: 'closed' }
+    ],
+    borrowFilterOptions: [
+      { label: '处理中', value: 'active' },
+      { label: '全部', value: 'all' },
+      { label: '待审核', value: 'applying' },
+      { label: '已确认', value: 'confirmed' },
+      { label: '待交付', value: 'in_transit' },
+      { label: '借阅中', value: 'borrowed' },
+      { label: '已归还', value: 'returned' },
+      { label: '已取消', value: 'cancelled' }
+    ],
+    exchangeRecordFilterOptions: [
+      { label: '处理中', value: 'active' },
+      { label: '全部', value: 'all' },
+      { label: '待领取', value: 'pending' },
+      { label: '配送中', value: 'shipped' },
+      { label: '已完成', value: 'completed' },
+      { label: '已领取', value: 'received' },
+      { label: '已取消', value: 'cancelled' }
+    ],
+    feedbackFilters: {
+      status: 'active',
+      start_date: '',
+      end_date: ''
+    },
+    borrowFilters: {
+      status: 'active',
+      start_date: '',
+      end_date: ''
+    },
+    exchangeRecordFilters: {
+      status: 'active',
+      start_date: '',
+      end_date: ''
+    },
     publishTimeOptions: buildTimeOptions(30),
     cancelHourOptions: buildHourOptions(),
     puzzleForm: {
@@ -263,11 +357,18 @@ Page({
   onLoad() {
     this.loadTheme();
     const today = todayText();
+    const start = daysAgoText(30);
     this.setData({
       'puzzleForm.publish_date': today,
       'activityForm.cancel_date': today,
       'activityForm.start_date': today,
-      'activityForm.end_date': today
+      'activityForm.end_date': today,
+      'feedbackFilters.start_date': start,
+      'feedbackFilters.end_date': today,
+      'borrowFilters.start_date': start,
+      'borrowFilters.end_date': today,
+      'exchangeRecordFilters.start_date': start,
+      'exchangeRecordFilters.end_date': today
     });
     this.initPage();
   },
@@ -285,6 +386,7 @@ Page({
     try {
       await Promise.all([
         this.loadDashboard(),
+        this.loadActivityRegistrations(),
         this.loadFeedback(),
         this.loadBorrowApplications(),
         this.loadExchangeGoods(),
@@ -303,11 +405,40 @@ Page({
   async loadDashboard() {
     const result = await adminService.getDashboard();
     if (!result.success) throw new Error(result.error || '没有后台权限');
-    this.setData({ stats: result.data || {} });
+    const data = result.data || {};
+    this.setData({
+      stats: data,
+      dashboard_trend: normalizeTrend(data.trend || {})
+    });
+  },
+
+  async loadActivityRegistrations() {
+    const result = await adminService.getActivityRegistrations({ status: 'active' });
+    if (!result.success) return;
+    const list = (result.data || []).map(item => ({
+      ...item,
+      registration_id: item.registration_id || item._id,
+      registered_text: formatTime(item.registered_at),
+      status_text: activityRegStatusText(item.status),
+      can_attend: !['attended', 'cancelled'].includes(item.status) && isPastTime(item.activity_end_time),
+      attend_hint: isPastTime(item.activity_end_time) ? '' : '活动结束后可确认'
+    }));
+    const waitlist = (result.waitlist || []).map(item => ({
+      ...item,
+      waitlist_id: item.waitlist_id || item._id,
+      joined_text: formatTime(item.joined_at)
+    }));
+    this.setData({
+      activity_registrations: list,
+      activity_waitlist: waitlist
+    });
   },
 
   async loadFeedback() {
-    const result = await adminService.getFeedback({ status: 'all' });
+    const result = await adminService.getFeedback({
+      ...this.data.feedbackFilters,
+      page_size: 100
+    });
     if (!result.success) return;
     const list = (result.data || []).map((item, index) => ({
       ...item,
@@ -337,7 +468,10 @@ Page({
   },
 
   async loadBorrowApplications() {
-    const result = await adminService.getBorrowApplications({ status: 'active' });
+    const result = await adminService.getBorrowApplications({
+      ...this.data.borrowFilters,
+      page_size: 100
+    });
     if (!result.success) return;
     const list = (result.data || []).map(item => ({
       ...item,
@@ -352,7 +486,10 @@ Page({
   },
 
   async loadExchangeRecords() {
-    const result = await adminService.getExchangeRecords({ status: 'active' });
+    const result = await adminService.getExchangeRecords({
+      ...this.data.exchangeRecordFilters,
+      page_size: 100
+    });
     if (!result.success) return;
     const list = (result.data || []).map(item => ({
       ...item,
@@ -442,6 +579,107 @@ Page({
     const { form, field } = event.currentTarget.dataset;
     if (!form || !field) return;
     this.setData({ [`${form}.${field}`]: event.detail.value });
+  },
+
+  onFilterStatusChange(event) {
+    const { filter, options } = event.currentTarget.dataset;
+    const source = this.data[options] || [];
+    const item = source[Number(event.detail.value)];
+    if (!filter || !item) return;
+    this.setData({ [`${filter}.status`]: item.value }, () => this.applyDataFilter(filter));
+  },
+
+  onFilterDateChange(event) {
+    const { filter, field } = event.currentTarget.dataset;
+    if (!filter || !field) return;
+    this.setData({ [`${filter}.${field}`]: event.detail.value }, () => this.applyDataFilter(filter));
+  },
+
+  clearFilterDate(event) {
+    const { filter, field } = event.currentTarget.dataset;
+    if (!filter || !field) return;
+    this.setData({ [`${filter}.${field}`]: '' }, () => this.applyDataFilter(filter));
+  },
+
+  applyDataFilter(filter) {
+    if (filter === 'feedbackFilters') return this.loadFeedback();
+    if (filter === 'borrowFilters') return this.loadBorrowApplications();
+    if (filter === 'exchangeRecordFilters') return this.loadExchangeRecords();
+    return Promise.resolve();
+  },
+
+  exportCsv(event) {
+    const type = event.currentTarget.dataset.type;
+    const configs = {
+      feedback: {
+        name: 'feedback',
+        rows: this.data.feedback_list,
+        headers: [
+          { key: 'feedback_id', label: '反馈ID' },
+          { key: 'created_text', label: '提交时间' },
+          { key: 'status_text', label: '状态' },
+          { key: 'feedback_title', label: '类型' },
+          { key: 'content', label: '内容' },
+          { key: 'anonymous_text', label: '匿名' },
+          { key: 'reply_draft', label: '回复' }
+        ]
+      },
+      borrow: {
+        name: 'borrow_applications',
+        rows: this.data.borrow_applications,
+        headers: [
+          { key: 'application_id', label: '申请ID' },
+          { key: 'created_text', label: '申请时间' },
+          { key: 'status_text', label: '状态' },
+          { key: 'item_name', label: '物资' },
+          { key: 'borrower_name', label: '申请人' },
+          { key: 'reason', label: '用途' }
+        ]
+      },
+      exchange: {
+        name: 'exchange_records',
+        rows: this.data.exchange_records,
+        headers: [
+          { key: 'exchange_id', label: '兑换ID' },
+          { key: 'created_text', label: '创建时间' },
+          { key: 'status_text', label: '状态' },
+          { key: 'item_name', label: '商品' },
+          { key: 'goods_name', label: '商品名' },
+          { key: 'user_name', label: '用户' },
+          { key: 'quantity_text', label: '数量' },
+          { key: 'total_cost_text', label: '积分' },
+          { key: 'pickup_code', label: '领取码' }
+        ]
+      }
+    };
+    const config = configs[type];
+    if (!config) return;
+    if (!config.rows || config.rows.length === 0) {
+      wx.showToast({ title: '暂无可导出数据', icon: 'none' });
+      return;
+    }
+
+    const csv = buildCsv(config.headers, config.rows);
+    const path = `${wx.env.USER_DATA_PATH}/${config.name}_${Date.now()}.csv`;
+    wx.getFileSystemManager().writeFile({
+      filePath: path,
+      data: csv,
+      encoding: 'utf8',
+      success: () => {
+        wx.showModal({
+          title: '导出完成',
+          content: 'CSV 文件已生成，是否立即打开？',
+          confirmText: '打开',
+          cancelText: '稍后',
+          success: (res) => {
+            if (res.confirm) wx.openDocument({ filePath: path, showMenu: true });
+          }
+        });
+      },
+      fail: () => {
+        wx.showToast({ title: '导出失败，请重试', icon: 'none' });
+      }
+    });
   },
 
   pickerLabel(event) {
@@ -710,6 +948,21 @@ Page({
     if (ok) {
       await Promise.all([
         this.loadExchangeGoods(),
+        this.loadDashboard()
+      ]);
+    }
+  },
+
+  async confirmActivityAttendance(event) {
+    const { id } = event.currentTarget.dataset;
+    if (!id) return;
+
+    this.setData({ processing_id: id });
+    const ok = await this.submitAction('confirmActivityAttendance', { registration_id: id }, '已确认参加');
+    this.setData({ processing_id: '' });
+    if (ok) {
+      await Promise.all([
+        this.loadActivityRegistrations(),
         this.loadDashboard()
       ]);
     }

@@ -5,11 +5,38 @@ function getTheme() {
   return settings.theme === 'gold' ? 'gold' : 'blue';
 }
 
+function setTheme(theme) {
+  const nextTheme = theme === 'gold' ? 'gold' : 'blue';
+  const settings = storage.getSync('user_settings') || {};
+  const nextSettings = {
+    ...settings,
+    theme: nextTheme
+  };
+  storage.setSync('user_settings', nextSettings);
+  return nextTheme;
+}
+
+function getFontSizeClass() {
+  if (typeof wx === 'undefined' || typeof wx.getSystemInfoSync !== 'function') return '';
+
+  try {
+    const info = wx.getSystemInfoSync();
+    const fontSize = Number(info.fontSizeSetting || 16);
+    if (fontSize >= 23) return 'font-xlarge';
+    if (fontSize >= 20) return 'font-large';
+  } catch (error) {
+    console.warn('getSystemInfoSync failed:', error);
+  }
+
+  return '';
+}
+
 function getThemeState() {
   const theme = getTheme();
   return {
     theme,
-    rankingCardTheme: theme === 'gold' ? 'dark' : 'light'
+    rankingCardTheme: theme === 'gold' ? 'dark' : 'light',
+    a11yFontClass: getFontSizeClass()
   };
 }
 
@@ -58,6 +85,7 @@ function applyTheme(page) {
 
 module.exports = {
   getTheme,
+  setTheme,
   getThemeState,
   applyTheme,
   applyNativeTheme

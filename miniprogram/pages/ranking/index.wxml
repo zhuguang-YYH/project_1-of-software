@@ -1,4 +1,4 @@
-<view class="container page-bg-gradient theme-{{theme}}" wx:if="{{!loading}}">
+<view class="container page-bg-gradient theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <view class="error-state" wx:if="{{error}}">
     <text class="error-text">{{error}}</text>
     <button class="retry-btn" bindtap="onRetry">重试</button>
@@ -17,7 +17,7 @@
         <view class="podium">
           <view class="podium-item rank-2 tap-feedback" wx:if="{{top_three[1]}}" data-user_id="{{top_three[1].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-silver" src="/images/rank_card/第二名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-silver" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" />
+            <image class="podium-avatar avatar-silver" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
             <text class="podium-name">{{top_three[1].nickname}}</text>
             <text class="podium-points">{{top_three[1].total_points}} 分</text>
             <view class="podium-base base-silver"><text>2nd</text></view>
@@ -25,7 +25,7 @@
 
           <view class="podium-item rank-1 tap-feedback" wx:if="{{top_three[0]}}" data-user_id="{{top_three[0].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-gold" src="/images/rank_card/第一名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-gold" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" />
+            <image class="podium-avatar avatar-gold" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
             <text class="podium-name">{{top_three[0].nickname}}</text>
             <text class="podium-points">{{top_three[0].total_points}} 分</text>
             <view class="podium-base base-gold"><text>1st</text></view>
@@ -33,7 +33,7 @@
 
           <view class="podium-item rank-3 tap-feedback" wx:if="{{top_three[2]}}" data-user_id="{{top_three[2].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-bronze" src="/images/rank_card/第三名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-bronze" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" />
+            <image class="podium-avatar avatar-bronze" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
             <text class="podium-name">{{top_three[2].nickname}}</text>
             <text class="podium-points">{{top_three[2].total_points}} 分</text>
             <view class="podium-base base-bronze"><text>3rd</text></view>
@@ -54,6 +54,7 @@
           wx:key="user_id"
           user="{{item}}"
           theme="{{rankingCardTheme}}"
+          a11y-font-class="{{a11yFontClass}}"
           bind:cardtap="openDetectiveCard" />
       </view>
 
@@ -108,7 +109,7 @@
         <view class="card-hero">
           <image class="card-hero-bg" src="/images/rank_card/侦探档案卡背景.svg" mode="aspectFill" />
           <view class="card-case-no">DETECTIVE PROFILE</view>
-          <image class="card-avatar" src="{{selected_card.avatar_url || '/images/icons/avatar.png'}}" />
+          <image class="card-avatar" src="{{selected_card.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
           <view class="card-identity">
             <text class="card-name">{{selected_card.display_name}}</text>
             <text class="card-signature">{{selected_card.self_intro}}</text>

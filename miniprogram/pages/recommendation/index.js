@@ -1,5 +1,9 @@
 const recommendationService = require('../../services/recommendation.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
+const interaction = require('../../utils/interaction.js');
+
+const DEFAULT_COVER = '/pages/exchange/images/goods-default.jpg';
 
 function toDate(value) {
   if (!value) return null;
@@ -42,7 +46,7 @@ function normalizeItem(item) {
     recommender_id: item.recommender_id || '',
     recommender_name: item.recommender_name || 'NK推协',
     reason: item.reason || '暂无推荐理由',
-    cover_url: item.cover_url || '',
+    cover_url: item.cover_url || item.image_url || item.image || DEFAULT_COVER,
     link_url: item.link_url || article_url,
     article_url,
     created_text: formatTime(item.published_at || item.created_at)
@@ -60,6 +64,7 @@ Page({
     page: 1,
     page_size: 10,
     has_more: false,
+    no_more_text: interaction.NO_MORE_TEXT,
     keyword: '',
     active_category: 'all',
     selected: null,
@@ -74,6 +79,7 @@ Page({
   },
 
   onLoad(options) {
+    share.rememberInviter(options || {});
     this.loadTheme();
     this._highlightId = options && options.highlight ? options.highlight : null;
     this.loadRecommendations(true);
@@ -201,8 +207,13 @@ Page({
   },
 
   async onPullDownRefresh() {
+    if (!interaction.canRefresh(this)) return;
     this.setData({ refreshing: true });
-    await this.loadRecommendations(true);
+    try {
+      await this.loadRecommendations(true);
+    } finally {
+      interaction.finishRefresh(this);
+    }
   },
 
   onRetry() {
@@ -212,13 +223,14 @@ Page({
   onShareAppMessage() {
     return {
       title: 'NK推协 · 好物推荐',
-      path: '/pages/recommendation/index'
+      path: share.appendShareParams('/pages/recommendation/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: 'NK推协 · 好物推荐'
+      title: 'NK推协 · 好物推荐',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   }
 });

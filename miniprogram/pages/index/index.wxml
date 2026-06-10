@@ -1,4 +1,4 @@
-<view class="page-bg-gradient page-root theme-{{theme}}">
+<view class="page-bg-gradient page-root theme-{{theme}} {{a11yFontClass}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
@@ -22,7 +22,7 @@
           <text class="hero-title">{{userInfo.nickname || '待完善昵称'}}</text>
           <text class="hero-sub">让我们继续今天的推理</text>
         </view>
-        <image class="hero-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" />
+        <image class="hero-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
       </view>
 
       <view class="hero-content hero-content-guest" wx:else>
@@ -111,6 +111,7 @@
           user="{{item}}"
           variant="compact"
           theme="{{rankingCardTheme}}"
+          a11y-font-class="{{a11yFontClass}}"
           bind:cardtap="openRankingUser"
         />
       </view>
@@ -124,7 +125,7 @@
 
       <view class="recommend-list">
         <view class="recommend-item tap-feedback" wx:for="{{recommendations}}" wx:key="id" data-id="{{item.id}}" bindtap="goToRecommendationDetail">
-          <image class="recommend-cover" src="{{item.cover_url || '/images/icons/default-cover.png'}}" mode="aspectFill" />
+          <image class="recommend-cover" src="{{item.cover_url || '/pages/exchange/images/goods-default.jpg'}}" mode="aspectFill" lazy-load="{{true}}" />
           <view class="recommend-info">
             <text class="recommend-title">{{item.title}}</text>
             <text class="recommend-category">{{item.category || '推荐'}}</text>

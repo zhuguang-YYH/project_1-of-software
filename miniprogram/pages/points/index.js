@@ -1,5 +1,6 @@
 const pointsService = require('../../services/points.js');
 const { applyTheme } = require('../../utils/theme.js');
+const interaction = require('../../utils/interaction.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -64,6 +65,7 @@ Page({
     page: 1,
     page_size: 20,
     has_more: false,
+    no_more_text: interaction.NO_MORE_TEXT,
     filter: 'all',
     filters: [
       { key: 'all', label: '全部' },
@@ -157,8 +159,13 @@ Page({
   },
 
   async onPullDownRefresh() {
+    if (!interaction.canRefresh(this)) return;
     this.setData({ refreshing: true });
-    await this.initPage();
+    try {
+      await this.initPage();
+    } finally {
+      interaction.finishRefresh(this);
+    }
   },
 
   onRetry() {

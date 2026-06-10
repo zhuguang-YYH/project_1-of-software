@@ -353,6 +353,72 @@
   margin: 8rpx 0;
 }
 
+.theme-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin: 20rpx 24rpx 0;
+  padding: 24rpx 28rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(24, 39, 75, 0.06);
+}
+
+.theme-panel-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.theme-panel-title,
+.theme-panel-desc {
+  display: block;
+}
+
+.theme-panel-title {
+  color: #18243a;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.theme-panel-desc {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.theme-switch {
+  flex: 0 0 auto;
+  display: flex;
+  padding: 6rpx;
+  border-radius: 14rpx;
+  background: #edf1f7;
+  gap: 6rpx;
+}
+
+.theme-choice {
+  min-width: 128rpx;
+  height: 62rpx;
+  border-radius: 10rpx;
+  color: #475569 !important;
+  background: transparent !important;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.theme-choice.active {
+  color: #fff !important;
+  background: #5b6cff !important;
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.24);
+}
+
+.theme-choice.gold.active {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8, #d4af37) !important;
+  box-shadow: 0 6rpx 16rpx rgba(212, 175, 55, 0.28);
+}
+
 /* ── 快速菜单 ─────────────────────────────────── */
 .quick-menu {
   margin: 20rpx 24rpx 0;
@@ -448,4 +514,75 @@
 .loading-text {
   font-size: 26rpx;
   color: #8a96a8;
+}
+
+.theme-gold.container {
+  background: #0a0a0a;
+}
+
+.theme-gold .header-bg {
+  background: linear-gradient(135deg, #070707 0%, #151515 58%, #2a2110 100%);
+}
+
+.theme-gold .login-card,
+.theme-gold .user-card,
+.theme-gold .edit-form,
+.theme-gold .stats-row,
+.theme-gold .theme-panel,
+.theme-gold .quick-menu,
+.theme-gold .about-section {
+  background: #151515;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.32);
+}
+
+.theme-gold .login-title,
+.theme-gold .user-name,
+.theme-gold .theme-panel-title,
+.theme-gold .menu-text,
+.theme-gold .about-title,
+.theme-gold .about-text,
+.theme-gold .form-input,
+.theme-gold .form-textarea {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .login-desc,
+.theme-gold .user-signature,
+.theme-gold .user-id,
+.theme-gold .theme-panel-desc,
+.theme-gold .stat-label,
+.theme-gold .about-desc,
+.theme-gold .edit-avatar-hint,
+.theme-gold .form-label {
+  color: rgba(244, 236, 214, 0.74) !important;
+}
+
+.theme-gold .stat-value,
+.theme-gold .nudge-text,
+.theme-gold .interest-tag,
+.theme-gold .card-edit-btn {
+  color: #d4af37 !important;
+}
+
+.theme-gold .nudge-text,
+.theme-gold .interest-tag,
+.theme-gold .card-edit-btn,
+.theme-gold .theme-switch,
+.theme-gold .form-cancel-btn {
+  background: rgba(212, 175, 55, 0.12) !important;
+}
+
+.theme-gold .login-btn,
+.theme-gold .form-save-btn {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8, #d4af37) !important;
+}
+
+.theme-gold .menu-item,
+.theme-gold .about-header,
+.theme-gold .form-field,
+.theme-gold .edit-avatar-section,
+.theme-gold .stat-divider {
+  border-color: rgba(212, 175, 55, 0.16) !important;
 }

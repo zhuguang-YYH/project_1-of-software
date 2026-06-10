@@ -34,6 +34,10 @@ function buildRegistrationId(user_id, activity_id) {
   return `activity_reg_${safeIdPart(activity_id)}_${safeIdPart(user_id)}`;
 }
 
+function buildWaitlistId(user_id, activity_id) {
+  return `activity_wait_${safeIdPart(activity_id)}_${safeIdPart(user_id)}`;
+}
+
 function toDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -198,8 +202,11 @@ function normalizeActivity(activity = {}) {
     title: activity.title || '',
     description: activity.description || '',
     location: activity.location || '',
+    cover_url: activity.cover_url || activity.image || '',
+    image: activity.image || activity.cover_url || '',
     capacity,
     registered_count,
+    waitlist_count: numberValue(activity.waitlist_count, 0),
     remaining_capacity: Math.max(0, capacity - registered_count),
     cancel_deadline: activity.cancel_deadline || '',
     start_time: activity.start_time || '',
@@ -226,6 +233,22 @@ function normalizeRegistration(reg = {}) {
   };
 }
 
+function normalizeWaitlist(item = {}) {
+  const waitlist_id = item.waitlist_id || item._id || '';
+  return {
+    waitlist_id,
+    activity_id: item.activity_id || '',
+    user_id: item.user_id || '',
+    reason: item.reason || '',
+    status: item.status || 'waiting',
+    queue_no: numberValue(item.queue_no, 0),
+    joined_at: item.joined_at || '',
+    promoted_at: item.promoted_at || '',
+    cancelled_at: item.cancelled_at || '',
+    updated_at: item.updated_at || ''
+  };
+}
+
 async function getCurrentUser(openid) {
   if (!openid) return null;
   const res = await db.collection('users').where({ openid }).limit(1).get();
@@ -240,6 +263,20 @@ async function getActiveRegistration(user, activity_id) {
       .limit(10)
       .get();
     return (res.data || []).find(item => !['cancelled', 'failed'].includes(item.status)) || null;
+  } catch (error) {
+    if (isCollectionMissing(error)) return null;
+    throw error;
+  }
+}
+
+async function getActiveWaitlist(user, activity_id) {
+  if (!user || !user._id || !activity_id) return null;
+  try {
+    const res = await db.collection('activity_waitlist')
+      .where({ user_id: user._id, activity_id, status: 'waiting' })
+      .limit(1)
+      .get();
+    return res.data[0] || null;
   } catch (error) {
     if (isCollectionMissing(error)) return null;
     throw error;
@@ -263,6 +300,93 @@ async function getUserRegistrationsMap(user_id, activity_ids) {
   } catch (error) {
     if (isCollectionMissing(error)) return new Map();
     throw error;
+  }
+}
+
+async function getUserWaitlistMap(user_id, activity_ids) {
+  if (!user_id || !activity_ids || activity_ids.length === 0) return new Map();
+  try {
+    const res = await db.collection('activity_waitlist')
+      .where({ user_id, activity_id: _.in(activity_ids), status: 'waiting' })
+      .limit(activity_ids.length)
+      .get();
+    const map = new Map();
+    for (const item of res.data || []) {
+      map.set(item.activity_id, normalizeWaitlist(item));
+    }
+    return map;
+  } catch (error) {
+    if (isCollectionMissing(error)) return new Map();
+    throw error;
+  }
+}
+
+async function promoteNextWaitlist(activity_id) {
+  if (!activity_id) return null;
+  try {
+    const waitRes = await db.collection('activity_waitlist')
+      .where({ activity_id, status: 'waiting' })
+      .orderBy('joined_at', 'asc')
+      .limit(1)
+      .get();
+    const next = waitRes.data[0];
+    if (!next) return null;
+
+    const actRes = await db.collection('activities').doc(activity_id).get();
+    const activity = normalizeActivity(actRes.data || {});
+    if (activity.capacity > 0 && activity.registered_count >= activity.capacity) return null;
+
+    const registration_id = buildRegistrationId(next.user_id, activity_id);
+    const regData = {
+      _id: registration_id,
+      registration_id,
+      user_id: next.user_id,
+      activity_id,
+      reason: next.reason || '',
+      status: 'registered',
+      from_waitlist: true,
+      waitlist_id: next.waitlist_id || next._id,
+      registered_at: db.serverDate(),
+      updated_at: db.serverDate()
+    };
+
+    try {
+      await db.collection('activity_registrations').add({ data: regData });
+    } catch (error) {
+      const existed = await db.collection('activity_registrations').doc(registration_id).get();
+      if (!existed.data || ['cancelled', 'failed'].includes(existed.data.status)) {
+        const { _id, ...patch } = regData;
+        await db.collection('activity_registrations').doc(registration_id).update({ data: patch });
+      }
+    }
+
+    const updateRes = await db.collection('activities')
+      .where({
+        _id: activity_id,
+        status: _.neq('cancelled'),
+        registered_count: activity.capacity > 0 ? _.lt(activity.capacity) : _.gte(0)
+      })
+      .update({
+        data: {
+          registered_count: _.inc(1),
+          waitlist_count: _.inc(-1),
+          updated_at: db.serverDate()
+        }
+      });
+    if (updateRes.stats && updateRes.stats.updated === 0) return null;
+
+    await db.collection('activity_waitlist').doc(next._id).update({
+      data: {
+        status: 'promoted',
+        promoted_registration_id: registration_id,
+        promoted_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+    return { waitlist_id: next._id, registration_id, user_id: next.user_id };
+  } catch (error) {
+    if (!isCollectionMissing(error)) console.warn('[activity] promote waitlist failed:', error && error.message);
+    return null;
   }
 }
 
@@ -301,6 +425,12 @@ async function activity_getActivities(event) {
         activity.user_registration = reg;
         activity.is_registered = !!reg;
       });
+      const waitMap = await getUserWaitlistMap(user._id, list.map(item => item.activity_id).filter(Boolean));
+      list.forEach(activity => {
+        const wait = waitMap.get(activity.activity_id) || null;
+        activity.user_waitlist = wait;
+        activity.is_waitlisted = !!wait;
+      });
     }
 
     return ok({
@@ -324,7 +454,29 @@ async function activity_getMyActivities(event) {
     if (!user) return fail('请先完成授权登录');
 
     const records = await listMyRegistrations(user, page, page_size);
-    const list = await Promise.all(records.list.map(async (item) => {
+    let waits = [];
+    try {
+      const waitRes = await db.collection('activity_waitlist')
+        .where({ user_id: user._id, status: 'waiting' })
+        .orderBy('joined_at', 'desc')
+        .limit(page_size)
+        .get();
+      waits = waitRes.data || [];
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
+    const mergedRecords = [
+      ...records.list,
+      ...waits.map(item => ({
+        ...item,
+        registration_id: item.waitlist_id || item._id,
+        status: 'waiting',
+        registered_at: item.joined_at,
+        is_waitlist: true
+      }))
+    ];
+
+    const list = await Promise.all(mergedRecords.map(async (item) => {
       const reg = normalizeRegistration(item);
       let activity = null;
       try {
@@ -333,12 +485,12 @@ async function activity_getMyActivities(event) {
       } catch (error) {
         activity = null;
       }
-      return { ...reg, activity };
+      return { ...reg, is_waitlist: !!item.is_waitlist, activity };
     }));
 
     return ok({
       list,
-      total: records.total,
+      total: records.total + waits.length,
       page,
       page_size,
       has_more: page * page_size < records.total
@@ -371,6 +523,14 @@ async function activity_registerActivity(event) {
       }
       return fail('报名请求正在处理中，请稍后刷新', 'REQUEST_PROCESSING');
     }
+    const existing_waitlist = await getActiveWaitlist(user, activity_id);
+    if (existing_waitlist) {
+      return ok({
+        waitlist_id: existing_waitlist.waitlist_id || existing_waitlist._id,
+        waitlisted: true,
+        idempotent: true
+      }, '已加入候补名单');
+    }
 
     const cancel_deadline = toDate(activity.cancel_deadline);
     if (cancel_deadline && new Date() > cancel_deadline && !confirmed) {
@@ -378,7 +538,30 @@ async function activity_registerActivity(event) {
     }
 
     if (activity.capacity > 0 && activity.registered_count >= activity.capacity) {
-      return fail('活动已满员');
+      const waitlist_id = buildWaitlistId(user._id, activity_id);
+      const waitData = {
+        _id: waitlist_id,
+        waitlist_id,
+        user_id: user._id,
+        activity_id,
+        reason,
+        status: 'waiting',
+        joined_at: db.serverDate(),
+        updated_at: db.serverDate()
+      };
+      try {
+        await db.collection('activity_waitlist').add({ data: waitData });
+        await db.collection('activities').doc(activity_id).update({
+          data: {
+            waitlist_count: _.inc(1),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (error) {
+        const old = await getActiveWaitlist(user, activity_id);
+        if (!old) throw error;
+      }
+      return ok({ waitlist_id, waitlisted: true }, '活动已满员，已加入候补名单');
     }
 
     registration_id = buildRegistrationId(user._id, activity_id);
@@ -500,13 +683,34 @@ async function activity_cancelRegister(event) {
 
     if (!registration_id && activity_id) {
       const reg = await getActiveRegistration(user, activity_id);
-      registration_id = reg && reg._id;
+      const wait = reg ? null : await getActiveWaitlist(user, activity_id);
+      registration_id = (reg && reg._id) || (wait && wait._id);
     }
     if (!registration_id) return fail('未找到有效报名记录');
 
-    const reg_res = await db.collection('activity_registrations').doc(registration_id).get();
-    const reg = normalizeRegistration(reg_res.data || {});
+    let reg_res = await db.collection('activity_registrations').doc(registration_id).get().catch(() => ({ data: null }));
+    let rawReg = reg_res.data || null;
+    if (!rawReg) {
+      const wait_res = await db.collection('activity_waitlist').doc(registration_id).get();
+      rawReg = wait_res.data || {};
+    }
+    const reg = normalizeRegistration(rawReg || {});
     if (reg.user_id !== user._id) return fail('只能取消自己的报名记录');
+    if (reg.status === 'waiting' || rawReg.waitlist_id) {
+      await db.collection('activity_waitlist').doc(registration_id).update({
+        data: {
+          status: 'cancelled',
+          cancelled_at: db.serverDate(),
+          updated_at: db.serverDate()
+        }
+      });
+      if (reg.activity_id) {
+        await db.collection('activities').doc(reg.activity_id).update({
+          data: { waitlist_count: _.inc(-1), updated_at: db.serverDate() }
+        });
+      }
+      return ok(null, '已取消候补');
+    }
 
     const final_activity_id = activity_id || reg.activity_id;
     if (final_activity_id) {
@@ -537,6 +741,7 @@ async function activity_cancelRegister(event) {
           updated_at: db.serverDate()
         }
       });
+      await promoteNextWaitlist(final_activity_id);
     }
 
     return ok(null, '取消报名成功');
@@ -551,7 +756,18 @@ async function activity_getActivityDetail(event) {
     if (!activity_id) return fail('活动编号不能为空');
 
     const res = await db.collection('activities').doc(activity_id).get();
-    return ok(normalizeActivity(res.data), '获取成功');
+    const activity = normalizeActivity(res.data);
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (user) {
+      const reg = await getActiveRegistration(user, activity_id);
+      const wait = await getActiveWaitlist(user, activity_id);
+      activity.user_registration = reg ? normalizeRegistration(reg) : null;
+      activity.user_waitlist = wait ? normalizeWaitlist(wait) : null;
+      activity.is_registered = !!reg;
+      activity.is_waitlisted = !!wait;
+    }
+    return ok(activity, '获取成功');
   } catch (error) {
     return fail('获取活动详情失败: ' + error.message);
   }

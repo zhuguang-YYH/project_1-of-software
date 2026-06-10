@@ -4,6 +4,9 @@ const recommendationService = require('../../services/recommendation.js');
 const pointsService = require('../../services/points.js');
 const { storage } = require('../../utils/storage');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
+
+const DEFAULT_COVER = '/pages/exchange/images/goods-default.jpg';
 
 function normalizeRankUser(item, index) {
   const rankNo = Number(item.rank_no || index + 1);
@@ -23,7 +26,7 @@ function normalizeRecommendation(item) {
   return {
     id: item.recommendation_id || item._id || '',
     title: item.title || '推荐内容',
-    cover_url: item.cover_url || '',
+    cover_url: item.cover_url || item.image_url || item.image || DEFAULT_COVER,
     category: item.category || item.type || ''
   };
 }
@@ -43,7 +46,8 @@ Page({
     error: ''
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.initPage();
   },
 
@@ -222,13 +226,14 @@ Page({
   onShareAppMessage() {
     return {
       title: 'NK推协 · 侦探集结地',
-      path: '/pages/index/index'
+      path: share.appendShareParams('/pages/index/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: 'NK推协 · 侦探集结地'
+      title: 'NK推协 · 侦探集结地',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   }
 });

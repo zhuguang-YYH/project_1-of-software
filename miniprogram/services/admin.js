@@ -34,6 +34,14 @@ class AdminService {
     return this.mutate('createActivity', data, '创建活动失败');
   }
 
+  async getActivityRegistrations(options = {}) {
+    return this.listWithExtra('getActivityRegistrations', options, '获取活动报名失败');
+  }
+
+  async confirmActivityAttendance(data) {
+    return this.mutate('confirmActivityAttendance', data, '确认参与失败');
+  }
+
   async createBorrowItem(data) {
     return this.mutate('createBorrowItem', data, '创建物资失败');
   }
@@ -112,6 +120,23 @@ class AdminService {
     } catch (error) {
       console.error(`Failed to call admin_${action}:`, error);
       return { success: false, data: [], error: error.message || fallbackMessage };
+    }
+  }
+
+  async listWithExtra(action, options, fallbackMessage) {
+    try {
+      const result = await this.call(action, options);
+      if (!result.success) return { success: false, data: [], error: result.message || fallbackMessage };
+      return {
+        success: true,
+        data: (result.data && result.data.list) || [],
+        waitlist: (result.data && result.data.waitlist) || [],
+        total: (result.data && result.data.total) || 0,
+        has_more: !!(result.data && result.data.has_more)
+      };
+    } catch (error) {
+      console.error(`Failed to call admin_${action}:`, error);
+      return { success: false, data: [], waitlist: [], error: error.message || fallbackMessage };
     }
   }
 

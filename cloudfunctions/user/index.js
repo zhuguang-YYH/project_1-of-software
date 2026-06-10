@@ -3,6 +3,9 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
+
+const INVITE_REWARD_POINTS = Math.max(0, Number(process.env.INVITE_REWARD_POINTS) || 10);
 
 function ok(data = null, message = '操作成功') {
   return { code: 0, data, message };
@@ -61,10 +64,15 @@ function sanitizeUser(user = {}) {
     available_points: Number(user.available_points || 0),
     frozen_points: Number(user.frozen_points || 0),
     used_points: Number(user.used_points || 0),
+    invited_by: user.invited_by || '',
     created_at: user.created_at || null,
     updated_at: user.updated_at || null,
     last_login_at: user.last_login_at || null
   };
+}
+
+function safeIdPart(value) {
+  return String(value || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
 }
 
 function buildProfileCardFields(user, overrides = {}, isCreate = true) {
@@ -131,18 +139,155 @@ async function getCurrentUser(openid) {
   return res.data[0] || null;
 }
 
+async function getUserById(user_id) {
+  if (!user_id) return null;
+  try {
+    const res = await db.collection('users').doc(user_id).get();
+    return res.data || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function readPoints(user = {}, account = {}) {
+  return {
+    total_points: Number(account.total_points !== undefined ? account.total_points : user.total_points) || 0,
+    available_points: Number(account.available_points !== undefined ? account.available_points : user.available_points) || 0,
+    frozen_points: Number(account.frozen_points !== undefined ? account.frozen_points : user.frozen_points) || 0,
+    used_points: Number(account.used_points !== undefined ? account.used_points : user.used_points) || 0
+  };
+}
+
+async function ensurePointAccount(user) {
+  try {
+    const res = await db.collection('point_accounts').where({ user_id: user._id }).limit(1).get();
+    if (res.data.length > 0) return res.data[0];
+  } catch (error) {
+    if (!isCollectionMissing(error)) throw error;
+  }
+
+  const points = readPoints(user);
+  const data = {
+    user_id: user._id,
+    ...points,
+    created_at: db.serverDate(),
+    updated_at: db.serverDate()
+  };
+  const res = await db.collection('point_accounts').add({ data });
+  return { _id: res._id, ...data };
+}
+
+async function addPoints(user, points, business_type, reason, related_id) {
+  if (!user || !user._id || points <= 0) return;
+  await ensurePointAccount(user);
+  await db.collection('users').doc(user._id).update({
+    data: {
+      total_points: _.inc(points),
+      available_points: _.inc(points),
+      updated_at: db.serverDate()
+    }
+  });
+  try {
+    await db.collection('point_accounts').where({ user_id: user._id }).update({
+      data: {
+        total_points: _.inc(points),
+        available_points: _.inc(points),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    if (!isCollectionMissing(error)) throw error;
+  }
+  try {
+    await db.collection('points_log').add({
+      data: {
+        user_id: user._id,
+        amount: points,
+        change_amount: points,
+        type: 'income',
+        point_type: 'available',
+        business_type,
+        reason,
+        related_id,
+        created_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    if (!isCollectionMissing(error)) throw error;
+  }
+}
+
+async function applyInviteReward(newUser, inviter_id) {
+  const inviterId = safeIdPart(inviter_id);
+  if (!newUser || !newUser._id || !inviterId || inviterId === newUser._id || INVITE_REWARD_POINTS <= 0) {
+    return null;
+  }
+
+  const inviter = await getUserById(inviterId);
+  if (!inviter || inviter.status === 'disabled') return null;
+
+  const reward_id = `invite_${safeIdPart(inviterId)}_${safeIdPart(newUser._id)}`.slice(0, 120);
+  try {
+    await db.collection('invitation_rewards').add({
+      data: {
+        _id: reward_id,
+        inviter_id: inviterId,
+        invitee_id: newUser._id,
+        points: INVITE_REWARD_POINTS,
+        status: 'processing',
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    return null;
+  }
+
+  await Promise.all([
+    addPoints(inviter, INVITE_REWARD_POINTS, 'invite_reward', '邀请新成员奖励', newUser._id),
+    addPoints(newUser, INVITE_REWARD_POINTS, 'invitee_reward', '新成员受邀奖励', inviterId)
+  ]);
+
+  await db.collection('users').doc(newUser._id).update({
+    data: {
+      invited_by: inviterId,
+      updated_at: db.serverDate()
+    }
+  });
+  await db.collection('invitation_rewards').doc(reward_id).update({
+    data: {
+      status: 'completed',
+      completed_at: db.serverDate(),
+      updated_at: db.serverDate()
+    }
+  });
+
+  return { inviter_id: inviterId, points: INVITE_REWARD_POINTS };
+}
+
 async function user_login(event) {
   try {
     const wxContext = cloud.getWXContext();
     const openid = wxContext.OPENID;
     const incoming = incomingProfile(event.userInfo || {});
+    const inviter_id = event.inviter_id || event.inviterId || '';
     let user = await getCurrentUser(openid);
+    let invite_reward = null;
 
     if (!user) {
       const data = buildUserFields(openid, incoming);
       const createRes = await db.collection('users').add({ data });
       user = { _id: createRes._id, ...data };
       await ensureProfileCard(user);
+      invite_reward = await applyInviteReward(user, inviter_id);
+      if (invite_reward) {
+        user = {
+          ...user,
+          invited_by: invite_reward.inviter_id,
+          total_points: Number(user.total_points || 0) + invite_reward.points,
+          available_points: Number(user.available_points || 0) + invite_reward.points
+        };
+      }
     } else {
       const data = {
         last_login_at: db.serverDate(),
@@ -165,7 +310,8 @@ async function user_login(event) {
 
     return ok({
       user_id: user._id,
-      userInfo: sanitizeUser(user)
+      userInfo: sanitizeUser(user),
+      invite_reward
     }, '登录成功');
   } catch (error) {
     return fail('登录失败: ' + error.message);

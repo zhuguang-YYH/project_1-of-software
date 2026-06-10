@@ -1,6 +1,7 @@
 const CONFIG = require('../config/index.js');
 const { callFunction } = require('../utils/request.js');
 const { storage } = require('../utils/storage.js');
+const share = require('../utils/share.js');
 
 function normalizeUserInfo(userInfo = {}) {
   const user_id = userInfo.user_id || userInfo._id || '';
@@ -17,7 +18,10 @@ function normalizeUserInfo(userInfo = {}) {
 class UserService {
   async login(params = {}) {
     try {
-      const result = await callFunction(CONFIG.api.user.login, params, {
+      const result = await callFunction(CONFIG.api.user.login, {
+        ...params,
+        inviter_id: params.inviter_id || share.getPendingInviterId()
+      }, {
         timeout: CONFIG.timeout.login || CONFIG.timeout.default
       });
       if (!result.success) return { success: false, error: result.message || '登录失败' };

@@ -16,6 +16,8 @@ const DEFAULT_SYSTEM_SETTINGS = {
   commission_enabled: true
 };
 
+const ACTIVITY_ATTEND_POINTS = Math.max(0, Number(process.env.ACTIVITY_ATTEND_POINTS) || 10);
+
 const EXCHANGE_GOOD_TAG_TEXT = {
   new: '新品',
   limited: '限量',
@@ -50,6 +52,74 @@ function toNumber(value, fallback = 0) {
 
 function toDateText(value) {
   return value || '';
+}
+
+function parseDateBoundary(value, endOfDay = false) {
+  const text = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  return new Date(`${text}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}+08:00`);
+}
+
+function addDateRange(where = {}, field, event = {}) {
+  const start = parseDateBoundary(event.start_date, false);
+  const end = parseDateBoundary(event.end_date, true);
+  const next = { ...(where || {}) };
+  const conditions = [];
+  if (start) conditions.push(_.gte(start));
+  if (end) conditions.push(_.lte(end));
+  if (conditions.length === 1) next[field] = conditions[0];
+  if (conditions.length > 1) next[field] = conditions[0].and(conditions[1]);
+  return next;
+}
+
+function buildStatusDateWhere(event, activeStatuses, dateField) {
+  const status = String(event.status || 'active').trim();
+  const where = {};
+  if (status !== 'all') {
+    where.status = _.in(status === 'active' ? activeStatuses : [status]);
+  }
+  return addDateRange(where, dateField, event);
+}
+
+function toJsDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (value.$date) return new Date(value.$date);
+  if (typeof value === 'object' && value.toDate) return value.toDate();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toBeijingDay(value) {
+  const date = toJsDate(value);
+  if (!date) return '';
+  const cst = new Date(date.getTime() + 8 * 3600 * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return `${cst.getUTCFullYear()}-${p(cst.getUTCMonth() + 1)}-${p(cst.getUTCDate())}`;
+}
+
+function buildRecentDays(days = 7) {
+  const result = [];
+  const now = new Date(Date.now() + 8 * 3600 * 1000);
+  now.setUTCHours(0, 0, 0, 0);
+  for (let index = days - 1; index >= 0; index -= 1) {
+    const date = new Date(now.getTime() - index * 24 * 3600 * 1000);
+    const p = n => String(n).padStart(2, '0');
+    result.push(`${date.getUTCFullYear()}-${p(date.getUTCMonth() + 1)}-${p(date.getUTCDate())}`);
+  }
+  return result;
+}
+
+function countByDay(list, field, days) {
+  const map = days.reduce((acc, day) => {
+    acc[day] = 0;
+    return acc;
+  }, {});
+  (list || []).forEach(item => {
+    const day = toBeijingDay(item[field]);
+    if (day && map[day] !== undefined) map[day] += 1;
+  });
+  return map;
 }
 
 function asThing(value, max = 20) {
@@ -325,6 +395,7 @@ async function updateInventoryItem(item_id, data) {
 }
 
 async function admin_getDashboard() {
+  const trend = await buildDashboardTrend();
   const [
     user_count,
     puzzle_count,
@@ -332,7 +403,9 @@ async function admin_getDashboard() {
     inventory_count,
     feedback_pending,
     borrow_active,
-    exchange_pending
+    exchange_pending,
+    registration_count,
+    exchange_count
   ] = await Promise.all([
     safeCount('users'),
     safeCount('puzzles'),
@@ -340,7 +413,9 @@ async function admin_getDashboard() {
     safeCount('inventory_items'),
     safeCount('feedback', { status: _.neq('resolved') }),
     safeCount('borrow_applications', { status: _.in(['applying', 'confirmed', 'in_transit', 'borrowed']) }),
-    safeCount('exchange_records', { status: _.in(['pending', 'shipped']) })
+    safeCount('exchange_records', { status: _.in(['pending', 'shipped']) }),
+    safeCount('activity_registrations'),
+    safeCount('exchange_records')
   ]);
 
   return ok({
@@ -350,8 +425,51 @@ async function admin_getDashboard() {
     inventory_count,
     feedback_pending,
     borrow_active,
-    exchange_pending
+    exchange_pending,
+    registration_count,
+    exchange_count,
+    trend
   });
+}
+
+async function buildDashboardTrend() {
+  const days = buildRecentDays(7);
+  const startDate = parseDateBoundary(days[0], false);
+  const dateWhere = { created_at: _.gte(startDate) };
+  const registrationDateWhere = { registered_at: _.gte(startDate) };
+  const [registrations, exchanges, borrows, feedbacks, users] = await Promise.all([
+    safeList('activity_registrations', { where: registrationDateWhere, limit: 1000 }),
+    safeList('exchange_records', { where: dateWhere, limit: 1000 }),
+    safeList('borrow_applications', { where: dateWhere, limit: 1000 }),
+    safeList('feedback', { where: dateWhere, limit: 1000 }),
+    safeList('users', { where: dateWhere, limit: 1000 })
+  ]);
+  const registrationMap = countByDay(registrations, 'registered_at', days);
+  const exchangeMap = countByDay(exchanges, 'created_at', days);
+  const activeMap = days.reduce((acc, day) => {
+    acc[day] = new Set();
+    return acc;
+  }, {});
+
+  [
+    ...registrations.map(item => ({ day: toBeijingDay(item.registered_at || item.created_at), user_id: item.user_id })),
+    ...exchanges.map(item => ({ day: toBeijingDay(item.created_at), user_id: item.user_id })),
+    ...borrows.map(item => ({ day: toBeijingDay(item.created_at), user_id: item.borrower_id || item.user_id })),
+    ...feedbacks.map(item => ({ day: toBeijingDay(item.created_at), user_id: item.user_id })),
+    ...users.map(item => ({ day: toBeijingDay(item.created_at), user_id: item._id }))
+  ].forEach(item => {
+    if (item.day && activeMap[item.day] && item.user_id) activeMap[item.day].add(item.user_id);
+  });
+
+  const points = days.map(day => ({
+    date: day,
+    label: day.slice(5),
+    registrations: registrationMap[day] || 0,
+    exchanges: exchangeMap[day] || 0,
+    active_users: activeMap[day] ? activeMap[day].size : 0
+  }));
+  const max = points.reduce((value, item) => Math.max(value, item.registrations, item.exchanges, item.active_users), 1);
+  return { days, max, points };
 }
 
 async function admin_savePuzzle(event, admin_user) {
@@ -413,6 +531,7 @@ async function admin_createActivity(event, admin_user) {
     location: String(event.location || '').trim(),
     capacity,
     registered_count: 0,
+    waitlist_count: 0,
     cancel_deadline: toDateText(event.cancel_deadline),
     start_time: toDateText(event.start_time),
     end_time: toDateText(event.end_time),
@@ -426,6 +545,133 @@ async function admin_createActivity(event, admin_user) {
   const res = await db.collection('activities').add({ data });
   await logOperation(admin_user, 'create_activity', 'activities', res._id, data);
   return ok({ activity_id: res._id }, '活动已创建');
+}
+
+function parseWallClockTs(text) {
+  return Date.parse(String(text || '').replace(/\//g, '-'));
+}
+
+function beijingNowTs() {
+  return Date.now() + 8 * 3600 * 1000;
+}
+
+function normalizeActivityRegistration(item = {}, activity = null, user = null) {
+  const registration_id = item.registration_id || item._id || '';
+  return {
+    registration_id,
+    activity_id: item.activity_id || '',
+    user_id: item.user_id || '',
+    user_name: (user && user.nickname) || item.user_name || '未知用户',
+    activity_title: (activity && activity.title) || item.activity_title || '活动',
+    activity_end_time: activity && activity.end_time,
+    reason: item.reason || '',
+    status: item.status || 'registered',
+    from_waitlist: !!item.from_waitlist,
+    registered_at: item.registered_at || item.created_at || '',
+    attended_at: item.attended_at || '',
+    attend_points: toNumber(item.attend_points, 0),
+    updated_at: item.updated_at || ''
+  };
+}
+
+async function admin_getActivityRegistrations(event) {
+  const page = toNumber(event.page, 1);
+  const page_size = toNumber(event.page_size, 50);
+  const activeStatuses = ['registered', 'confirmed', 'pending', 'attended'];
+  const where = event.status === 'all'
+    ? null
+    : { status: _.in((event.status || 'active') === 'active' ? activeStatuses : [event.status]) };
+  const list = await safeList('activity_registrations', {
+    where,
+    orderBy: { field: 'registered_at', direction: 'desc' },
+    skip: (page - 1) * page_size,
+    limit: page_size
+  });
+
+  const result = await Promise.all(list.map(async (item) => {
+    const [activity, user] = await Promise.all([
+      getDoc('activities', item.activity_id || ''),
+      getUserById(item.user_id || '')
+    ]);
+    return normalizeActivityRegistration(item, activity, user);
+  }));
+
+  let waitlist = [];
+  try {
+    const waits = await safeList('activity_waitlist', {
+      where: { status: 'waiting' },
+      orderBy: { field: 'joined_at', direction: 'asc' },
+      limit: 50
+    });
+    waitlist = await Promise.all(waits.map(async (item) => {
+      const [activity, user] = await Promise.all([
+        getDoc('activities', item.activity_id || ''),
+        getUserById(item.user_id || '')
+      ]);
+      return {
+        waitlist_id: item.waitlist_id || item._id,
+        activity_id: item.activity_id || '',
+        user_id: item.user_id || '',
+        user_name: (user && user.nickname) || '未知用户',
+        activity_title: (activity && activity.title) || '活动',
+        reason: item.reason || '',
+        joined_at: item.joined_at || ''
+      };
+    }));
+  } catch (error) {
+    if (!isCollectionMissing(error)) throw error;
+  }
+
+  return ok({ list: result, waitlist, page, page_size });
+}
+
+async function admin_confirmActivityAttendance(event, admin_user) {
+  const registration_id = event.registration_id;
+  const points = Math.max(0, toNumber(event.points, ACTIVITY_ATTEND_POINTS));
+  if (!registration_id) return fail('报名记录编号不能为空');
+
+  const registration = await getDocByIdOrField('activity_registrations', registration_id, 'registration_id');
+  if (!registration) return fail('报名记录不存在');
+  if (registration.status === 'attended') return ok(null, '已确认参加');
+  if (['cancelled', 'failed'].includes(registration.status)) return fail('该报名已取消，不能确认参加');
+
+  const user = await getUserById(registration.user_id || '');
+  if (!user) return fail('用户不存在');
+  const activity = await getDoc('activities', registration.activity_id || '');
+  const endTs = activity && activity.end_time ? parseWallClockTs(activity.end_time) : NaN;
+  if (!Number.isNaN(endTs) && endTs > beijingNowTs()) {
+    return fail('活动结束后才能确认参加');
+  }
+
+  await db.collection('activity_registrations').doc(registration._doc_id).update({
+    data: {
+      status: 'attended',
+      attended_at: db.serverDate(),
+      attend_points: points,
+      attended_by: admin_user._id,
+      updated_at: db.serverDate()
+    }
+  });
+
+  if (points > 0) {
+    const current = readPoints(user, await ensurePointAccount(user));
+    await syncPoints(user, {
+      ...current,
+      total_points: current.total_points + points,
+      available_points: current.available_points + points
+    });
+    await addPointsLog({
+      user_id: user._id,
+      amount: points,
+      type: 'income',
+      business_type: 'activity_attendance',
+      reason: `活动参与奖励 - ${registration.activity_title || registration.activity_id || ''}`,
+      related_id: registration.activity_id || registration_id
+    });
+  }
+
+  await logOperation(admin_user, 'confirm_activity_attendance', 'activity_registrations', registration_id, { points });
+  return ok(null, points > 0 ? `已确认参加，发放 ${points} 积分` : '已确认参加');
 }
 
 async function admin_createBorrowItem(event, admin_user) {
@@ -551,9 +797,7 @@ async function admin_getBorrowApplications(event) {
   const page = toNumber(event.page, 1);
   const page_size = toNumber(event.page_size, 30);
   const active_statuses = ['applying', 'confirmed', 'in_transit', 'borrowed'];
-  const where = event.status === 'all'
-    ? null
-    : { status: _.in((event.status || 'active') === 'active' ? active_statuses : [event.status]) };
+  const where = buildStatusDateWhere(event, active_statuses, 'created_at');
   const list = await safeList('borrow_applications', {
     where,
     orderBy: { field: 'created_at', direction: 'desc' },
@@ -650,9 +894,7 @@ async function admin_updateBorrowStatus(event, admin_user) {
 async function admin_getExchangeRecords(event) {
   const page = toNumber(event.page, 1);
   const page_size = toNumber(event.page_size, 30);
-  const where = event.status === 'all'
-    ? null
-    : { status: _.in((event.status || 'active') === 'active' ? ['pending', 'shipped'] : [event.status]) };
+  const where = buildStatusDateWhere(event, ['pending', 'shipped'], 'created_at');
   const list = await safeList('exchange_records', {
     where,
     orderBy: { field: 'created_at', direction: 'desc' },
@@ -813,7 +1055,7 @@ async function admin_updateRecommendationStatus(event, admin_user) {
 async function admin_getFeedback(event) {
   const page = toNumber(event.page, 1);
   const page_size = toNumber(event.page_size, 50);
-  const where = event.status === 'all' ? null : { status: event.status || 'pending' };
+  const where = buildStatusDateWhere(event, ['pending', 'processing'], 'created_at');
   const list = await safeList('feedback', {
     where,
     orderBy: { field: 'created_at', direction: 'desc' },
@@ -909,6 +1151,8 @@ exports.main = async (event) => {
     getDashboard: admin_getDashboard,
     savePuzzle: admin_savePuzzle,
     createActivity: admin_createActivity,
+    getActivityRegistrations: admin_getActivityRegistrations,
+    confirmActivityAttendance: admin_confirmActivityAttendance,
     createBorrowItem: admin_createBorrowItem,
     createExchangeGood: admin_createExchangeGood,
     getExchangeGoods: admin_getExchangeGoods,

@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}} {{a11yFontClass}}">
   <skeleton wx:if="{{loading}}" variant="media" rows="3" title="加载推荐中..." />
 
   <scroll-view
@@ -47,9 +47,8 @@
 
     <view class="list">
       <view class="recommend-card" wx:for="{{list}}" wx:key="recommendation_id" data-id="{{item.recommendation_id}}" bindtap="openDetail">
-        <view class="cover {{item.cover_url ? '' : 'empty-cover'}}">
-          <image wx:if="{{item.cover_url}}" src="{{item.cover_url}}" mode="aspectFill" />
-          <text wx:else>{{item.category_text}}</text>
+        <view class="cover">
+          <image src="{{item.cover_url}}" mode="aspectFill" lazy-load="{{true}}" />
         </view>
         <view class="content">
           <view class="card-head">
@@ -68,7 +67,7 @@
     <view class="load-more" wx:if="{{list.length > 0}}">
       <text wx:if="{{loading_more}}">加载中...</text>
       <text wx:elif="{{has_more}}" bindtap="loadMore">继续加载</text>
-      <text wx:else>已浏览全部推荐</text>
+      <text wx:else>{{no_more_text}}</text>
     </view>
 
     <empty-state
@@ -91,7 +90,7 @@
         <button class="close-btn" bindtap="closeDetail">×</button>
       </view>
 
-      <image wx:if="{{selected.cover_url}}" class="detail-cover" src="{{selected.cover_url}}" mode="aspectFill" />
+      <image wx:if="{{selected.cover_url}}" class="detail-cover" src="{{selected.cover_url}}" mode="aspectFill" lazy-load="{{true}}" />
 
       <view class="detail-section">
         <text class="section-label">推荐理由</text>

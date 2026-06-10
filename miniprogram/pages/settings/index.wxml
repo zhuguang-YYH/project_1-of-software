@@ -1,9 +1,9 @@
-<view class="page theme-{{theme}}" wx:if="{{!loading}}">
+<view class="page theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <scroll-view class="scroll-view" scroll-y>
     <view class="account-panel">
       <text class="panel-title">登录状态</text>
       <view class="account-row">
-        <image class="avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" />
+        <image class="avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
         <view class="account-meta">
           <text class="account-name">{{userInfo.nickname || '未登录'}}</text>
           <text class="account-role">{{userInfo.role === 'admin' ? '管理员' : (userInfo ? '普通用户' : '游客')}}</text>
@@ -123,7 +123,7 @@
   </scroll-view>
 </view>
 
-<view class="loading-state theme-{{theme}}" wx:else>
+<view class="loading-state theme-{{theme}} {{a11yFontClass}}" wx:else>
   <view class="loading-spinner"></view>
   <text>加载设置中...</text>
 </view>

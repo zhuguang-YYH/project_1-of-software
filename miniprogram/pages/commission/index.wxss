@@ -460,6 +460,13 @@
   color: #8a96a8;
 }
 
+.field-error {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #dc2626;
+}
+
 .modal-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

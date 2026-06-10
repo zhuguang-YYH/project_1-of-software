@@ -99,6 +99,8 @@
 }
 
 .activity-status { background: #fee2e2; color: #991b1b; }
+.activity-status.full { background: #fee2e2; color: #991b1b; }
+.activity-status.warn { background: #fef3c7; color: #92400e; }
 .activity-status.available { background: #dcfce7; color: #166534; }
 .registration-status { background: #fef3c7; color: #92400e; }
 .registration-status.confirmed { background: #dcfce7; color: #166534; }
@@ -160,7 +162,8 @@
 .btn-register,
 .btn-cancel,
 .btn-confirm-modal,
-.btn-cancel-modal {
+.btn-cancel-modal,
+.btn-share {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -180,6 +183,11 @@
   color: #fff !important;
   border: none !important;
   box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.28);
+}
+
+.btn-register.waitlist {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  box-shadow: 0 6rpx 16rpx rgba(217, 119, 6, 0.24);
 }
 
 .btn-confirm-modal[disabled] {
@@ -220,6 +228,13 @@
   border: 2rpx solid #fecaca !important;
 }
 
+.btn-share {
+  flex: 0 0 120rpx;
+  background: #eef2ff !important;
+  color: #3a4cd1 !important;
+  border: none !important;
+}
+
 .btn-registered {
   flex: 1;
   height: 80rpx !important;
@@ -246,6 +261,7 @@
 .btn-cancel::after,
 .btn-confirm-modal::after,
 .btn-cancel-modal::after,
+.btn-share::after,
 .btn-full::after,
 .btn-confirmed::after { border: none !important; }
 
@@ -417,6 +433,12 @@
 .input-hint {
   font-size: 22rpx;
   color: #8a96a8;
+  text-align: right;
+}
+
+.field-error {
+  font-size: 22rpx;
+  color: #dc2626;
   text-align: right;
 }
 

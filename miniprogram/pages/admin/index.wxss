@@ -107,6 +107,111 @@ page {
   font-weight: 500;
 }
 
+.trend-panel {
+  margin: 0 24rpx 24rpx;
+  padding: 26rpx 24rpx;
+  border-radius: 18rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.08);
+}
+
+.trend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.trend-title,
+.trend-sub {
+  display: block;
+}
+
+.trend-title {
+  color: #1a1f3a;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.trend-sub {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 22rpx;
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10rpx;
+}
+
+.legend-item {
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  color: #344054;
+  background: #f4f6fb;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.legend-item.reg { color: #3a4cd1; background: #eef0ff; }
+.legend-item.exchange { color: #92580d; background: #fef3df; }
+.legend-item.active { color: #0f766e; background: #ccfbf1; }
+
+.trend-chart {
+  margin-top: 28rpx;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12rpx;
+  align-items: end;
+}
+
+.trend-day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.bar-group {
+  height: 142rpx;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5rpx;
+  border-bottom: 1rpx solid #edf2f7;
+}
+
+.bar {
+  position: relative;
+  width: 16rpx;
+  min-height: 8rpx;
+  border-radius: 8rpx 8rpx 0 0;
+}
+
+.bar text {
+  position: absolute;
+  top: -28rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #475569;
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+.bar.reg { background: #5b6cff; }
+.bar.exchange { background: #f5b041; }
+.bar.active { background: #14b8a6; }
+
+.trend-date {
+  color: #667085;
+  font-size: 20rpx;
+  white-space: nowrap;
+}
+
 .tab-nav {
   margin: 0 24rpx 20rpx;
   padding: 8rpx;
@@ -251,6 +356,14 @@ page {
   font-size: 25rpx;
 }
 
+.upload-hint {
+  display: block;
+  margin-top: 12rpx;
+  color: #6b7280;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
 .upload-actions {
   display: flex;
   flex-wrap: wrap;
@@ -370,6 +483,35 @@ page {
 
 .ops-actions .small-btn {
   margin-top: 18rpx;
+}
+
+.filter-bar {
+  margin: 8rpx 0 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.filter-chip {
+  min-height: 58rpx;
+  padding: 0 18rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  color: #344054;
+  background: #f4f6fb;
+  border: 1rpx solid #e5e7eb;
+  font-size: 23rpx;
+  font-weight: 600;
+}
+
+.export-btn {
+  margin: 0;
+  width: 180rpx;
+  height: 58rpx;
+  line-height: 58rpx;
+  font-size: 23rpx;
 }
 
 .feedback-card {
@@ -522,6 +664,7 @@ page {
 .theme-gold .panel-title,
 .theme-gold .ops-title,
 .theme-gold .feedback-title,
+.theme-gold .trend-title,
 .theme-gold .log-operation,
 .theme-gold .switch-title {
   color: #f4ecd6 !important;
@@ -545,6 +688,29 @@ page {
   color: rgba(244, 236, 214, 0.82) !important;
 }
 
+.theme-gold .trend-panel {
+  background: rgba(21, 21, 21, 0.96) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.32);
+}
+
+.theme-gold .trend-sub,
+.theme-gold .trend-date,
+.theme-gold .bar text {
+  color: rgba(244, 236, 214, 0.72) !important;
+}
+
+.theme-gold .bar-group {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .filter-chip,
+.theme-gold .legend-item {
+  color: rgba(244, 236, 214, 0.86) !important;
+  background: rgba(212, 175, 55, 0.10) !important;
+  border-color: rgba(212, 175, 55, 0.18) !important;
+}
+
 .theme-gold .upload-box {
   background: rgba(16, 16, 16, 0.92) !important;
   border-color: rgba(212, 175, 55, 0.28) !important;
@@ -553,6 +719,10 @@ page {
 .theme-gold .upload-placeholder {
   color: rgba(244, 236, 214, 0.64) !important;
   background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.theme-gold .upload-hint {
+  color: rgba(244, 236, 214, 0.64) !important;
 }
 
 .theme-gold .section-divider,

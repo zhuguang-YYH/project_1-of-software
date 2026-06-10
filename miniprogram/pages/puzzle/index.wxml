@@ -1,6 +1,6 @@
 <common-loading visible="{{loading}}" title="加载谜题中..." mask="{{false}}" />
 
-<view class="container theme-{{theme}}" wx:if="{{!loading}}">
+<view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <empty-state
     wx:if="{{error}}"
     icon="!"

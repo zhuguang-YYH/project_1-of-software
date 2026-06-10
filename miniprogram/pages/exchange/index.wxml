@@ -1,4 +1,4 @@
-<view class="container theme-{{theme}}">
+<view class="container theme-{{theme}} {{a11yFontClass}}">
   <skeleton wx:if="{{loading}}" variant="media" rows="3" title="加载兑换商品中..." />
 
   <scroll-view
@@ -48,7 +48,7 @@
       <view class="goods-list">
         <view class="goods-card" wx:for="{{filtered_goods}}" wx:key="item_id">
           <view class="goods-main">
-            <image class="goods-cover" src="{{item.cover_url}}" mode="aspectFill" />
+            <image class="goods-cover" src="{{item.cover_url}}" mode="aspectFill" lazy-load="{{true}}" />
             <view class="goods-content">
               <view class="goods-header">
                 <view class="goods-name">{{item.name}}</view>
@@ -193,4 +193,6 @@
       </view>
     </view>
   </view>
+
+  <common-modal id="exchangeConfirm" bind:confirm="executeExchange" />
 </view>

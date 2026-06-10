@@ -2,6 +2,7 @@
   "navigationBarTitleText": "积分兑换",
   "enableShareAppMessage": true,
   "usingComponents": {
-    "skeleton": "/components/skeleton/index"
+    "skeleton": "/components/skeleton/index",
+    "common-modal": "/components/common/modal"
   }
 }

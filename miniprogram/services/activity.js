@@ -59,6 +59,8 @@ class ActivityService {
       return {
         success: true,
         registration_id: result.data && result.data.registration_id,
+        waitlist_id: result.data && result.data.waitlist_id,
+        waitlisted: !!(result.data && result.data.waitlisted),
         idempotent: !!(result.data && result.data.idempotent),
         message: result.message || '报名成功'
       };

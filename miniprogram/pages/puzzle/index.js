@@ -1,6 +1,7 @@
 const puzzleService = require('../../services/puzzle.js');
 const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
 
 Page({
   data: {
@@ -15,7 +16,8 @@ Page({
     error: ''
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.loadTheme();
     this.loadPuzzle();
   },
@@ -132,13 +134,14 @@ Page({
   onShareAppMessage() {
     return {
       title: '每日谜题挑战',
-      path: '/pages/puzzle/index'
+      path: share.appendShareParams('/pages/puzzle/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: '每日谜题挑战'
+      title: '每日谜题挑战',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   }
 });

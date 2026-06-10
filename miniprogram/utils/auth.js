@@ -1,6 +1,7 @@
 const CONFIG = require('../config/index.js');
 const { callCloudFunction } = require('./request.js');
 const { storage } = require('./storage.js');
+const share = require('./share.js');
 
 function normalizeUserInfo(userInfo = {}) {
   const userId = userInfo.user_id || userInfo._id || '';
@@ -39,7 +40,8 @@ class Auth {
 
           try {
             const loginResult = await callCloudFunction('user_login', {
-              code: res.code
+              code: res.code,
+              inviter_id: share.getPendingInviterId()
             }, {
               timeout: CONFIG.timeout.login || 12000,
               retries: 1

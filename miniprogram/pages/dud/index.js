@@ -1,5 +1,6 @@
 const dudService = require('../../services/dud.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
 
 function toDate(value) {
   if (!value) return new Date();
@@ -39,7 +40,8 @@ Page({
     quick_prompts: ['你好', '帮助', '积分', '排行', '活动']
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.loadTheme();
     this.loadHistory();
   },
@@ -170,13 +172,14 @@ Page({
   onShareAppMessage() {
     return {
       title: 'Dud 对话',
-      path: '/pages/dud/index'
+      path: share.appendShareParams('/pages/dud/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: 'Dud 对话'
+      title: 'Dud 对话',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   }
 });

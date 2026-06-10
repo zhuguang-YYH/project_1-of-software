@@ -3,6 +3,8 @@ const pointsService = require('../../services/points.js');
 const subscribe = require('../../utils/subscribe.js');
 const format = require('../../utils/format.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
+const interaction = require('../../utils/interaction.js');
 
 const EXCHANGE_ASSETS = {
   goodsDefault: '/pages/exchange/images/goods-default.jpg',
@@ -121,7 +123,8 @@ Page({
     search_keyword: ''
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.loadTheme();
     this.initPage();
   },
@@ -219,10 +222,10 @@ Page({
   },
 
   onPullDownRefresh() {
+    if (!interaction.canRefresh(this)) return;
     this.setData({ refreshing: true });
     this.initPage().finally(() => {
-      wx.stopPullDownRefresh();
-      this.setData({ refreshing: false });
+      interaction.finishRefresh(this);
     });
   },
 
@@ -276,7 +279,7 @@ Page({
     });
   },
 
-  async confirmExchange() {
+  confirmExchange() {
     const { selected_goods, exchange_quantity, user_points } = this.data;
     if (!selected_goods) return;
 
@@ -285,6 +288,18 @@ Page({
       wx.showToast({ title: '积分不足', icon: 'none' });
       return;
     }
+
+    this.selectComponent('#exchangeConfirm').show({
+      title: '确认兑换',
+      content: `将消耗 ${total_points} 积分兑换 ${exchange_quantity} 件「${selected_goods.name}」。`,
+      confirmText: '确认兑换',
+      cancelText: '再想想'
+    });
+  },
+
+  async executeExchange() {
+    const { selected_goods, exchange_quantity } = this.data;
+    if (!selected_goods || this.data.exchanging) return;
 
     // 申请兑换通知订阅授权；须在点击手势栈内触发，用户拒绝不影响兑换
     await subscribe.requestSubscribe(subscribe.TEMPLATES.EXCHANGE_NOTIFY);
@@ -339,13 +354,14 @@ Page({
   onShareAppMessage() {
     return {
       title: 'NK推协 · 积分兑换',
-      path: '/pages/exchange/index'
+      path: share.appendShareParams('/pages/exchange/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: 'NK推协 · 积分兑换'
+      title: 'NK推协 · 积分兑换',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   },
 

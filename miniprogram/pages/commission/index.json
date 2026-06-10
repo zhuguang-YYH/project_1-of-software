@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "事件委托",
-  "enableShareAppMessage": true
+  "enableShareAppMessage": true,
+  "usingComponents": {
+    "common-modal": "/components/common/modal"
+  }
 }

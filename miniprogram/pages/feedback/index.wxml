@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}} {{a11yFontClass}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text>加载反馈中...</text>

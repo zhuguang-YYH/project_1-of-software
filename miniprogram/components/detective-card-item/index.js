@@ -12,6 +12,10 @@ Component({
       type: String,
       value: 'light'
     },
+    a11yFontClass: {
+      type: String,
+      value: ''
+    },
     showRank: {
       type: Boolean,
       value: true

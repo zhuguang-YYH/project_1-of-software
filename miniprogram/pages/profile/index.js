@@ -4,7 +4,7 @@ const upload = require('../../utils/upload');
 const userService = require('../../services/user');
 const profileService = require('../../services/profile');
 const rankingService = require('../../services/ranking');
-const { applyTheme } = require('../../utils/theme.js');
+const { applyTheme, setTheme } = require('../../utils/theme.js');
 
 function isDefaultName(name) {
   return !name || ['未知用户', '未设置昵称'].includes(String(name).trim());
@@ -310,6 +310,18 @@ Page({
 
   goSettings() {
     wx.navigateTo({ url: '/pages/settings/index' });
+  },
+
+  switchTheme(e) {
+    const theme = e.currentTarget.dataset.theme === 'gold' ? 'gold' : 'blue';
+    if (theme === this.data.theme) return;
+
+    setTheme(theme);
+    this.loadTheme();
+    wx.showToast({
+      title: theme === 'gold' ? '已切换黑金' : '已切换侦探蓝',
+      icon: 'none'
+    });
   },
 
   goAdmin() {

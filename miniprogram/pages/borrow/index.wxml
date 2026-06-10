@@ -1,4 +1,4 @@
-<view class="container theme-{{theme}}">
+<view class="container theme-{{theme}} {{a11yFontClass}}">
   <skeleton wx:if="{{loading}}" variant="media" rows="3" title="加载物资中..." />
 
   <scroll-view
@@ -28,7 +28,7 @@
     <view wx:if="{{tab === 'available'}}" class="items-list">
       <view class="item-card" wx:for="{{items}}" wx:key="item_id">
         <view class="borrow-card-main">
-          <image class="borrow-cover" src="{{item.cover_image}}" mode="aspectFill" />
+          <image class="borrow-cover" src="{{item.cover_image}}" mode="aspectFill" lazy-load="{{true}}" />
           <view class="borrow-card-content">
             <view class="item-header">
               <view class="item-name">{{item.name}}</view>
@@ -121,7 +121,7 @@
       <view class="scripts-list">
         <view class="script-card" wx:for="{{scripts}}" wx:key="item_id">
           <view class="script-main">
-            <image class="script-cover" src="{{item.cover_image}}" mode="aspectFill" />
+            <image class="script-cover" src="{{item.cover_image}}" mode="aspectFill" lazy-load="{{true}}" />
             <view class="script-content">
               <view class="script-header">
                 <view>

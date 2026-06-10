@@ -1,4 +1,4 @@
-<view class="page theme-{{theme}}">
+<view class="page theme-{{theme}} {{a11yFontClass}}">
   <view class="loading-state" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">加载中...</text>
@@ -186,16 +186,19 @@
         <view class="field">
           <text class="field-label">标题</text>
           <input value="{{publish_form.title}}" data-field="title" bindinput="onPublishInput" maxlength="40" placeholder="委托标题" />
+          <text class="field-error" wx:if="{{publish_errors.title}}">{{publish_errors.title}}</text>
         </view>
         <view class="field">
           <text class="field-label">描述</text>
           <textarea value="{{publish_form.description}}" data-field="description" bindinput="onPublishInput" maxlength="300" placeholder="详细描述任务与交付要求" show-confirm-bar="{{false}}" />
           <text class="counter">{{publish_form.description.length}}/300</text>
+          <text class="field-error" wx:if="{{publish_errors.description}}">{{publish_errors.description}}</text>
         </view>
         <view class="field">
           <text class="field-label">奖励积分</text>
           <input type="number" value="{{publish_form.reward_points}}" data-field="reward_points" bindinput="onPublishInput" placeholder="发布时从可用积分冻结" />
           <text class="hint">可用：{{user_points.available_points}}</text>
+          <text class="field-error" wx:if="{{publish_errors.reward_points}}">{{publish_errors.reward_points}}</text>
         </view>
         <view class="field">
           <text class="field-label">截止时间</text>
@@ -205,7 +208,7 @@
 
       <view class="modal-actions">
         <button class="secondary-btn" bindtap="closePublishModal">取消</button>
-        <button class="primary-btn" loading="{{publishing}}" disabled="{{publishing}}" bindtap="publishCommission">确认发布</button>
+        <button class="primary-btn" loading="{{publishing}}" disabled="{{publishing || !publish_valid}}" bindtap="publishCommission">确认发布</button>
       </view>
     </view>
   </view>
@@ -227,4 +230,6 @@
       </view>
     </view>
   </view>
+
+  <common-modal id="publishConfirm" bind:confirm="executePublishCommission" />
 </view>

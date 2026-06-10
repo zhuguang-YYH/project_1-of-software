@@ -1,4 +1,4 @@
-<view class="container theme-{{theme}}">
+<view class="container theme-{{theme}} {{a11yFontClass}}">
   <skeleton wx:if="{{loading}}" variant="card" rows="3" title="加载活动中..." />
 
   <scroll-view
@@ -28,8 +28,9 @@
         <view class="activity-card" wx:for="{{visible_activities}}" wx:key="activity_id">
           <view class="activity-header">
             <view class="activity-title">{{item.title}}</view>
-            <view class="activity-status" wx:if="{{item.is_full}}">已满</view>
-            <view class="activity-status available" wx:else>余 {{item.remaining_capacity}}</view>
+            <view class="activity-status full" wx:if="{{item.is_full}}">{{item.status_label}}</view>
+            <view class="activity-status warn" wx:elif="{{item.is_nearly_full}}">{{item.status_label}}</view>
+            <view class="activity-status available" wx:else>{{item.status_label}}</view>
           </view>
 
           <view class="activity-details">
@@ -49,6 +50,10 @@
               <text class="detail-label">报名人数</text>
               <text class="detail-value">{{item.registered_count}}/{{item.capacity}}</text>
             </view>
+            <view class="detail-item" wx:if="{{item.waitlist_count}}">
+              <text class="detail-label">候补人数</text>
+              <text class="detail-value">{{item.waitlist_count}}</text>
+            </view>
             <view class="detail-item" wx:if="{{item.description}}">
               <text class="detail-label">活动说明</text>
               <text class="detail-value">{{item.description}}</text>
@@ -61,6 +66,7 @@
 
           <view class="activity-actions">
             <button class="btn-registered" wx:if="{{item.is_registered}}">已报名</button>
+            <button class="btn-registered" wx:elif="{{item.is_waitlisted}}">候补中</button>
             <button
               class="btn-register"
               wx:elif="{{!item.is_full}}"
@@ -68,7 +74,14 @@
               data-id="{{item.activity_id}}">
               <text class="btn-text">立即报名</text>
             </button>
-            <button class="btn-full" wx:else>活动已满员</button>
+            <button
+              class="btn-register waitlist"
+              wx:else
+              bindtap="showRegisterModal"
+              data-id="{{item.activity_id}}">
+              <text class="btn-text">加入候补</text>
+            </button>
+            <button class="btn-share" open-type="share" data-id="{{item.activity_id}}">分享</button>
           </view>
         </view>
 
@@ -108,6 +121,10 @@
             <view class="detail-item" wx:if="{{item.reason}}">
               <text class="detail-label">报名理由</text>
               <text class="detail-value">{{item.reason}}</text>
+            </view>
+            <view class="detail-item" wx:if="{{item.status === 'waiting'}}">
+              <text class="detail-label">候补说明</text>
+              <text class="detail-value">有名额释放时将自动转为报名</text>
             </view>
           </view>
 
@@ -152,7 +169,7 @@
 
         <view class="modal-section">
           <text class="section-label">剩余名额</text>
-          <text class="section-value">{{selected_activity.remaining_capacity}}</text>
+          <text class="section-value">{{selected_activity.is_full ? '已满员，可加入候补' : selected_activity.remaining_capacity}}</text>
         </view>
 
         <view class="modal-section">
@@ -165,6 +182,7 @@
             maxlength="200"
             show-confirm-bar="{{false}}" />
           <text class="input-hint">{{register_reason.length}}/200</text>
+          <text class="field-error" wx:if="{{register_error}}">{{register_error}}</text>
         </view>
       </view>
 
@@ -174,9 +192,12 @@
           class="btn-confirm-modal"
           disabled="{{registering}}"
           bindtap="confirmRegister">
-          <text class="btn-text">确认报名</text>
+          <text class="btn-text">{{selected_activity.is_full ? '确认候补' : '确认报名'}}</text>
         </button>
       </view>
     </view>
   </view>
+
+  <common-modal id="deadlineConfirm" bind:confirm="confirmRegisterAfterDeadline" />
+  <common-modal id="cancelConfirm" bind:confirm="confirmCancelRegister" />
 </view>

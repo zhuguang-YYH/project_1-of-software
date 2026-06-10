@@ -3,6 +3,8 @@ const pointsService = require('../../services/points.js');
 const format = require('../../utils/format.js');
 const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
+const interaction = require('../../utils/interaction.js');
 
 function toDate(value) {
   if (!value) return null;
@@ -117,6 +119,8 @@ Page({
       reward_points: '',
       deadline: ''
     },
+    publish_errors: {},
+    publish_valid: false,
     accepting_id: '',
     completing_id: '',
     show_reward_modal: false,
@@ -125,7 +129,8 @@ Page({
     reward_points_input: ''
   },
 
-  onLoad() {
+  onLoad(options = {}) {
+    share.rememberInviter(options);
     this.loadTheme();
     this.initPage();
   },
@@ -216,12 +221,12 @@ Page({
   },
 
   async onPullDownRefresh() {
+    if (!interaction.canRefresh(this)) return;
     this.setData({ refreshing: true });
     try {
       await this.initPage();
     } finally {
-      wx.stopPullDownRefresh();
-      this.setData({ refreshing: false });
+      interaction.finishRefresh(this);
     }
   },
 
@@ -233,7 +238,9 @@ Page({
         description: '',
         reward_points: '',
         deadline: ''
-      }
+      },
+      publish_errors: {},
+      publish_valid: false
     });
   },
 
@@ -244,34 +251,64 @@ Page({
 
   onPublishInput(e) {
     const field = e.currentTarget.dataset.field;
+    const publish_form = {
+      ...this.data.publish_form,
+      [field]: e.detail.value
+    };
+    const validation = this.validatePublishForm(publish_form);
     this.setData({
-      publish_form: {
-        ...this.data.publish_form,
-        [field]: e.detail.value
-      }
+      publish_form,
+      publish_errors: validation.errors,
+      publish_valid: validation.valid
     });
   },
 
-  async publishCommission() {
-    const form = this.data.publish_form;
+  validatePublishForm(form = this.data.publish_form) {
     const reward_points = Number(form.reward_points);
+    const errors = {};
 
     if (!form.title.trim()) {
-      wx.showToast({ title: '请填写标题', icon: 'none' });
-      return;
+      errors.title = '请填写标题';
     }
     if (!form.description.trim()) {
-      wx.showToast({ title: '请填写描述', icon: 'none' });
-      return;
+      errors.description = '请填写描述';
     }
     if (!Number.isInteger(reward_points) || reward_points <= 0) {
-      wx.showToast({ title: '奖励积分无效', icon: 'none' });
-      return;
+      errors.reward_points = '奖励积分需为正整数';
     }
     if (reward_points > this.data.user_points.available_points) {
-      wx.showToast({ title: '可用积分不足', icon: 'none' });
+      errors.reward_points = '可用积分不足';
+    }
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors
+    };
+  },
+
+  publishCommission() {
+    const validation = this.validatePublishForm();
+    this.setData({
+      publish_errors: validation.errors,
+      publish_valid: validation.valid
+    });
+    if (!validation.valid) {
+      wx.showToast({ title: Object.values(validation.errors)[0] || '请检查表单', icon: 'none' });
       return;
     }
+
+    const form = this.data.publish_form;
+    this.selectComponent('#publishConfirm').show({
+      title: '确认发布委托',
+      content: `发布后将冻结 ${Number(form.reward_points)} 积分作为奖励。`,
+      confirmText: '确认发布',
+      cancelText: '再检查'
+    });
+  },
+
+  async executePublishCommission() {
+    const form = this.data.publish_form;
+    const reward_points = Number(form.reward_points);
+    if (this.data.publishing) return;
 
     this.setData({ publishing: true });
     try {
@@ -394,13 +431,14 @@ Page({
   onShareAppMessage() {
     return {
       title: '推协委托',
-      path: '/pages/commission/index'
+      path: share.appendShareParams('/pages/commission/index')
     };
   },
 
   onShareTimeline() {
     return {
-      title: '推协委托'
+      title: '推协委托',
+      query: share.appendShareParams('').replace(/^\?/, '')
     };
   },
 

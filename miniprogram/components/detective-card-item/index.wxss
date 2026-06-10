@@ -172,3 +172,25 @@
 .theme-dark .arrow {
   color: rgba(212, 175, 55, 0.70);
 }
+
+.font-large .name {
+  font-size: 32rpx;
+  line-height: 1.35;
+}
+
+.font-large .meta,
+.font-large .score-label {
+  font-size: 25rpx;
+  line-height: 1.45;
+}
+
+.font-xlarge .name {
+  font-size: 36rpx;
+  line-height: 1.38;
+}
+
+.font-xlarge .meta,
+.font-xlarge .score-label {
+  font-size: 28rpx;
+  line-height: 1.5;
+}
