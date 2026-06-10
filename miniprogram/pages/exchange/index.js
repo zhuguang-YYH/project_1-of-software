@@ -20,7 +20,7 @@ function formatTime(value) {
 function exchangeStatusText(status) {
   const map = {
     processing: '处理中',
-    pending: '处理中',
+    pending: '待领取',
     shipped: '待领取',
     completed: '已完成',
     received: '已领取',
@@ -43,10 +43,20 @@ function exchangeStatusColor(status) {
   return map[status] || '#5b6cff';
 }
 
+function goodTagText(tag_type, tag_text) {
+  return String(tag_text || ({
+    new: '新品',
+    limited: '限量',
+    limited_time: '限时'
+  })[tag_type] || '').trim();
+}
+
 function normalizeGoods(item = {}, available_points = 0) {
   const item_id = item.item_id || item._id || '';
   const exchange_points = Number(item.exchange_points || 0);
   const available_quantity = Number(item.available_quantity || 0);
+  const stock_warning_threshold = Math.max(0, Number(item.stock_warning_threshold === undefined ? 3 : item.stock_warning_threshold));
+  const tag_type = item.tag_type || '';
 
   return {
     ...item,
@@ -57,6 +67,10 @@ function normalizeGoods(item = {}, available_points = 0) {
     stock_icon: EXCHANGE_ASSETS.stockEmpty,
     exchange_points,
     available_quantity,
+    stock_warning_threshold,
+    tag_type,
+    tag_text: goodTagText(tag_type, item.tag_text),
+    is_stock_low: available_quantity <= stock_warning_threshold,
     max_exchange_quantity: exchange_points > 0
       ? Math.min(available_quantity, Math.floor(available_points / exchange_points))
       : 0,
@@ -68,10 +82,14 @@ function normalizeGoods(item = {}, available_points = 0) {
 
 function normalizeExchange(record = {}) {
   const exchange_id = record.exchange_id || record._id || '';
+  const pickup_code = record.pickup_code || '';
   return {
     ...record,
     exchange_id,
     item_name: record.item_name || record.goods_name || '兑换商品',
+    pickup_code,
+    pickup_qr_text: record.pickup_qr_text || (pickup_code ? `EXCHANGE:${exchange_id}:${pickup_code}` : ''),
+    can_pickup: !!pickup_code && ['pending', 'shipped'].includes(record.status),
     exchange_time_text: formatTime(record.created_at || record.exchange_time),
     handled_time_text: formatTime(record.handled_at),
     total_points: Number(record.total_points || record.points_cost || 0),
@@ -287,6 +305,31 @@ Page({
     } finally {
       this.setData({ exchanging: false });
     }
+  },
+
+  showTopUpGuide(e) {
+    const short_points = Number(e.currentTarget.dataset.short_points || 0);
+    wx.showActionSheet({
+      itemList: ['去每日谜题补分', '去事件委托补分'],
+      success: (res) => {
+        const url = res.tapIndex === 0 ? '/pages/puzzle/index' : '/pages/commission/index';
+        wx.navigateTo({ url });
+      },
+      fail: () => {
+        if (short_points > 0) {
+          wx.showToast({ title: `还差 ${short_points} 积分`, icon: 'none' });
+        }
+      }
+    });
+  },
+
+  copyPickupCredential(e) {
+    const text = e.currentTarget.dataset.text || '';
+    if (!text) return;
+    wx.setClipboardData({
+      data: text,
+      success: () => wx.showToast({ title: '已复制领取凭证', icon: 'success' })
+    });
   },
 
   onRetry() {

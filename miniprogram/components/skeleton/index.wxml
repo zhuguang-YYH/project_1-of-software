@@ -1,0 +1,14 @@
+<view class="skeleton-wrap variant-{{variant}}">
+  <view class="skeleton-title" wx:if="{{title}}">{{title}}</view>
+
+  <view class="skeleton-row" wx:for="{{rowList}}" wx:key="*this">
+    <view class="skeleton-rank" wx:if="{{variant === 'ranking'}}"></view>
+    <view class="skeleton-cover" wx:if="{{variant === 'media'}}"></view>
+    <view class="skeleton-body">
+      <view class="skeleton-line line-title"></view>
+      <view class="skeleton-line line-short"></view>
+      <view class="skeleton-line line-mid"></view>
+    </view>
+    <view class="skeleton-pill" wx:if="{{variant !== 'ranking'}}"></view>
+  </view>
+</view>

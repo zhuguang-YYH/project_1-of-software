@@ -67,6 +67,22 @@ function exchangeStatusText(status) {
   })[status] || status || '未知';
 }
 
+function exchangeGoodStatusText(status) {
+  return ({
+    available: '上架中',
+    offline: '已下架',
+    discontinued: '已停用'
+  })[status] || status || '未知';
+}
+
+function exchangeGoodTagText(tag_type, tag_text) {
+  return String(tag_text || ({
+    new: '新品',
+    limited: '限量',
+    limited_time: '限时'
+  })[tag_type] || '').trim();
+}
+
 function feedbackTypeText(type) {
   return ({
     general: '一般反馈',
@@ -100,6 +116,7 @@ Page({
     log_list: [],
     borrow_applications: [],
     exchange_records: [],
+    exchange_goods: [],
     tabs: [
       { key: 'puzzle', label: '谜题' },
       { key: 'activity', label: '活动' },
@@ -148,6 +165,12 @@ Page({
       { label: '活动奖励', value: 'activity' },
       { label: '书籍/资料', value: 'book' },
       { label: '其他', value: 'other' }
+    ],
+    exchangeTagOptions: [
+      { label: '无标签', value: '' },
+      { label: '新品', value: 'new' },
+      { label: '限量', value: 'limited' },
+      { label: '限时', value: 'limited_time' }
     ],
     recommendationCategoryOptions: [
       { label: '书籍', value: 'book' },
@@ -208,6 +231,9 @@ Page({
       exchange_points: '',
       original_cost: '',
       total_quantity: '',
+      tag_type: '',
+      tag_text: '',
+      stock_warning_threshold: '3',
       cover_url: ''
     },
     recommendationForm: {
@@ -261,6 +287,7 @@ Page({
         this.loadDashboard(),
         this.loadFeedback(),
         this.loadBorrowApplications(),
+        this.loadExchangeGoods(),
         this.loadExchangeRecords(),
         this.loadLogs(),
         this.loadSystemSettings()
@@ -339,6 +366,25 @@ Page({
     this.setData({ exchange_records: list });
   },
 
+  async loadExchangeGoods() {
+    const result = await adminService.getExchangeGoods({ page: 1, page_size: 50 });
+    if (!result.success) return;
+    const list = (result.data || []).map(item => {
+      const tag_text = exchangeGoodTagText(item.tag_type, item.tag_text);
+      return {
+        ...item,
+        item_id: item.item_id || item._id,
+        status_text: exchangeGoodStatusText(item.status),
+        tag_display: tag_text,
+        stock_text: `${Number(item.available_quantity || 0)}/${Number(item.total_quantity || 0)}`,
+        stock_warning: !!item.stock_warning,
+        can_online: item.status !== 'available',
+        can_offline: item.status === 'available'
+      };
+    });
+    this.setData({ exchange_goods: list });
+  },
+
   async loadSystemSettings() {
     const result = await adminService.getSystemSettings();
     if (!result.success) return;
@@ -358,7 +404,10 @@ Page({
     const tab = event.currentTarget.dataset.tab;
     this.setData({ tab });
     if (tab === 'borrow') this.loadBorrowApplications();
-    if (tab === 'exchange') this.loadExchangeRecords();
+    if (tab === 'exchange') {
+      this.loadExchangeGoods();
+      this.loadExchangeRecords();
+    }
     if (tab === 'feedback') this.loadFeedback();
     if (tab === 'logs') this.loadLogs();
   },
@@ -553,9 +602,13 @@ Page({
           exchange_points: '',
           original_cost: '',
           total_quantity: '',
+          tag_type: '',
+          tag_text: '',
+          stock_warning_threshold: '3',
           cover_url: ''
         }
       });
+      await this.loadExchangeGoods();
     }
   },
 
@@ -641,6 +694,22 @@ Page({
     if (ok) {
       await Promise.all([
         this.loadExchangeRecords(),
+        this.loadDashboard()
+      ]);
+    }
+  },
+
+  async updateExchangeGoodStatus(event) {
+    const { id, status } = event.currentTarget.dataset;
+    if (!id || !status) return;
+    const text = status === 'available' ? '商品已上架' : '商品已下架';
+
+    this.setData({ processing_id: id });
+    const ok = await this.submitAction('updateExchangeGoodStatus', { item_id: id, status }, text);
+    this.setData({ processing_id: '' });
+    if (ok) {
+      await Promise.all([
+        this.loadExchangeGoods(),
         this.loadDashboard()
       ]);
     }

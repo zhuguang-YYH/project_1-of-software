@@ -228,6 +228,30 @@
   color: #3a4cd1;
 }
 
+.goods-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin: -4rpx 0 14rpx;
+}
+
+.goods-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #3a4cd1;
+  background: #eef0ff;
+}
+
+.goods-tag.tag-limited,
+.goods-tag.tag-limited_time {
+  color: #92580d;
+  background: #fef3df;
+}
+
 /* 详情 */
 .goods-details,
 .exchange-details {
@@ -261,6 +285,75 @@
 }
 
 /* 价格 */
+.pickup-card {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #eef0ff, #f8fafc);
+}
+
+.pickup-qr {
+  width: 150rpx;
+  height: 150rpx;
+  flex: 0 0 150rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  border-radius: 14rpx;
+  background: #fff;
+  border: 2rpx dashed rgba(91, 108, 255, 0.35);
+}
+
+.pickup-qr-label {
+  font-size: 22rpx;
+  color: #8a96a8;
+}
+
+.pickup-qr-code {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #3a4cd1;
+}
+
+.pickup-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.pickup-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+}
+
+.pickup-desc {
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: #6b7890;
+}
+
+.pickup-copy {
+  align-self: flex-start;
+  height: 54rpx !important;
+  line-height: 54rpx !important;
+  padding: 0 18rpx !important;
+  margin: 4rpx 0 0 !important;
+  border: none !important;
+  border-radius: 999rpx !important;
+  background: #fff !important;
+  color: #3a4cd1 !important;
+  font-size: 23rpx !important;
+  font-weight: 700 !important;
+}
+
+.pickup-copy::after { border: none !important; }
+
 .goods-pricing {
   background: linear-gradient(135deg, #fef3df, #fff7e6);
   border-radius: 14rpx;
@@ -385,29 +478,6 @@
 }
 
 .error-retry::after { border: none !important; }
-
-/* 加载 */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  gap: 28rpx;
-}
-
-.loading-spinner {
-  width: 64rpx;
-  height: 64rpx;
-  border: 6rpx solid #eef0ff;
-  border-top-color: #5b6cff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loading-text { font-size: 28rpx; color: #8a96a8; }
 
 /* 弹窗 */
 .modal-overlay {

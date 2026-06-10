@@ -16,6 +16,17 @@ const DEFAULT_SYSTEM_SETTINGS = {
   commission_enabled: true
 };
 
+const EXCHANGE_GOOD_TAG_TEXT = {
+  new: '新品',
+  limited: '限量',
+  limited_time: '限时'
+};
+
+function normalizeExchangeGoodTag(value) {
+  const tag_type = String(value || '').trim();
+  return EXCHANGE_GOOD_TAG_TEXT[tag_type] ? tag_type : '';
+}
+
 function ok(data = null, message = '操作成功') {
   return { code: 0, data, message };
 }
@@ -204,6 +215,9 @@ function makeInventoryItem(data = {}) {
     exchange_points: toNumber(data.exchange_points, 0),
     original_cost: toNumber(data.original_cost, 0),
     cover_url: String(data.cover_url || '').trim(),
+    tag_type: normalizeExchangeGoodTag(data.tag_type),
+    tag_text: String(data.tag_text || '').trim(),
+    stock_warning_threshold: Math.max(0, toNumber(data.stock_warning_threshold, 3)),
     borrow_count: toNumber(data.borrow_count, 0),
     exchanged_count: toNumber(data.exchanged_count, 0),
     genre: String(data.genre || '').trim(),
@@ -462,11 +476,75 @@ async function admin_createExchangeGood(event, admin_user) {
     available_quantity: total_quantity,
     exchange_points,
     original_cost: event.original_cost || exchange_points,
+    tag_type: event.tag_type,
+    tag_text: event.tag_text,
+    stock_warning_threshold: event.stock_warning_threshold,
     cover_url: event.cover_url
   });
   const res = await db.collection('inventory_items').add({ data });
   await logOperation(admin_user, 'create_exchange_good', 'inventory_items', res._id, data);
   return ok({ item_id: res._id }, '商品已添加');
+}
+
+function normalizeExchangeGood(item = {}) {
+  const item_id = item.item_id || item._id || '';
+  const available_quantity = toNumber(item.available_quantity, 0);
+  const stock_warning_threshold = Math.max(0, toNumber(item.stock_warning_threshold, 3));
+  const tag_type = normalizeExchangeGoodTag(item.tag_type);
+  return {
+    item_id,
+    item_name: item.item_name || '',
+    description: item.description || '',
+    category: item.category || 'general',
+    cover_url: item.cover_url || '',
+    exchange_points: toNumber(item.exchange_points, 0),
+    original_cost: toNumber(item.original_cost, 0),
+    total_quantity: toNumber(item.total_quantity, 0),
+    available_quantity,
+    exchanged_count: toNumber(item.exchanged_count, 0),
+    status: item.status || 'available',
+    tag_type,
+    tag_text: String(item.tag_text || EXCHANGE_GOOD_TAG_TEXT[tag_type] || '').trim(),
+    stock_warning_threshold,
+    stock_warning: available_quantity <= stock_warning_threshold,
+    created_at: item.created_at || '',
+    updated_at: item.updated_at || ''
+  };
+}
+
+async function admin_getExchangeGoods(event) {
+  const page = toNumber(event.page, 1);
+  const page_size = toNumber(event.page_size, 50);
+  const where = { item_type: 'exchange_good', status: _.neq('discontinued') };
+  const list = await safeList('inventory_items', {
+    where,
+    orderBy: { field: 'created_at', direction: 'desc' },
+    skip: (page - 1) * page_size,
+    limit: page_size
+  });
+  const total = await safeCount('inventory_items', where);
+
+  return ok({
+    list: list.map(normalizeExchangeGood),
+    total,
+    page,
+    page_size,
+    has_more: page * page_size < total
+  });
+}
+
+async function admin_updateExchangeGoodStatus(event, admin_user) {
+  const item_id = event.item_id;
+  const status = String(event.status || '').trim();
+  if (!item_id) return fail('商品编号不能为空');
+  if (!['available', 'offline'].includes(status)) return fail('不支持的商品状态');
+
+  const item = await getDoc('inventory_items', item_id);
+  if (!item || item.item_type !== 'exchange_good') return fail('兑换商品不存在');
+
+  await updateInventoryItem(item_id, { status });
+  await logOperation(admin_user, 'update_exchange_good_status', 'inventory_items', item_id, { status }, { status: item.status || 'available' });
+  return ok(null, status === 'available' ? '商品已上架' : '商品已下架');
 }
 
 async function admin_getBorrowApplications(event) {
@@ -833,6 +911,8 @@ exports.main = async (event) => {
     createActivity: admin_createActivity,
     createBorrowItem: admin_createBorrowItem,
     createExchangeGood: admin_createExchangeGood,
+    getExchangeGoods: admin_getExchangeGoods,
+    updateExchangeGoodStatus: admin_updateExchangeGoodStatus,
     getBorrowApplications: admin_getBorrowApplications,
     updateBorrowStatus: admin_updateBorrowStatus,
     getExchangeRecords: admin_getExchangeRecords,

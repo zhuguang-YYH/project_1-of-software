@@ -189,12 +189,44 @@
           <view class="picker-box">{{exchangeForm.category === 'general' ? '通用' : exchangeForm.category === 'merch' ? '社团周边' : exchangeForm.category === 'activity' ? '活动奖励' : exchangeForm.category === 'book' ? '书籍/资料' : '其他'}}</view>
         </picker>
       </view>
+      <view class="grid-2">
+        <view class="field">
+          <text>运营标签</text>
+          <picker range="{{exchangeTagOptions}}" range-key="label" data-form="exchangeForm" data-field="tag_type" data-options="exchangeTagOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{exchangeForm.tag_type === 'new' ? '新品' : exchangeForm.tag_type === 'limited' ? '限量' : exchangeForm.tag_type === 'limited_time' ? '限时' : '无标签'}}</view>
+          </picker>
+        </view>
+        <view class="field"><text>标签文案</text><input value="{{exchangeForm.tag_text}}" data-form="exchangeForm" data-field="tag_text" bindinput="onFormInput" placeholder="默认使用标签名" /></view>
+      </view>
       <view class="grid-3">
         <view class="field"><text>兑换积分</text><input type="number" value="{{exchangeForm.exchange_points}}" data-form="exchangeForm" data-field="exchange_points" bindinput="onFormInput" /></view>
         <view class="field"><text>原价</text><input type="number" value="{{exchangeForm.original_cost}}" data-form="exchangeForm" data-field="original_cost" bindinput="onFormInput" /></view>
         <view class="field"><text>库存</text><input type="number" value="{{exchangeForm.total_quantity}}" data-form="exchangeForm" data-field="total_quantity" bindinput="onFormInput" /></view>
       </view>
+      <view class="field"><text>库存预警阈值</text><input type="number" value="{{exchangeForm.stock_warning_threshold}}" data-form="exchangeForm" data-field="stock_warning_threshold" bindinput="onFormInput" placeholder="默认 3" /></view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createExchangeGood">添加商品</button>
+
+      <view class="section-divider"></view>
+      <view class="panel-title compact">商品运营管理</view>
+      <view class="ops-card" wx:for="{{exchange_goods}}" wx:key="item_id">
+        <view class="ops-head">
+          <view>
+            <text class="ops-title">{{item.item_name}}</text>
+            <text class="ops-meta">{{item.exchange_points}} 积分 · 库存 {{item.stock_text}}</text>
+          </view>
+          <text class="badge {{item.status === 'available' ? 'blue' : ''}}">{{item.status_text}}</text>
+        </view>
+        <view class="ops-line">
+          <text wx:if="{{item.tag_display}}">{{item.tag_display}}</text>
+          <text wx:else>无标签</text>
+          <text class="{{item.stock_warning ? 'warn-text' : ''}}">{{item.stock_warning ? '库存预警' : '库存正常'}}</text>
+        </view>
+        <view class="ops-actions">
+          <button wx:if="{{item.can_online}}" class="small-btn" data-id="{{item.item_id}}" data-status="available" loading="{{processing_id === item.item_id && saving}}" disabled="{{saving}}" bindtap="updateExchangeGoodStatus">上架</button>
+          <button wx:if="{{item.can_offline}}" class="small-btn ghost" data-id="{{item.item_id}}" data-status="offline" loading="{{processing_id === item.item_id && saving}}" disabled="{{saving}}" bindtap="updateExchangeGoodStatus">下架</button>
+        </view>
+      </view>
+      <view class="empty" wx:if="{{exchange_goods.length === 0}}">暂无兑换商品</view>
 
       <view class="section-divider"></view>
       <view class="panel-title compact">兑换领取处理</view>
@@ -209,6 +241,10 @@
         <view class="ops-line">
           <text>数量 {{item.quantity_text}}</text>
           <text>{{item.total_cost_text}} 积分</text>
+        </view>
+        <view class="ops-line" wx:if="{{item.pickup_code}}">
+          <text>领取码</text>
+          <text>{{item.pickup_code}}</text>
         </view>
         <view class="ops-actions" wx:if="{{item.can_process}}">
           <button class="small-btn success" data-id="{{item.exchange_id}}" data-status="completed" loading="{{processing_id === item.exchange_id && saving}}" disabled="{{saving}}" bindtap="updateExchangeStatus">完成领取</button>

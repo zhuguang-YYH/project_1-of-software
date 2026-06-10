@@ -1,8 +1,5 @@
 <view class="page theme-{{theme}}">
-  <view class="loading-state" wx:if="{{loading}}">
-    <view class="loading-spinner"></view>
-    <text>加载推荐中...</text>
-  </view>
+  <skeleton wx:if="{{loading}}" variant="media" rows="3" title="加载推荐中..." />
 
   <scroll-view
     class="scroll-view"
@@ -11,7 +8,7 @@
     refresher-triggered="{{refreshing}}"
     bindrefresherrefresh="onPullDownRefresh"
     bindscrolltolower="loadMore"
-    wx:else>
+    wx:if="{{!loading}}">
 
     <view class="header">
       <text class="title">推荐内容</text>
@@ -43,7 +40,7 @@
       </view>
     </scroll-view>
 
-    <view class="error-banner" wx:if="{{error}}">
+    <view class="error-banner" wx:if="{{error && list.length > 0}}">
       <text>{{error}}</text>
       <button size="mini" bindtap="onRetry">重试</button>
     </view>
@@ -74,10 +71,14 @@
       <text wx:else>已浏览全部推荐</text>
     </view>
 
-    <view class="empty-state" wx:if="{{!error && list.length === 0}}">
-      <text class="empty-title">暂无推荐内容</text>
-      <text class="empty-text">后台发布后会显示在这里。</text>
-    </view>
+    <empty-state
+      wx:if="{{list.length === 0}}"
+      icon="{{error ? '!' : '荐'}}"
+      title="{{error ? error : '暂无推荐内容'}}"
+      description="{{error ? '请检查网络后重试' : '后台发布后会显示在这里。'}}"
+      action-text="{{error ? '重试' : ''}}"
+      bind:action="onRetry"
+    />
   </scroll-view>
 
   <view class="modal-mask" wx:if="{{show_detail}}" bindtap="closeDetail">

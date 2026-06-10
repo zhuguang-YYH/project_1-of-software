@@ -1,8 +1,5 @@
 <view class="container theme-{{theme}}">
-  <view class="loading-state" wx:if="{{loading}}">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">加载中...</text>
-  </view>
+  <skeleton wx:if="{{loading}}" variant="media" rows="3" title="加载兑换商品中..." />
 
   <scroll-view
     class="scroll-view"
@@ -59,7 +56,11 @@
                   <image class="badge-icon" src="{{item.stock_icon}}" mode="aspectFit" />
                   <text>已兑完</text>
                 </view>
-                <view class="goods-badge stock-low" wx:elif="{{item.available_quantity <= 3}}">仅剩{{item.available_quantity}}</view>
+                <view class="goods-badge stock-low" wx:elif="{{item.is_stock_low}}">仅剩{{item.available_quantity}}</view>
+              </view>
+
+              <view class="goods-tags" wx:if="{{item.tag_text}}">
+                <text class="goods-tag tag-{{item.tag_type}}">{{item.tag_text}}</text>
               </view>
 
               <view class="goods-details">
@@ -93,7 +94,7 @@
               data-item_id="{{item.item_id}}"
               bindtap="showExchangeModal">立即兑换</button>
             <button class="btn-soldout" wx:elif="{{item.is_sold_out}}">已兑完</button>
-            <button class="btn-insufficient" wx:else>差 {{item.short_points}} 积分</button>
+            <button class="btn-insufficient" wx:else data-short_points="{{item.short_points}}" bindtap="showTopUpGuide">差 {{item.short_points}} 积分，去补分</button>
           </view>
         </view>
 
@@ -125,6 +126,17 @@
           <view class="detail-item" wx:if="{{item.pickup_code}}">
             <text class="detail-label">领取码</text>
             <text class="detail-value">{{item.pickup_code}}</text>
+          </view>
+        </view>
+        <view class="pickup-card" wx:if="{{item.can_pickup}}">
+          <view class="pickup-qr">
+            <text class="pickup-qr-label">二维码</text>
+            <text class="pickup-qr-code">{{item.pickup_code}}</text>
+          </view>
+          <view class="pickup-info">
+            <text class="pickup-title">待领取凭证</text>
+            <text class="pickup-desc">到社团领取时出示领取码，或复制二维码内容给管理员核验。</text>
+            <button class="pickup-copy" data-text="{{item.pickup_qr_text}}" bindtap="copyPickupCredential">复制二维码内容</button>
           </view>
         </view>
       </view>

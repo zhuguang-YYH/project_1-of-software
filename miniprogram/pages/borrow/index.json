@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "物资借阅",
-  "enableShareAppMessage": true
+  "enableShareAppMessage": true,
+  "usingComponents": {
+    "skeleton": "/components/skeleton/index"
+  }
 }

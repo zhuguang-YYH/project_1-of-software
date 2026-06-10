@@ -1,4 +1,8 @@
 {
   "navigationBarTitleText": "每日谜题",
-  "enableShareAppMessage": true
+  "enableShareAppMessage": true,
+  "usingComponents": {
+    "empty-state": "/components/empty-state/index",
+    "common-loading": "/components/common/loading"
+  }
 }

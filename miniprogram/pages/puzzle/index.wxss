@@ -5,62 +5,6 @@
   background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
 }
 
-/* 错误状态 */
-.error-state,
-.no-puzzle-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 720rpx;
-  gap: 28rpx;
-  padding: 0 40rpx;
-}
-
-.error-text {
-  font-size: 28rpx;
-  color: #a73a3a;
-  text-align: center;
-}
-
-.retry-btn {
-  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
-  color: #fff !important;
-  width: 280rpx;
-  border-radius: 16rpx !important;
-  height: 80rpx;
-  line-height: 80rpx;
-  font-size: 28rpx;
-  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.25);
-}
-
-.no-puzzle-icon {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f5b041, #e89d24);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 80rpx;
-  color: #fff;
-  font-weight: 800;
-  box-shadow: 0 12rpx 32rpx rgba(245, 176, 65, 0.35);
-}
-
-.no-puzzle-title {
-  font-size: 38rpx;
-  font-weight: 800;
-  color: #1a1f3a;
-}
-
-.no-puzzle-desc {
-  font-size: 26rpx;
-  color: #4a5577;
-  text-align: center;
-  line-height: 1.6;
-}
-
 /* 谜题卡片 */
 .puzzle-card {
   background: #fff;
@@ -372,27 +316,3 @@
   font-weight: 700;
 }
 
-/* 加载 */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 80vh;
-  gap: 28rpx;
-}
-
-.loading-spinner {
-  width: 64rpx;
-  height: 64rpx;
-  border: 6rpx solid #eef0ff;
-  border-top-color: #5b6cff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text { font-size: 28rpx; color: #8a96a8; }

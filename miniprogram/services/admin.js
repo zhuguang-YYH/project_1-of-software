@@ -62,6 +62,10 @@ class AdminService {
     return this.mutate('updateExchangeStatus', data, '更新兑换状态失败');
   }
 
+  async updateExchangeGoodStatus(data) {
+    return this.mutate('updateExchangeGoodStatus', data, '更新商品状态失败');
+  }
+
   async updateFeedback(data) {
     return this.mutate('updateFeedback', data, '更新反馈状态失败');
   }
@@ -76,6 +80,10 @@ class AdminService {
 
   async getExchangeRecords(options = {}) {
     return this.list('getExchangeRecords', options, '获取兑换记录失败');
+  }
+
+  async getExchangeGoods(options = {}) {
+    return this.list('getExchangeGoods', options, '获取兑换商品失败');
   }
 
   async getFeedback(options = {}) {

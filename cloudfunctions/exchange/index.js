@@ -67,10 +67,37 @@ function buildExchangeRequestId(user_id, client_request_id) {
   return `exchange_${user_id}_${safe}`;
 }
 
+const GOOD_TAG_TEXT = {
+  new: '新品',
+  limited: '限量',
+  limited_time: '限时'
+};
+
+function normalizeTagType(value) {
+  const tag_type = String(value || '').trim();
+  return GOOD_TAG_TEXT[tag_type] ? tag_type : '';
+}
+
+function readTagText(item = {}) {
+  const tag_type = normalizeTagType(item.tag_type);
+  return String(item.tag_text || GOOD_TAG_TEXT[tag_type] || '').trim();
+}
+
+function buildPickupCode(exchange_id) {
+  const seed = String(exchange_id || Date.now()).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return seed.slice(-6).padStart(6, '0');
+}
+
+function buildPickupQrText(exchange_id, pickup_code) {
+  return `EXCHANGE:${exchange_id}:${pickup_code}`;
+}
+
 function normalizeGood(item = {}) {
   const item_id = item.item_id || item._id || '';
   const exchange_points = toNumber(item.exchange_points);
   const available_quantity = toNumber(item.available_quantity);
+  const tag_type = normalizeTagType(item.tag_type);
+  const stock_warning_threshold = Math.max(0, toNumber(item.stock_warning_threshold === undefined ? 3 : item.stock_warning_threshold));
 
   return {
     item_id,
@@ -84,6 +111,9 @@ function normalizeGood(item = {}) {
     available_quantity,
     total_quantity: toNumber(item.total_quantity || available_quantity),
     status: item.status || 'available',
+    tag_type,
+    tag_text: readTagText(item),
+    stock_warning_threshold,
     exchanged_count: toNumber(item.exchanged_count),
     created_at: item.created_at || '',
     updated_at: item.updated_at || ''
@@ -102,6 +132,8 @@ function normalizeRecord(item = {}) {
     points_cost: toNumber(item.points_cost),
     total_cost: toNumber(item.total_cost || item.points_cost),
     status: item.status || 'pending',
+    pickup_code: item.pickup_code || '',
+    pickup_qr_text: item.pickup_qr_text || '',
     exchange_time: item.exchange_time || item.created_at || '',
     created_at: item.created_at || item.exchange_time || '',
     handled_by: item.handled_by || '',
@@ -251,7 +283,7 @@ async function exchange_getGoods(event) {
     const count_res = await db.collection('inventory_items').where(where).count();
     const list = (res.data || [])
       .map(normalizeGood)
-      .filter(item => item.available_quantity > 0 && item.exchange_points > 0);
+      .filter(item => item.status !== 'offline' && item.available_quantity > 0 && item.exchange_points > 0);
 
     return ok({
       list,
@@ -323,6 +355,8 @@ async function exchange_exchange(event) {
           return ok({
             exchange_id: old.exchange_id || old._id,
             points_cost: toNumber(old.points_cost || old.total_cost),
+            pickup_code: old.pickup_code || '',
+            pickup_qr_text: old.pickup_qr_text || '',
             idempotent: true
           }, '兑换成功');
         }
@@ -335,6 +369,7 @@ async function exchange_exchange(event) {
 
     const good = await getGoodById(item_id);
     if (!good) return fail('兑换商品不存在');
+    if (good.status === 'offline' || good.status === 'discontinued') return fail('该商品已下架');
     if (good.available_quantity < quantity) return fail('库存不足');
     if (good.exchange_points <= 0) return fail('该商品暂不可兑换');
 
@@ -350,6 +385,8 @@ async function exchange_exchange(event) {
     points_frozen = true;
 
     // 3) 写兑换记录
+    const pickup_code = exchange_doc_id ? buildPickupCode(exchange_doc_id) : '';
+    const pickup_qr_text = pickup_code ? buildPickupQrText(exchange_doc_id, pickup_code) : '';
     const data = {
       user_id,
       item_id,
@@ -360,6 +397,8 @@ async function exchange_exchange(event) {
       points_cost: total_cost,
       total_cost,
       status: 'pending',
+      pickup_code,
+      pickup_qr_text,
       client_request_id,
       exchange_time: db.serverDate(),
       created_at: db.serverDate(),
@@ -372,7 +411,14 @@ async function exchange_exchange(event) {
     } else {
       const res = await db.collection('exchange_records').add({ data });
       exchange_doc_id = res._id;
-      await db.collection('exchange_records').doc(res._id).update({ data: { exchange_id: res._id } });
+      const next_pickup_code = buildPickupCode(exchange_doc_id);
+      await db.collection('exchange_records').doc(res._id).update({
+        data: {
+          exchange_id: res._id,
+          pickup_code: next_pickup_code,
+          pickup_qr_text: buildPickupQrText(exchange_doc_id, next_pickup_code)
+        }
+      });
     }
 
     // 兑换通知（best-effort）：仅当用户已填学号时下发
@@ -387,7 +433,13 @@ async function exchange_exchange(event) {
       }, 'pages/exchange/index');
     }
 
-    return ok({ exchange_id: exchange_doc_id, points_cost: total_cost }, '兑换成功');
+    const final_pickup_code = buildPickupCode(exchange_doc_id);
+    return ok({
+      exchange_id: exchange_doc_id,
+      points_cost: total_cost,
+      pickup_code: final_pickup_code,
+      pickup_qr_text: buildPickupQrText(exchange_doc_id, final_pickup_code)
+    }, '兑换成功');
   } catch (error) {
     // 回滚：按已完成的步骤逆序回退
     if (points_frozen && user_id && total_cost > 0) {

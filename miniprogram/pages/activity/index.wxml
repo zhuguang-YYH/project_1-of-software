@@ -1,8 +1,5 @@
 <view class="container theme-{{theme}}">
-  <view class="loading-state" wx:if="{{loading}}">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">加载中...</text>
-  </view>
+  <skeleton wx:if="{{loading}}" variant="card" rows="3" title="加载活动中..." />
 
   <scroll-view
     class="scroll-view"

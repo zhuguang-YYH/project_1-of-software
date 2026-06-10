@@ -1,15 +1,23 @@
-<view class="container theme-{{theme}}" wx:if="{{!loading}}">
-  <view class="error-state" wx:if="{{error}}">
-    <text class="error-text">{{error}}</text>
-    <button class="retry-btn" bindtap="onRetry">重试</button>
-  </view>
+<common-loading visible="{{loading}}" title="加载谜题中..." mask="{{false}}" />
 
-  <view class="no-puzzle-state" wx:elif="{{!puzzle}}">
-    <view class="no-puzzle-icon">?</view>
-    <text class="no-puzzle-title">今日暂无谜题</text>
-    <text class="no-puzzle-desc">管理员还未发布今日谜题，稍后再来看看。</text>
-    <button class="retry-btn" bindtap="onRetry">刷新</button>
-  </view>
+<view class="container theme-{{theme}}" wx:if="{{!loading}}">
+  <empty-state
+    wx:if="{{error}}"
+    icon="!"
+    title="{{error}}"
+    description="请检查网络后重试"
+    action-text="重试"
+    bind:action="onRetry"
+  />
+
+  <empty-state
+    wx:elif="{{!puzzle}}"
+    icon="?"
+    title="今日暂无谜题"
+    description="管理员还未发布今日谜题，稍后再来看看。"
+    action-text="刷新"
+    bind:action="onRetry"
+  />
 
   <view class="puzzle-card" wx:elif="{{puzzle}}">
     <view class="puzzle-header">
@@ -85,9 +93,4 @@
       </view>
     </view>
   </view>
-</view>
-
-<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
-  <view class="loading-spinner"></view>
-  <text class="loading-text">加载谜题中...</text>
 </view>

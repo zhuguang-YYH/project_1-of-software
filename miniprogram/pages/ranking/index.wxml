@@ -146,7 +146,4 @@
   </view>
 </view>
 
-<view class="loading-state theme-{{theme}}" wx:elif="{{loading}}">
-  <view class="loading-spinner"></view>
-  <text class="loading-text">加载排行中…</text>
-</view>
+<skeleton wx:elif="{{loading}}" variant="ranking" rows="4" title="加载排行中..." />

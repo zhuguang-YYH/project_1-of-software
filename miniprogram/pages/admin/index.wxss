@@ -414,6 +414,11 @@ page {
   background: #e0e4ff;
 }
 
+.warn-text {
+  color: #b45309;
+  font-weight: 700;
+}
+
 .feedback-content {
   display: block;
   margin-top: 14rpx;
