@@ -147,5 +147,6 @@
     visible="{{show_card_modal}}"
     loading="{{card_loading}}"
     card="{{selected_card}}"
+    theme="{{theme}}"
     bind:close="closeCardModal" />
 </view>

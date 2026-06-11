@@ -19,6 +19,17 @@ function formatTime(value) {
   return date ? format.formatDate(date, 'YYYY-MM-DD HH:mm') : '';
 }
 
+function formatDeadlineParts(value) {
+  const date = toDate(value);
+  return date ? {
+    deadline_date_text: format.formatDate(date, 'YYYY-MM-DD'),
+    deadline_time_text: format.formatDate(date, 'HH:mm')
+  } : {
+    deadline_date_text: '长期',
+    deadline_time_text: '有效'
+  };
+}
+
 function statusText(status) {
   const map = {
     recruiting: '招募中',
@@ -52,6 +63,7 @@ function normalizeCommission(item = {}) {
     publisher_name: item.publisher_name || '匿名侦探',
     created_text: formatTime(item.created_at),
     deadline_text: item.deadline ? formatTime(item.deadline) : '长期有效',
+    ...formatDeadlineParts(item.deadline),
     status_text: statusText(item.status),
     can_accept: !expired && !item.is_mine && !my_acceptance && ['recruiting', 'in_progress'].includes(item.status),
     is_expired: expired,

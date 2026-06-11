@@ -308,6 +308,29 @@
   word-break: break-all;
 }
 
+.deadline-value {
+  margin-top: 6rpx;
+  color: #3a4cd1;
+  font-weight: 800;
+  text-align: center;
+}
+
+.deadline-date,
+.deadline-time {
+  display: block;
+  line-height: 1.28;
+  white-space: nowrap;
+}
+
+.deadline-date {
+  font-size: 26rpx;
+}
+
+.deadline-time {
+  margin-top: 4rpx;
+  font-size: 28rpx;
+}
+
 .card-actions {
   margin-top: 24rpx;
   display: flex;
@@ -651,5 +674,194 @@
   margin-bottom: 12rpx;
   font-size: 28rpx;
   color: #334155;
+}
+
+/* 黑金主题：委托页局部控件可读性修正 */
+.theme-gold.page {
+  background: #0a0a0a !important;
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .summary {
+  color: #f4ecd6 !important;
+  background: linear-gradient(135deg, #14100a 0%, #211909 55%, #3b2a0b 100%) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.28);
+  box-shadow: 0 18rpx 42rpx rgba(0, 0, 0, 0.42);
+}
+
+.theme-gold .summary::before {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.theme-gold .summary-label {
+  color: rgba(244, 236, 214, 0.72) !important;
+}
+
+.theme-gold .summary-value,
+.theme-gold .summary-value.frozen {
+  color: #f8e7a8 !important;
+}
+
+.theme-gold .publish-btn,
+.theme-gold .primary-btn,
+.theme-gold .small-primary,
+.theme-gold .modal-actions .primary-btn {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 12rpx 28rpx rgba(212, 175, 55, 0.24) !important;
+}
+
+.theme-gold .secondary-btn,
+.theme-gold .ghost-btn,
+.theme-gold .modal-actions .secondary-btn {
+  color: #f4ecd6 !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18) !important;
+}
+
+.theme-gold .tab-nav,
+.theme-gold .modal,
+.theme-gold .modal-actions {
+  background: #151515 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.28);
+}
+
+.theme-gold .tab-item {
+  color: rgba(244, 236, 214, 0.70) !important;
+}
+
+.theme-gold .tab-item.active {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 8rpx 20rpx rgba(212, 175, 55, 0.24) !important;
+}
+
+.theme-gold .commission-card {
+  color: #f4ecd6 !important;
+  background: #151515 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.32);
+}
+
+.theme-gold .commission-card::before {
+  background: linear-gradient(180deg, #f8e7a8 0%, #d4af37 58%, #8f6a16 100%);
+}
+
+.theme-gold .card-title,
+.theme-gold .modal-head,
+.theme-gold .field-label,
+.theme-gold .receiver,
+.theme-gold .empty-title,
+.theme-gold .reward-name {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .card-meta,
+.theme-gold .acceptance-meta,
+.theme-gold .desc,
+.theme-gold .counter,
+.theme-gold .hint,
+.theme-gold .empty-text,
+.theme-gold .no-acceptance,
+.theme-gold .loading-text {
+  color: rgba(244, 236, 214, 0.72) !important;
+}
+
+.theme-gold .status,
+.theme-gold .status-recruiting,
+.theme-gold .status-in_progress,
+.theme-gold .status-accepted,
+.theme-gold .status-completed,
+.theme-gold .status-resolved,
+.theme-gold .status-rewarded {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 100%) !important;
+}
+
+.theme-gold .info-item {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .info-label {
+  color: rgba(244, 236, 214, 0.68) !important;
+}
+
+.theme-gold .info-value,
+.theme-gold .deadline-value {
+  color: #f8e7a8 !important;
+}
+
+.theme-gold .acceptance-list,
+.theme-gold .acceptance-item {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .no-acceptance,
+.theme-gold .empty-state {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.12);
+}
+
+.theme-gold .card-actions .claim-btn,
+.theme-gold .card-actions .claim-btn.status-btn-accepted,
+.theme-gold .card-actions .claim-btn.status-btn-in_progress {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 12rpx 26rpx rgba(212, 175, 55, 0.22) !important;
+}
+
+.theme-gold .card-actions .claim-btn.expired-btn,
+.theme-gold .card-actions .claim-btn.owner-btn,
+.theme-gold .card-actions .claim-btn.unavailable-btn,
+.theme-gold .card-actions .claim-btn.status-btn-withdrawn,
+.theme-gold .card-actions .claim-btn.status-btn-closed {
+  color: rgba(244, 236, 214, 0.78) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.theme-gold .card-actions .claim-btn.accepted-btn,
+.theme-gold .card-actions .claim-btn.status-btn-completed,
+.theme-gold .card-actions .claim-btn.status-btn-rewarded,
+.theme-gold .card-actions .claim-btn.status-btn-resolved {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #ffe9a3 0%, #cfa93a 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(212, 175, 55, 0.20) !important;
+}
+
+.theme-gold .card-actions .claim-btn[disabled] {
+  opacity: 1 !important;
+}
+
+.theme-gold .modal-mask {
+  background: rgba(0, 0, 0, 0.68) !important;
+}
+
+.theme-gold .close-btn {
+  color: #f8e7a8 !important;
+  background: rgba(212, 175, 55, 0.12) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.22) !important;
+}
+
+.theme-gold .field input,
+.theme-gold .field textarea,
+.theme-gold .reward-input,
+.theme-gold .picker-input {
+  color: #f4ecd6 !important;
+  background: #101010 !important;
+  border-color: rgba(212, 175, 55, 0.24) !important;
+}
+
+.theme-gold .field-error {
+  color: #ffb4a8 !important;
+}
+
+.theme-gold .error-banner {
+  color: #ffb4a8 !important;
+  background: rgba(127, 29, 29, 0.26) !important;
+  border: 1rpx solid rgba(248, 113, 113, 0.22);
 }
 

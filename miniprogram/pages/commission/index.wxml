@@ -56,7 +56,10 @@
           </view>
           <view class="info-item">
             <text class="info-label">截止</text>
-            <text class="info-value">{{item.deadline_text}}</text>
+            <view class="deadline-value">
+              <text class="deadline-date">{{item.deadline_date_text}}</text>
+              <text class="deadline-time">{{item.deadline_time_text}}</text>
+            </view>
           </view>
         </view>
 

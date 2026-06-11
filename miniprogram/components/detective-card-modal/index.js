@@ -11,6 +11,10 @@ Component({
     card: {
       type: Object,
       value: null
+    },
+    theme: {
+      type: String,
+      value: 'blue'
     }
   },
 

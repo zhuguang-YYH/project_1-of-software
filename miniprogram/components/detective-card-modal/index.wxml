@@ -1,4 +1,4 @@
-<view class="modal-mask" wx:if="{{visible}}" bindtap="close">
+<view class="modal-mask theme-{{theme}}" wx:if="{{visible}}" bindtap="close">
   <view class="card-modal" catchtap="noop">
     <view class="modal-header">
       <text class="modal-title">侦探名片</text>

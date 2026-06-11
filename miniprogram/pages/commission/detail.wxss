@@ -161,6 +161,29 @@
   line-height: 1.35;
 }
 
+.deadline-value {
+  margin-top: 8rpx;
+  color: #3a4cd1;
+  font-weight: 800;
+  text-align: center;
+}
+
+.deadline-date,
+.deadline-time {
+  display: block;
+  line-height: 1.28;
+  white-space: nowrap;
+}
+
+.deadline-date {
+  font-size: 26rpx;
+}
+
+.deadline-time {
+  margin-top: 4rpx;
+  font-size: 30rpx;
+}
+
 .detail-section {
   margin-top: 22rpx;
 }
@@ -218,4 +241,78 @@
   background: #f7f9fc;
   color: #8a96a8;
   font-size: 25rpx;
+}
+
+/* 黑金主题：委托详情页局部控件可读性修正 */
+.theme-gold.page {
+  background: #0a0a0a !important;
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .hero-card,
+.theme-gold .detail-section {
+  color: #f4ecd6 !important;
+  background: #151515 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.32);
+}
+
+.theme-gold .hero-card::before {
+  background: linear-gradient(180deg, #f8e7a8 0%, #d4af37 58%, #8f6a16 100%);
+}
+
+.theme-gold .title,
+.theme-gold .section-title,
+.theme-gold .receiver {
+  color: #f4ecd6 !important;
+}
+
+.theme-gold .meta,
+.theme-gold .description,
+.theme-gold .acceptance-meta,
+.theme-gold .progress-label,
+.theme-gold .loading-text,
+.theme-gold .error-state {
+  color: rgba(244, 236, 214, 0.72) !important;
+}
+
+.theme-gold .status,
+.theme-gold .status-recruiting,
+.theme-gold .status-in_progress,
+.theme-gold .status-accepted,
+.theme-gold .status-completed,
+.theme-gold .status-resolved,
+.theme-gold .status-rewarded {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 100%) !important;
+}
+
+.theme-gold .info-item {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .info-label {
+  color: rgba(244, 236, 214, 0.68) !important;
+}
+
+.theme-gold .info-value,
+.theme-gold .deadline-value,
+.theme-gold .progress-number {
+  color: #f8e7a8 !important;
+}
+
+.theme-gold .acceptance-card {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+}
+
+.theme-gold .empty-state {
+  color: rgba(244, 236, 214, 0.72) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.12);
+}
+
+.theme-gold .loading-spinner {
+  border-color: rgba(212, 175, 55, 0.18) !important;
+  border-top-color: #d4af37 !important;
 }
