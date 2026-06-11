@@ -267,12 +267,15 @@
 }
 
 .desc {
-  display: block;
+  display: -webkit-box;
   margin-top: 22rpx;
   font-size: 27rpx;
   line-height: 1.6;
   color: #445166;
-  white-space: pre-wrap;
+  overflow: hidden;
+  word-break: break-word;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .info-row {
@@ -314,6 +317,114 @@
 .card-actions button {
   margin: 0;
   min-width: 184rpx;
+}
+
+.card-actions .claim-btn {
+  position: relative;
+  width: 100% !important;
+  height: 76rpx !important;
+  line-height: 76rpx !important;
+  border-radius: 999rpx !important;
+  overflow: hidden;
+  font-size: 28rpx !important;
+  letter-spacing: 2rpx;
+  background: linear-gradient(135deg, #6f7cff 0%, #4b5de8 100%) !important;
+  box-shadow: 0 12rpx 24rpx rgba(75, 93, 232, 0.28);
+}
+
+.card-actions .claim-btn::before {
+  content: '';
+  position: absolute;
+  left: 22rpx;
+  right: 22rpx;
+  top: 8rpx;
+  height: 2rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.card-actions .claim-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 6rpx 14rpx rgba(75, 93, 232, 0.24);
+}
+
+.card-actions .claim-btn.expired-btn {
+  color: #92400e !important;
+  background: linear-gradient(135deg, #fff7ed 0%, #f8d889 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(245, 176, 65, 0.22);
+}
+
+.card-actions .claim-btn.expired-btn[disabled] {
+  opacity: 1 !important;
+  color: #92400e !important;
+}
+
+.card-actions .claim-btn.expired-btn:active {
+  transform: none;
+  box-shadow: 0 10rpx 22rpx rgba(245, 176, 65, 0.22);
+}
+
+.card-actions .claim-btn.accepted-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #34d399 0%, #16a085 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(22, 160, 133, 0.22);
+}
+
+.card-actions .claim-btn.accepted-btn[disabled] {
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+.card-actions .claim-btn.accepted-btn:active {
+  transform: none;
+  box-shadow: 0 10rpx 22rpx rgba(22, 160, 133, 0.22);
+}
+
+.card-actions .claim-btn.status-btn,
+.card-actions .claim-btn.owner-btn,
+.card-actions .claim-btn.unavailable-btn {
+  transform: none;
+  opacity: 1 !important;
+}
+
+.card-actions .claim-btn.owner-btn {
+  color: #3a4cd1 !important;
+  background: linear-gradient(135deg, #eef0ff 0%, #dfe4ff 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(91, 108, 255, 0.14);
+}
+
+.card-actions .claim-btn.unavailable-btn {
+  color: #64748b !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(100, 116, 139, 0.12);
+}
+
+.card-actions .claim-btn.status-btn-accepted,
+.card-actions .claim-btn.status-btn-in_progress {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #6f7cff 0%, #4b5de8 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(75, 93, 232, 0.22);
+}
+
+.card-actions .claim-btn.status-btn-completed,
+.card-actions .claim-btn.status-btn-rewarded,
+.card-actions .claim-btn.status-btn-resolved {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #34d399 0%, #16a085 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(22, 160, 133, 0.22);
+}
+
+.card-actions .claim-btn.status-btn-withdrawn,
+.card-actions .claim-btn.status-btn-closed {
+  color: #64748b !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  box-shadow: 0 10rpx 22rpx rgba(100, 116, 139, 0.12);
+}
+
+.card-actions .claim-btn.status-btn:active,
+.card-actions .claim-btn.owner-btn:active,
+.card-actions .claim-btn.unavailable-btn:active {
+  transform: none;
 }
 
 .acceptance-list {
@@ -382,6 +493,7 @@
   border-radius: 32rpx 32rpx 0 0;
   background: #ffffff;
   animation: slide-up 0.3s ease;
+  overflow-y: auto;
 }
 
 @keyframes slide-up {
@@ -403,13 +515,24 @@
 }
 
 .close-btn {
-  width: 64rpx;
-  height: 64rpx;
-  padding: 0;
-  line-height: 60rpx;
-  border-radius: 50%;
+  width: 64rpx !important;
+  height: 64rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 64rpx !important;
+  border-radius: 50% !important;
+  font-size: 30rpx;
+  font-weight: 700;
   color: #64748b;
-  background: #edf2f7;
+  background: #edf2f7 !important;
+  box-shadow: none !important;
+}
+
+.close-btn::after {
+  border: none !important;
 }
 
 .form {
@@ -460,6 +583,28 @@
   color: #8a96a8;
 }
 
+.deadline-picker-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+}
+
+.deadline-picker-row picker {
+  min-width: 0;
+}
+
+.picker-input {
+  height: 80rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  border-radius: 14rpx;
+  background: #f4f6fb;
+  color: #1a1f3a;
+  font-size: 27rpx;
+}
+
 .field-error {
   display: block;
   margin-top: 8rpx;
@@ -470,12 +615,31 @@
 .modal-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16rpx;
-  margin-top: 24rpx;
+  gap: 20rpx;
+  margin-top: 28rpx;
+  padding: 20rpx 0 6rpx;
+  background: #ffffff;
+  position: sticky;
+  bottom: 0;
 }
 
 .modal-actions button {
-  margin: 0;
+  height: 84rpx !important;
+  margin: 0 !important;
+  line-height: 84rpx !important;
+  border-radius: 999rpx !important;
+  font-size: 28rpx !important;
+  font-weight: 800 !important;
+}
+
+.modal-actions .secondary-btn {
+  color: #334155 !important;
+  background: #eef2f7 !important;
+}
+
+.modal-actions .primary-btn {
+  background: linear-gradient(135deg, #6f7cff 0%, #3a4cd1 100%) !important;
+  box-shadow: 0 12rpx 24rpx rgba(58, 76, 209, 0.24);
 }
 
 .reward-box {

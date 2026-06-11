@@ -49,7 +49,8 @@
     {
       "root": "pages/commission",
       "pages": [
-        "index"
+        "index",
+        "detail"
       ],
       "independent": false,
       "name": "commission"

@@ -1,0 +1,221 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 100%);
+  color: #1a1f3a;
+}
+
+.scroll-view {
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 24rpx 24rpx 48rpx;
+}
+
+.loading-state,
+.error-state {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  color: #8a96a8;
+  font-size: 26rpx;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-card,
+.detail-section {
+  position: relative;
+  padding: 30rpx;
+  background: #ffffff;
+  border-radius: 22rpx;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.08);
+}
+
+.hero-card {
+  overflow: hidden;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6rpx;
+  background: linear-gradient(180deg, #5b6cff, #f5b041);
+}
+
+.hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+.meta,
+.acceptance-meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  color: #8a96a8;
+}
+
+.description {
+  margin-top: 28rpx;
+  font-size: 29rpx;
+  line-height: 1.75;
+  color: #445166;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.status {
+  flex: 0 0 auto;
+  min-width: 108rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  text-align: center;
+}
+
+.status-recruiting {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.status-in_progress,
+.status-accepted {
+  color: #3a4cd1;
+  background: #eef0ff;
+}
+
+.status-completed {
+  color: #92580d;
+  background: #fef3df;
+}
+
+.status-resolved,
+.status-rewarded {
+  color: #5b21b6;
+  background: #ede9fe;
+}
+
+.section-grid {
+  margin-top: 22rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14rpx;
+}
+
+.info-item {
+  padding: 20rpx 14rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  min-width: 0;
+  text-align: center;
+}
+
+.info-label {
+  display: block;
+  font-size: 22rpx;
+  color: #4a5577;
+}
+
+.info-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #3a4cd1;
+  word-break: break-word;
+}
+
+.info-value.small {
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.detail-section {
+  margin-top: 22rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.progress-card {
+  margin-top: 20rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  text-align: center;
+}
+
+.progress-number {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #3a4cd1;
+}
+
+.progress-label {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8a96a8;
+}
+
+.acceptance-card {
+  margin-top: 18rpx;
+  padding: 22rpx 0 0;
+  border-top: 1rpx solid #edf2f7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.receiver {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #334155;
+}
+
+.empty-state {
+  margin-top: 20rpx;
+  padding: 28rpx;
+  text-align: center;
+  border-radius: 14rpx;
+  background: #f7f9fc;
+  color: #8a96a8;
+  font-size: 25rpx;
+}

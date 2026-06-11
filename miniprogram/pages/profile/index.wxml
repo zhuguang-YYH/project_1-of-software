@@ -39,19 +39,19 @@
       </view>
       <view class="form-field">
         <text class="form-label">昵称</text>
-        <input class="form-input" value="{{form.nickname}}" placeholder="请输入昵称" type="nickname" data-field="nickname" bindinput="onInput" />
+        <input class="form-input" value="{{form.nickname}}" placeholder="请输入昵称" placeholder-class="form-placeholder" type="nickname" data-field="nickname" bindinput="onInput" />
       </view>
       <view class="form-field">
         <text class="form-label">个性签名</text>
-        <textarea class="form-textarea" auto-height value="{{form.signature}}" placeholder="一句侦探签名（选填）" data-field="signature" bindinput="onInput" maxlength="80" show-confirm-bar="{{false}}" />
+        <textarea class="form-textarea" value="{{form.signature}}" placeholder="一句侦探签名（选填）" placeholder-class="form-placeholder" data-field="signature" bindinput="onInput" maxlength="80" show-confirm-bar="{{false}}" cursor-color="{{theme === 'gold' ? '#d4af37' : '#5b6cff'}}" cursor-spacing="24" />
       </view>
       <view class="form-field">
         <text class="form-label">兴趣标签</text>
-        <input class="form-input" value="{{form.interests}}" placeholder="多个标签用顿号 、 分隔" data-field="interests" bindinput="onInput" />
+        <input class="form-input" value="{{form.interests}}" placeholder="多个标签用顿号 、 分隔" placeholder-class="form-placeholder" data-field="interests" bindinput="onInput" />
       </view>
       <view class="form-field">
         <text class="form-label">学号</text>
-        <input class="form-input" value="{{form.student_id}}" placeholder="用于活动/兑换通知（选填）" type="number" data-field="student_id" bindinput="onInput" maxlength="20" />
+        <input class="form-input" value="{{form.student_id}}" placeholder="用于活动/兑换通知（选填）" placeholder-class="form-placeholder" type="number" data-field="student_id" bindinput="onInput" maxlength="20" />
       </view>
       <view class="form-actions">
         <button class="form-save-btn" loading="{{savingProfile}}" disabled="{{savingProfile}}" bindtap="saveEdit">保存档案</button>

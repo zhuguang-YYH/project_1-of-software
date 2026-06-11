@@ -43,6 +43,19 @@ class CommissionService {
     }
   }
 
+  async getCommissionDetail(commission_id) {
+    if (!commission_id) return { success: false, data: null, error: '委托编号不能为空' };
+
+    try {
+      const result = await callFunction(CONFIG.api.commission.getCommissionDetail, { commission_id });
+      if (!result.success) return { success: false, data: null, error: result.message || '获取委托详情失败' };
+      return { success: true, data: result.data || null };
+    } catch (error) {
+      console.error('Failed to get commission detail:', error);
+      return { success: false, data: null, error: error.message || '获取委托详情失败' };
+    }
+  }
+
   async publishCommission(params = {}) {
     const { title, content, reward_points, deadline } = params;
     if (!title || !title.trim()) return { success: false, error: '标题不能为空' };

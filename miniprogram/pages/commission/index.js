@@ -6,6 +6,8 @@ const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
 const interaction = require('../../utils/interaction.js');
 
+const DESCRIPTION_LIMIT = 200;
+
 function toDate(value) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value.$date || value);
@@ -117,7 +119,8 @@ Page({
       title: '',
       description: '',
       reward_points: '',
-      deadline: ''
+      deadline_date: '',
+      deadline_time: ''
     },
     publish_errors: {},
     publish_valid: false,
@@ -237,7 +240,8 @@ Page({
         title: '',
         description: '',
         reward_points: '',
-        deadline: ''
+        deadline_date: '',
+        deadline_time: ''
       },
       publish_errors: {},
       publish_valid: false
@@ -251,9 +255,21 @@ Page({
 
   onPublishInput(e) {
     const field = e.currentTarget.dataset.field;
+    this.updatePublishField(field, e.detail.value);
+  },
+
+  onDeadlineDateChange(e) {
+    this.updatePublishField('deadline_date', e.detail.value);
+  },
+
+  onDeadlineTimeChange(e) {
+    this.updatePublishField('deadline_time', e.detail.value);
+  },
+
+  updatePublishField(field, value) {
     const publish_form = {
       ...this.data.publish_form,
-      [field]: e.detail.value
+      [field]: value
     };
     const validation = this.validatePublishForm(publish_form);
     this.setData({
@@ -261,6 +277,11 @@ Page({
       publish_errors: validation.errors,
       publish_valid: validation.valid
     });
+  },
+
+  buildDeadline(form = this.data.publish_form) {
+    if (!form.deadline_date) return '';
+    return `${form.deadline_date} ${form.deadline_time || '23:59'}`;
   },
 
   validatePublishForm(form = this.data.publish_form) {
@@ -273,11 +294,17 @@ Page({
     if (!form.description.trim()) {
       errors.description = '请填写描述';
     }
+    if (form.description && form.description.length > DESCRIPTION_LIMIT) {
+      errors.description = `内容不能超过 ${DESCRIPTION_LIMIT} 字`;
+    }
     if (!Number.isInteger(reward_points) || reward_points <= 0) {
       errors.reward_points = '奖励积分需为正整数';
     }
     if (reward_points > this.data.user_points.available_points) {
       errors.reward_points = '可用积分不足';
+    }
+    if (form.deadline_time && !form.deadline_date) {
+      errors.deadline = '请先选择截止日期';
     }
     return {
       valid: Object.keys(errors).length === 0,
@@ -318,7 +345,7 @@ Page({
         title: form.title.trim(),
         content: form.description.trim(),
         reward_points,
-        deadline: form.deadline.trim()
+        deadline: this.buildDeadline(form)
       });
       if (!result.success) throw new Error(result.error || '发布失败');
 
@@ -330,6 +357,14 @@ Page({
     } finally {
       this.setData({ publishing: false });
     }
+  },
+
+  goCommissionDetail(e) {
+    const commission_id = e.currentTarget.dataset.commission_id;
+    if (!commission_id) return;
+    wx.navigateTo({
+      url: `/pages/commission/detail?commission_id=${encodeURIComponent(commission_id)}`
+    });
   },
 
   async acceptCommission(e) {
