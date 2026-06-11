@@ -1,0 +1,52 @@
+<view class="modal-mask" wx:if="{{visible}}" bindtap="close">
+  <view class="card-modal" catchtap="noop">
+    <view class="modal-header">
+      <text class="modal-title">侦探名片</text>
+      <button class="modal-close" bindtap="close">×</button>
+    </view>
+
+    <view class="card-loading" wx:if="{{loading}}">
+      <view class="mini-spinner"></view>
+      <text>加载中...</text>
+    </view>
+
+    <view class="detective-card" wx:if="{{card}}">
+      <view class="card-hero">
+        <image class="card-hero-bg" src="/images/rank_card/侦探档案卡背景.svg" mode="aspectFill" />
+        <view class="card-case-no">DETECTIVE PROFILE</view>
+        <image class="card-avatar" src="{{card.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+        <view class="card-identity">
+          <text class="card-name">{{card.display_name}}</text>
+          <text class="card-signature">{{card.self_intro}}</text>
+        </view>
+      </view>
+
+      <view class="card-stats">
+        <view class="card-stat">
+          <image class="card-stat-icon" src="/images/rank_card/排名图标.svg" mode="aspectFit" />
+          <text class="card-stat-value">{{card.rank_no}}</text>
+          <text class="card-stat-label">排名</text>
+        </view>
+        <view class="card-stat">
+          <image class="card-stat-icon" src="/images/rank_card/积分图标.svg" mode="aspectFit" />
+          <text class="card-stat-value">{{card.total_points}}</text>
+          <text class="card-stat-label">总积分</text>
+        </view>
+        <view class="card-stat">
+          <image class="card-stat-icon" src="/images/rank_card/可兑换积分图标.svg" mode="aspectFit" />
+          <text class="card-stat-value">{{card.available_points}}</text>
+          <text class="card-stat-label">可兑换</text>
+        </view>
+      </view>
+
+      <view class="card-section" wx:if="{{card.interests}}">
+        <text class="card-section-title">兴趣标签</text>
+        <text class="card-section-value">{{card.interests}}</text>
+      </view>
+      <view class="card-section" wx:if="{{card.created_text}}">
+        <text class="card-section-title">注册时间</text>
+        <text class="card-section-value">{{card.created_text}}</text>
+      </view>
+    </view>
+  </view>
+</view>

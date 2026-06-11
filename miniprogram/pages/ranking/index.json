@@ -3,6 +3,7 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "detective-card-item": "/components/detective-card-item/index",
+    "detective-card-modal": "/components/detective-card-modal/index",
     "skeleton": "/components/skeleton/index"
   }
 }

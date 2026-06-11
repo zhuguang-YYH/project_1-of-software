@@ -142,4 +142,10 @@
 
     <view class="page-footer">NK推协 · Detective Club</view>
   </scroll-view>
+
+  <detective-card-modal
+    visible="{{show_card_modal}}"
+    loading="{{card_loading}}"
+    card="{{selected_card}}"
+    bind:close="closeCardModal" />
 </view>

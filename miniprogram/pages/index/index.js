@@ -1,10 +1,12 @@
 const puzzleService = require('../../services/puzzle.js');
 const rankingService = require('../../services/ranking.js');
+const profileService = require('../../services/profile.js');
 const recommendationService = require('../../services/recommendation.js');
 const pointsService = require('../../services/points.js');
 const { storage } = require('../../utils/storage');
 const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
+const { normalizePublicCard } = require('../../utils/public-card.js');
 
 const DEFAULT_COVER = '/pages/exchange/images/goods-default.jpg';
 
@@ -43,7 +45,10 @@ Page({
     rankingCardTheme: 'light',
     loading: true,
     refreshing: false,
-    error: ''
+    error: '',
+    show_card_modal: false,
+    card_loading: false,
+    selected_card: null
   },
 
   onLoad(options = {}) {
@@ -187,11 +192,39 @@ Page({
   },
 
   goToRanking() {
-    wx.navigateTo({ url: '/pages/ranking/index' });
+    storage.setSync('ranking_target_tab', 'full', 5);
+    wx.switchTab({ url: '/pages/ranking/index' });
   },
 
-  openRankingUser() {
-    wx.navigateTo({ url: '/pages/ranking/index' });
+  async openRankingUser(e) {
+    const detail = e.detail || {};
+    const user_id = detail.user_id || '';
+    const fallback = detail.user || this.data.topThree.find(item => item.user_id === user_id) || {};
+    if (!user_id) return;
+
+    this.setData({
+      show_card_modal: true,
+      card_loading: true,
+      selected_card: normalizePublicCard({}, fallback)
+    });
+
+    try {
+      const result = await profileService.getPublicCard(user_id);
+      if (!result.success) throw new Error(result.error || '加载名片失败');
+      this.setData({ selected_card: normalizePublicCard(result.data || {}, fallback) });
+    } catch (err) {
+      wx.showToast({ title: err.message || '加载名片失败', icon: 'none' });
+    } finally {
+      this.setData({ card_loading: false });
+    }
+  },
+
+  closeCardModal() {
+    this.setData({
+      show_card_modal: false,
+      selected_card: null,
+      card_loading: false
+    });
   },
 
   goToRecommendations() {
