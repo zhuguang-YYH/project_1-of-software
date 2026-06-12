@@ -856,11 +856,17 @@ page {
 .theme-gold .log-item,
 .theme-gold .history-card,
 .theme-gold .settings-panel,
-.theme-gold .setting-row,
 .theme-gold .theme-option {
   color: #f4ecd6 !important;
-  background: #101010 !important;
+  background: #151515 !important;
   border-color: rgba(212, 175, 55, 0.24) !important;
+}
+
+/* setting-row / action-row 继承父级 section 背景，避免出现黑色横条 */
+.theme-gold .setting-row,
+.theme-gold .action-row {
+  background: transparent !important;
+  border-color: rgba(212, 175, 55, 0.18) !important;
 }
 
 .theme-gold .modal-header,

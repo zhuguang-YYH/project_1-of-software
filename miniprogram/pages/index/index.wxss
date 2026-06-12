@@ -215,24 +215,6 @@
   overflow: hidden;
 }
 
-.nav-item-wide {
-  grid-column: span 2;
-  min-height: 124rpx;
-  flex-direction: row;
-  justify-content: flex-start;
-  gap: 24rpx;
-  padding: 24rpx 32rpx;
-}
-
-.nav-text-block {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-
-.nav-item-wide .nav-text { font-size: 30rpx; }
-
 .nav-text {
   color: #f4ecd6;
   font-size: 28rpx;

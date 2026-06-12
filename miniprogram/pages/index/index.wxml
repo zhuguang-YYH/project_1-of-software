@@ -87,15 +87,6 @@
         <text class="nav-text">Dud 对话</text>
         <text class="nav-desc">关键词助手</text>
       </view>
-
-      <view class="nav-item tap-feedback nav-item-wide" bindtap="goToProfile">
-        <view class="icon-circle is-pink">卡</view>
-        <view class="nav-text-block">
-          <text class="nav-text">个人名片</text>
-          <text class="nav-desc">查看与管理资料</text>
-        </view>
-        <text class="nav-arrow">›</text>
-      </view>
     </view>
 
     <view class="section detective-card" wx:if="{{topThree.length > 0}}">

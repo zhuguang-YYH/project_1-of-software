@@ -244,18 +244,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28rpx 28rpx 20rpx;
+  padding: 16rpx 28rpx 16rpx;
   border-bottom: 1rpx solid #f4f7fb;
 }
+
+.edit-avatar-section .user-avatar {
+  width: 150rpx;
+  height: 150rpx;
+}
+
+.edit-avatar-section .avatar-picker {
+  width: 150rpx;
+  height: 150rpx;
+}
+
+.edit-avatar-section .avatar-edit-badge {
+  width: 40rpx;
+  height: 40rpx;
+  font-size: 20rpx;
+}
+
 .edit-avatar-hint {
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   font-size: 20rpx;
   color: #a0aec0;
 }
 
 /* ── 编辑表单 ─────────────────────────────────── */
 .edit-form {
-  margin: 16rpx 24rpx 0;
+  margin: -100rpx 24rpx 0;
   background: #fff;
   border-radius: 16rpx;
   overflow: hidden;

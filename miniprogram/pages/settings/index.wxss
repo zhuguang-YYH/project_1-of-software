@@ -287,3 +287,65 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── 黑金主题 ─────────────────────────────────── */
+.theme-gold.page {
+  background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+}
+
+/* 账户面板 */
+.theme-gold .account-panel {
+  background: linear-gradient(135deg, #070707 0%, #1a1a1a 60%, #2a2110 100%) !important;
+  box-shadow: 0 16rpx 40rpx rgba(212, 175, 55, 0.12);
+}
+
+/* section 卡片：用暖棕深色替代纯灰黑，避免“纯黑块”观感 */
+.theme-gold .section {
+  background: #1e1b16 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.16) !important;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.26);
+}
+
+/* 标题装饰条 */
+.theme-gold .section .section-title::before {
+  background: linear-gradient(180deg, #d4af37, #f8e7a8);
+}
+
+/* 选项行：与 section 同色融为一体 */
+.theme-gold .setting-row,
+.theme-gold .action-row {
+  background: transparent !important;
+  border-color: rgba(212, 175, 55, 0.13) !important;
+}
+
+/* 主题选择卡片 */
+.theme-gold .theme-option {
+  background: #221f18 !important;
+  border-color: rgba(212, 175, 55, 0.18) !important;
+}
+
+.theme-gold .theme-option.active {
+  border-color: #d4af37 !important;
+  background: #2a2415 !important;
+}
+
+.theme-gold .arrow {
+  color: rgba(212, 175, 55, 0.5);
+}
+
+.theme-gold .action-row:active {
+  background: rgba(212, 175, 55, 0.1) !important;
+}
+
+.theme-gold .danger .setting-name {
+  color: #f28b82;
+}
+
+.theme-gold .loading-state {
+  color: rgba(244, 236, 214, 0.62);
+}
+
+.theme-gold .loading-spinner {
+  border-color: rgba(212, 175, 55, 0.16);
+  border-top-color: #d4af37;
+}

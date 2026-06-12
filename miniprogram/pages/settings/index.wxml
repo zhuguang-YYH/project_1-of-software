@@ -42,28 +42,28 @@
           <text class="setting-name">每日谜题提醒</text>
           <text class="setting-desc">保留本地偏好，后续可接入订阅消息。</text>
         </view>
-        <switch checked="{{settings.puzzle_reminder}}" data-field="puzzle_reminder" bindchange="onSettingChange" />
+        <switch checked="{{settings.puzzle_reminder}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="puzzle_reminder" bindchange="onSettingChange" />
       </view>
       <view class="setting-row">
         <view>
           <text class="setting-name">活动报名提醒</text>
           <text class="setting-desc">用于活动开始、报名截止等提醒。</text>
         </view>
-        <switch checked="{{settings.activity_reminder}}" data-field="activity_reminder" bindchange="onSettingChange" />
+        <switch checked="{{settings.activity_reminder}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="activity_reminder" bindchange="onSettingChange" />
       </view>
       <view class="setting-row">
         <view>
           <text class="setting-name">借阅状态提醒</text>
           <text class="setting-desc">用于传递、借出、归还状态变化。</text>
         </view>
-        <switch checked="{{settings.borrow_reminder}}" data-field="borrow_reminder" bindchange="onSettingChange" />
+        <switch checked="{{settings.borrow_reminder}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="borrow_reminder" bindchange="onSettingChange" />
       </view>
       <view class="setting-row">
         <view>
           <text class="setting-name">委托进度提醒</text>
           <text class="setting-desc">用于领取、完成、奖励分配变化。</text>
         </view>
-        <switch checked="{{settings.commission_reminder}}" data-field="commission_reminder" bindchange="onSettingChange" />
+        <switch checked="{{settings.commission_reminder}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="commission_reminder" bindchange="onSettingChange" />
       </view>
     </view>
 
@@ -74,21 +74,21 @@
           <text class="setting-name">展示排行榜身份</text>
           <text class="setting-desc">关闭后后续排行榜可按匿名展示处理。</text>
         </view>
-        <switch checked="{{settings.show_ranking}}" data-field="show_ranking" bindchange="onSettingChange" />
+        <switch checked="{{settings.show_ranking}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="show_ranking" bindchange="onSettingChange" />
       </view>
       <view class="setting-row">
         <view>
           <text class="setting-name">允许展示个人名片</text>
           <text class="setting-desc">用于从排行榜或委托页查看名片。</text>
         </view>
-        <switch checked="{{settings.show_profile_card}}" data-field="show_profile_card" bindchange="onSettingChange" />
+        <switch checked="{{settings.show_profile_card}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="show_profile_card" bindchange="onSettingChange" />
       </view>
       <view class="setting-row">
         <view>
           <text class="setting-name">紧凑显示模式</text>
           <text class="setting-desc">为信息密集页面预留偏好。</text>
         </view>
-        <switch checked="{{settings.compact_mode}}" data-field="compact_mode" bindchange="onSettingChange" />
+        <switch checked="{{settings.compact_mode}}" color="{{theme === 'gold' ? '#d4af37' : ''}}" data-field="compact_mode" bindchange="onSettingChange" />
       </view>
     </view>
 
