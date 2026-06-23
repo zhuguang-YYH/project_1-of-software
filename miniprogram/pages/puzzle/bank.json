@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "谜题库",
+  "usingComponents": {
+    "empty-state": "/components/empty-state/index",
+    "common-loading": "/components/common/loading",
+    "skeleton": "/components/skeleton/index"
+  }
+}

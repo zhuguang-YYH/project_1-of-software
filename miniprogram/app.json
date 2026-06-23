@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/puzzle/index",
     "pages/ranking/index",
     "pages/profile/index"
   ],
@@ -86,6 +85,27 @@
       ],
       "independent": false,
       "name": "settings"
+    },
+    {
+      "root": "pages/puzzle",
+      "pages": [
+        "index",
+        "bank",
+        "practice",
+        "favorites"
+      ],
+      "independent": false,
+      "name": "puzzle_ext"
+    },
+    {
+      "root": "pages/dating",
+      "pages": [
+        "index",
+        "matches",
+        "chat"
+      ],
+      "independent": false,
+      "name": "dating"
     }
   ],
   "window": {

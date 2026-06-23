@@ -23,6 +23,11 @@ Component({
       this.triggerEvent('close');
     },
 
+    onAddFriend() {
+      const card = this.data.card || {};
+      this.triggerEvent('addfriend', { user_id: card.user_id });
+    },
+
     noop() {}
   }
 });

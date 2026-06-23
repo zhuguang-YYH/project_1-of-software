@@ -98,7 +98,8 @@
     loading="{{card_loading}}"
     card="{{selected_card}}"
     theme="{{theme}}"
-    bind:close="closeCardModal" />
+    bind:close="closeCardModal"
+    bind:addfriend="onAddFriend" />
 </view>
 
 <skeleton wx:elif="{{loading}}" variant="ranking" rows="4" title="加载排行中..." />

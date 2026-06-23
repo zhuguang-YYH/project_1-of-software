@@ -137,6 +137,80 @@ class PuzzleService {
       return { success: false, error: error.message || '订阅提醒登记失败' };
     }
   }
+
+  // ========== 谜题库 ==========
+
+  async getPuzzleBank(options = {}) {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getPuzzleBank, {
+        page: options.page || 1,
+        page_size: options.page_size || CONFIG.pagination.pageSize,
+        category: options.category || '',
+        difficulty: options.difficulty || '',
+        sort_by: options.sort_by || 'date',
+        sort_order: options.sort_order || 'desc',
+        keyword: options.keyword || ''
+      });
+      if (!result.success) return { success: false, error: result.message || '获取谜题库失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get puzzle bank:', error);
+      return { success: false, error: error.message || '获取谜题库失败' };
+    }
+  }
+
+  async getPuzzleCategories() {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getPuzzleCategories, {});
+      if (!result.success) return { success: false, error: result.message || '获取分类失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get puzzle categories:', error);
+      return { success: false, error: error.message || '获取分类失败' };
+    }
+  }
+
+  async toggleFavorite(puzzle_id) {
+    if (!puzzle_id) return { success: false, error: '谜题编号不能为空' };
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.toggleFavorite, { puzzle_id }, { idempotent: true });
+      if (!result.success) return { success: false, error: result.message || '操作收藏失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      return { success: false, error: error.message || '操作收藏失败' };
+    }
+  }
+
+  async getFavorites(options = {}) {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getFavorites, {
+        page: options.page || 1,
+        page_size: options.page_size || CONFIG.pagination.pageSize
+      });
+      if (!result.success) return { success: false, error: result.message || '获取收藏失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get favorites:', error);
+      return { success: false, error: error.message || '获取收藏失败' };
+    }
+  }
+
+  async submitPracticeAnswer(puzzle_id, option_id) {
+    if (!puzzle_id || !option_id) return { success: false, error: '答题参数不完整' };
+    try {
+      const result = await callFunction(
+        CONFIG.api.puzzle.submitPracticeAnswer,
+        { puzzle_id, option_id },
+        { idempotent: true }
+      );
+      if (!result.success) return { success: false, error: result.message || '提交练习答案失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to submit practice answer:', error);
+      return { success: false, error: error.message || '提交练习答案失败' };
+    }
+  }
 }
 
 module.exports = new PuzzleService();

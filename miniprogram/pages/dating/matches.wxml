@@ -1,0 +1,79 @@
+<common-loading visible="{{loading}}" title="加载中..." mask="{{false}}" />
+
+<view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
+  <empty-state
+    wx:if="{{error}}"
+    icon="!"
+    title="{{error}}"
+    description="请稍后再试"
+    action-text="重试"
+    bind:action="onRetry"
+  />
+
+  <block wx:if="{{!error}}">
+    <!-- 好友请求区块 -->
+    <view class="friend-requests-section" wx:if="{{friendRequests.length > 0}}">
+      <view class="fr-section-header">
+        <text class="fr-section-title">好友请求</text>
+        <text class="fr-section-count">{{pendingReceiveCount}} 条待处理</text>
+      </view>
+      <view class="fr-item" wx:for="{{friendRequests}}" wx:key="request_id">
+        <image class="fr-avatar" src="{{item.from_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+        <view class="fr-body">
+          <text class="fr-name">{{item.from_user.display_name}}</text>
+          <text class="fr-message" wx:if="{{item.message}}">{{item.message}}</text>
+          <text class="fr-time">{{item.created_at_text}}</text>
+        </view>
+        <view class="fr-actions">
+          <view class="fr-btn accept" data-request-id="{{item.request_id}}" bindtap="acceptRequest">✓ 接受</view>
+          <view class="fr-btn decline" data-request-id="{{item.request_id}}" bindtap="declineRequest">✕ 拒绝</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 好友列表 -->
+    <view class="conversation-list" wx:if="{{conversations.length > 0}}">
+      <view class="conv-header">
+        <text class="conv-header-text">共 {{conversations.length}} 位好友</text>
+      </view>
+
+      <view
+        class="conversation-item tap-feedback"
+        wx:for="{{conversations}}"
+        wx:key="match_id"
+        data-match-id="{{item.match_id}}"
+        data-user-id="{{item.other_user.user_id}}"
+        data-name="{{item.other_user.display_name}}"
+        data-avatar="{{item.other_user.avatar_url}}"
+        bindtap="goToChat"
+      >
+        <view class="conv-avatar-wrap">
+          <image class="conv-avatar" src="{{item.other_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+          <view class="conv-unread-badge" wx:if="{{item.unread_count > 0}}">
+            <text>{{item.unread_count > 99 ? '99+' : item.unread_count}}</text>
+          </view>
+        </view>
+        <view class="conv-body">
+          <view class="conv-top-row">
+            <text class="conv-name">{{item.other_user.display_name}}</text>
+            <text class="conv-time">{{item.last_time_text}}</text>
+          </view>
+          <view class="conv-bottom-row">
+            <text class="conv-preview {{item.unread_count > 0 ? 'unread' : ''}}">{{item.last_content_preview || '开始聊天吧'}}</text>
+          </view>
+        </view>
+        <text class="conv-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 全空状态 -->
+    <empty-state
+      wx:if="{{conversations.length === 0 && friendRequests.length === 0}}"
+      icon="🎭"
+      title="暂无推理好友"
+      description="可在排行榜或首页点击他人名片添加好友。"
+    />
+  </block>
+
+  <view class="page-footer" wx:if="{{!error}}">NK推协 · 我的好友</view>
+</view>

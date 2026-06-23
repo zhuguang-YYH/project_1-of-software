@@ -27,7 +27,10 @@ function normalizePublicCard(data = {}, fallback = {}) {
     total_points: Number(data.total_points || fallback.total_points || 0),
     available_points: Number(data.available_points || 0),
     rank_no: Number(data.rank_no || fallback.rank_no || 0),
-    created_text: formatDate(data.created_at || data.create_time)
+    created_text: formatDate(data.created_at || data.create_time),
+    is_self: !!data.is_self,
+    is_friend: !!data.is_friend,
+    request_pending: !!data.request_pending
   };
 }
 

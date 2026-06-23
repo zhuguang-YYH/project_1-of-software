@@ -45,6 +45,7 @@ exports.main = async (event, context) => {
     await initAdminLogs();
     await initRankingSnapshots();
     await initSystemSettings();
+    await initDatingCollections();
 
     if (cleanupLegacyFields) {
       await cleanupLegacyDatabaseFields();
@@ -1221,6 +1222,48 @@ async function initSystemSettings() {
     console.log('系统设置字段对齐完成');
   } catch (error) {
     console.log('系统设置字段对齐:', error.message);
+  }
+}
+
+/**
+ * 初始化交友相关集合（dating_matches, dating_swipes, dating_pool, dating_preferences, game_invitations, friend_messages）
+ */
+async function initDatingCollections() {
+  const collections = [
+    'dating_matches',
+    'dating_swipes',
+    'dating_pool',
+    'dating_preferences',
+    'game_invitations',
+    'friend_messages',
+    'friend_requests'
+  ];
+
+  for (const name of collections) {
+    try {
+      // 尝试查询以检查集合是否存在，不存在则通过 add+remove 触发创建
+      try {
+        await db.collection(name).limit(1).get();
+        console.log(`✅ 集合 ${name} 已存在`);
+      } catch (e) {
+        if (e.errCode === -502005 || String(e.message || '').includes('not exist')) {
+          // 插入一个占位文档来创建集合
+          const addRes = await db.collection(name).add({
+            data: {
+              _placeholder: true,
+              created_at: new Date()
+            }
+          });
+          // 立即删除占位文档
+          await db.collection(name).doc(addRes._id).remove();
+          console.log(`✅ 集合 ${name} 已创建`);
+        } else {
+          throw e;
+        }
+      }
+    } catch (error) {
+      console.log(`集合 ${name} 初始化:`, error.message);
+    }
   }
 }
 

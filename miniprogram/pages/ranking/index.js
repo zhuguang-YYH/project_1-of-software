@@ -1,5 +1,6 @@
 const rankingService = require('../../services/ranking.js');
 const profileService = require('../../services/profile.js');
+const datingService = require('../../services/dating.js');
 const { storage } = require('../../utils/storage.js');
 const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
@@ -160,12 +161,42 @@ Page({
     });
 
     try {
+      const userInfo = storage.getUserInfo();
+      const myId = (userInfo && userInfo.user_id) || '';
       const result = await profileService.getPublicCard(user_id);
-      this.setData({ selected_card: normalizePublicCard(result.data || {}, fallback) });
+      const card = normalizePublicCard(result.data || {}, fallback);
+      card.is_self = myId === user_id;
+      if (!card.is_self && myId) {
+        try {
+          const frResult = await datingService.getFriendRequests();
+          if (frResult.success) {
+            const data = frResult.data || {};
+            card.is_friend = !!(data.friend_ids || []).includes(user_id);
+            card.request_pending = !!(data.pending_sent_ids || []).includes(user_id);
+          }
+        } catch (_) { /* ignore */ }
+      }
+      this.setData({ selected_card: card });
     } catch (err) {
       wx.showToast({ title: err.message || 'Load card failed', icon: 'none' });
     } finally {
       this.setData({ card_loading: false });
+    }
+  },
+
+  async onAddFriend(e) {
+    const user_id = e.detail.user_id;
+    if (!user_id) return;
+
+    try {
+      const result = await datingService.sendFriendRequest(user_id);
+      if (!result.success) throw new Error(result.error || '发送失败');
+
+      wx.showToast({ title: '好友请求已发送', icon: 'success' });
+      const card = { ...this.data.selected_card, request_pending: true };
+      this.setData({ selected_card: card });
+    } catch (err) {
+      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
     }
   },
 

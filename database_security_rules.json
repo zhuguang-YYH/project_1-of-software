@@ -111,6 +111,46 @@
     "write": false
   },
 
+  "puzzle_favorites": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzle_practice_answers": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzle_subscriptions": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "dating_pool": {
+    "read": true,
+    "write": false
+  },
+
+  "dating_swipes": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "dating_matches": {
+    "read": "auth.openid != null && (get(`database.users.${doc.user_id_1}`).openid == auth.openid || get(`database.users.${doc.user_id_2}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "dating_preferences": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "invitation_rewards": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
   "admin_logs": {
     "read": false,
     "write": false

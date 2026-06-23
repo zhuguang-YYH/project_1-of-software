@@ -150,6 +150,45 @@ class AdminService {
       return { success: false, error: error.message || fallbackMessage };
     }
   }
+
+  // ========== 谜题库管理 ==========
+
+  async setFeaturedPuzzle(puzzle_id, date) {
+    return this.mutate('setFeaturedPuzzle', { puzzle_id, date }, '设置推荐谜题失败');
+  }
+
+  async updatePuzzleBank(puzzle_id, data) {
+    return this.mutate('updatePuzzleBank', { puzzle_id, ...data }, '更新谜题失败');
+  }
+
+  // ========== 交友管理 ==========
+
+  async getDatingStats() {
+    try {
+      const result = await this.call('getDatingStats');
+      if (!result.success) return { success: false, data: {}, error: result.message || '获取交友统计失败' };
+      return { success: true, data: result.data || {} };
+    } catch (error) {
+      console.error('Failed to get dating stats:', error);
+      return { success: false, data: {}, error: error.message || '获取交友统计失败' };
+    }
+  }
+
+  async getDatingPool(options = {}) {
+    return this.list('getDatingPool', options, '获取交友池失败');
+  }
+
+  async getDatingMatches(options = {}) {
+    return this.list('getDatingMatches', options, '获取匹配记录失败');
+  }
+
+  async removeFromPool(user_id) {
+    return this.mutate('removeFromPool', { user_id }, '移除失败');
+  }
+
+  async deactivateMatch(match_id) {
+    return this.mutate('deactivateMatch', { match_id }, '解除匹配失败');
+  }
 }
 
 module.exports = new AdminService();

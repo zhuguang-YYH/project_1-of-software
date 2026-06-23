@@ -26,7 +26,13 @@ const CONFIG = {
       getPuzzleHistory: 'puzzle_getPuzzleHistory',
       submitAnswer: 'puzzle_submitAnswer',
       getPuzzleDetail: 'puzzle_getPuzzleDetail',
-      subscribeDailyReminder: 'puzzle_subscribeDailyReminder'
+      subscribeDailyReminder: 'puzzle_subscribeDailyReminder',
+      // 谜题库
+      getPuzzleBank: 'puzzle_getPuzzleBank',
+      getPuzzleCategories: 'puzzle_getPuzzleCategories',
+      toggleFavorite: 'puzzle_toggleFavorite',
+      getFavorites: 'puzzle_getFavorites',
+      submitPracticeAnswer: 'puzzle_submitPracticeAnswer'
     },
 
     // 排行榜
@@ -98,6 +104,31 @@ const CONFIG = {
     recommendation: {
       getRecommendations: 'recommendation_getRecommendations',
       getDetail: 'recommendation_getDetail'
+    },
+
+    // 交友系统
+    dating: {
+      getDailyStatus: 'dating_getDailyStatus',
+      getProfiles: 'dating_getProfiles',
+      swipe: 'dating_swipe',
+      getMatches: 'dating_getMatches',
+      getMatchDetail: 'dating_getMatchDetail',
+      updatePreferences: 'dating_updatePreferences',
+      joinPool: 'dating_joinPool',
+      leavePool: 'dating_leavePool',
+      unmatch: 'dating_unmatch',
+      // 游戏邀请
+      sendInvitation: 'dating_sendInvitation',
+      getInvitations: 'dating_getInvitations',
+      respondInvitation: 'dating_respondInvitation',
+      // 好友聊天
+      sendMessage: 'dating_sendMessage',
+      getMessages: 'dating_getMessages',
+      getConversations: 'dating_getConversations',
+      // 好友请求
+      sendFriendRequest: 'dating_sendFriendRequest',
+      getFriendRequests: 'dating_getFriendRequests',
+      respondFriendRequest: 'dating_respondFriendRequest'
     }
   },
 
@@ -110,7 +141,8 @@ const CONFIG = {
     ranking: 12000,
     recommendation: 12000,
     puzzle: 10000,
-    dud: 15000
+    dud: 15000,
+    dating: 10000
   },
 
   // 分页配置
@@ -147,6 +179,12 @@ const CONFIG = {
       dudChat: { messages: 5, seconds: 30 },
       // 答题提交：防重复
       puzzleSubmit: { times: 1, timeWindow: 24 * 60 * 60 * 1000 }
+    },
+
+    // 交友配置
+    dating: {
+      dailySwipeLimit: 20,
+      profilesPerBatch: 5
     }
   },
 

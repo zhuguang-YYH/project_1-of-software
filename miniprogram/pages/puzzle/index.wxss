@@ -316,3 +316,15 @@
   font-weight: 700;
 }
 
+/* 谜题库链接 */
+.bank-link {
+  text-align: center;
+  padding: 0 32rpx 28rpx;
+}
+
+.bank-link text {
+  font-size: 26rpx;
+  color: #5b6cff;
+  font-weight: 600;
+}
+

@@ -13,6 +13,7 @@ const ROUTED_CLOUD_FUNCTIONS = [
   'feedback',
   'recommendation',
   'points',
+  'dating',
   'admin'
 ];
 

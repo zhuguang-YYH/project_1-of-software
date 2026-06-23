@@ -87,6 +87,18 @@
         <text class="nav-text">Dud 对话</text>
         <text class="nav-desc">关键词助手</text>
       </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToPuzzleBank">
+        <view class="icon-circle">库</view>
+        <text class="nav-text">谜题库</text>
+        <text class="nav-desc">练习与收藏</text>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToDating">
+        <view class="icon-circle is-pink">友</view>
+        <text class="nav-text">我的好友</text>
+        <text class="nav-desc">聊天与约局</text>
+      </view>
     </view>
 
     <view class="section detective-card" wx:if="{{topThree.length > 0}}">
@@ -139,5 +151,6 @@
     loading="{{card_loading}}"
     card="{{selected_card}}"
     theme="{{theme}}"
-    bind:close="closeCardModal" />
+    bind:close="closeCardModal"
+    bind:addfriend="onAddFriend" />
 </view>

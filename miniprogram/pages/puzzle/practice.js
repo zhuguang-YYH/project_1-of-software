@@ -1,7 +1,5 @@
 const puzzleService = require('../../services/puzzle.js');
-const subscribe = require('../../utils/subscribe.js');
 const { applyTheme } = require('../../utils/theme.js');
-const share = require('../../utils/share.js');
 
 Page({
   data: {
@@ -10,6 +8,8 @@ Page({
     selected_option_id: '',
     answered: false,
     is_correct: false,
+    is_favorited: false,
+    already_answered: false,
     loading: true,
     submitting: false,
     theme: 'blue',
@@ -17,9 +17,17 @@ Page({
   },
 
   onLoad(options = {}) {
-    share.rememberInviter(options);
     this.loadTheme();
-    this.loadPuzzle();
+    const puzzle_id = options.puzzle_id || '';
+    if (puzzle_id) {
+      this.setData({ puzzle_id });
+      this.loadPuzzle();
+    } else {
+      this.setData({
+        error: '缺少谜题编号',
+        loading: false
+      });
+    }
   },
 
   onShow() {
@@ -31,10 +39,12 @@ Page({
   },
 
   async loadPuzzle() {
+    if (!this.data.puzzle_id) return;
+
     try {
       this.setData({ loading: true, error: '' });
 
-      const result = await puzzleService.getTodayPuzzle();
+      const result = await puzzleService.getPuzzleDetail(this.data.puzzle_id);
       if (!result.success) throw new Error(result.error || '加载谜题失败');
 
       const puzzle = result.data || {};
@@ -43,6 +53,7 @@ Page({
       const raw = String(puzzle.difficulty || '').toLowerCase();
       puzzle._difficulty_class = VALID_CLASSES.includes(raw) ? raw : 'normal';
       puzzle._difficulty_text = DIFFICULTY_MAP[raw] || (puzzle.difficulty || '中等');
+
       const options = (puzzle.options || []).map((option, index) => ({
         option_id: option.option_id || option.option_content,
         option_label: option.option_label || String.fromCharCode(65 + index),
@@ -52,9 +63,6 @@ Page({
       this.setData({
         puzzle,
         options,
-        answered: !!puzzle.answered,
-        is_correct: !!puzzle.is_correct,
-        selected_option_id: puzzle.selected_option_id || '',
         loading: false
       });
     } catch (error) {
@@ -80,46 +88,52 @@ Page({
     try {
       this.setData({ submitting: true });
 
-      const subResult = await subscribe.requestSubscribe(subscribe.TEMPLATES.PUZZLE_DAILY_REMINDER);
-      if (subResult.accepted.includes(subscribe.TEMPLATES.PUZZLE_DAILY_REMINDER)) {
-        puzzleService.subscribeDailyReminder();
-      }
-
-      const result = await puzzleService.submitAnswer(
-        this.data.puzzle.puzzle_id,
+      const result = await puzzleService.submitPracticeAnswer(
+        this.data.puzzle_id,
         this.data.selected_option_id
       );
       if (!result.success) throw new Error(result.error || '提交失败');
 
       const data = result.data || {};
-      const streakBonus = Number(data.streak_bonus_points || 0);
-      const totalScore = Number(data.total_score_gained || data.score_gained || 0);
       this.setData({
         answered: true,
         is_correct: !!data.is_correct,
+        already_answered: !!data.already_answered,
         puzzle: {
           ...this.data.puzzle,
           correct_answer: data.correct_answer || '',
-          answer_explanation: data.answer_explanation || this.data.puzzle.answer_explanation || '',
-          current_streak: Number(data.current_streak || data.streak_days || 0),
-          last_streak_bonus_points: streakBonus,
-          total_score_gained: totalScore,
-          streak_bonus_days: Number(data.streak_bonus_days || this.data.puzzle.streak_bonus_days || 0),
-          streak_bonus_points: Number(data.streak_bonus_points || this.data.puzzle.streak_bonus_points || 0),
-          next_streak_bonus_in: Number(data.next_streak_bonus_in || this.data.puzzle.next_streak_bonus_in || 0)
+          answer_explanation: data.answer_explanation || this.data.puzzle.answer_explanation || ''
         },
         submitting: false
       });
 
       wx.showToast({
-        title: data.is_correct ? (streakBonus > 0 ? `答对 +${totalScore}分` : '答对了') : '回答错误',
+        title: data.is_correct ? '答对了' : '回答错误',
         icon: data.is_correct ? 'success' : 'none',
         duration: 2000
       });
     } catch (error) {
-      console.error('Submit answer failed:', error);
+      console.error('Submit practice answer failed:', error);
       wx.showToast({ title: error.message || '提交失败', icon: 'none' });
       this.setData({ submitting: false });
+    }
+  },
+
+  async toggleFavorite() {
+    try {
+      const result = await puzzleService.toggleFavorite(this.data.puzzle_id);
+      if (result.success) {
+        const data = result.data || {};
+        this.setData({ is_favorited: !!data.is_favorited });
+        wx.showToast({
+          title: data.is_favorited ? '已收藏' : '已取消收藏',
+          icon: 'success',
+          duration: 1500
+        });
+      }
+    } catch (error) {
+      console.error('Toggle favorite failed:', error);
+      wx.showToast({ title: '操作收藏失败', icon: 'none' });
     }
   },
 
@@ -137,15 +151,15 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '每日谜题挑战',
-      path: share.appendShareParams('/pages/puzzle/index')
+      title: '谜题练习',
+      path: `/pages/puzzle/practice?puzzle_id=${this.data.puzzle_id}`
     };
   },
 
   onShareTimeline() {
     return {
-      title: '每日谜题挑战',
-      query: share.appendShareParams('').replace(/^\?/, '')
+      title: '谜题练习',
+      query: `puzzle_id=${this.data.puzzle_id}`
     };
   }
 });

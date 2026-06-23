@@ -51,8 +51,14 @@
     </view>
 
     <view class="panel" wx:if="{{!error && tab === 'puzzle'}}">
-      <view class="panel-title">每日谜题</view>
+      <view class="panel-title">{{puzzleForm.puzzle_type === 'bank' ? '谜题库' : '每日谜题'}}</view>
       <view class="field">
+        <text>谜题类型</text>
+        <picker range="{{puzzleTypeOptions}}" range-key="label" data-form="puzzleForm" data-field="puzzle_type" data-options="puzzleTypeOptions" bindchange="onPickerChange">
+          <view class="picker-box">{{puzzleForm.puzzle_type === 'bank' ? '谜题库' : '每日谜题'}}</view>
+        </picker>
+      </view>
+      <view class="field" wx:if="{{puzzleForm.puzzle_type === 'daily'}}">
         <text>发布日期</text>
         <picker mode="date" value="{{puzzleForm.publish_date}}" data-form="puzzleForm" data-field="publish_date" bindchange="onDateChange">
           <view class="picker-box">{{puzzleForm.publish_date || '请选择日期'}}</view>
@@ -78,6 +84,15 @@
             <view class="picker-box">{{puzzleForm.difficulty === 'easy' ? '简单' : puzzleForm.difficulty === 'medium' ? '中等' : '困难'}}</view>
           </picker>
         </view>
+      </view>
+      <view class="grid-2">
+        <view class="field">
+          <text>分类</text>
+          <picker range="{{puzzleCategoryOptions}}" range-key="label" data-form="puzzleForm" data-field="category" data-options="puzzleCategoryOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{puzzleForm.category || '逻辑推理'}}</view>
+          </picker>
+        </view>
+        <view class="field"><text>标签</text><input value="{{puzzleForm.tags}}" data-form="puzzleForm" data-field="tags" bindinput="onFormInput" placeholder="多个用逗号分隔" /></view>
       </view>
       <view class="field"><text>解析</text><textarea value="{{puzzleForm.answer_explanation}}" data-form="puzzleForm" data-field="answer_explanation" bindinput="onFormInput" maxlength="400" show-confirm-bar="{{false}}" /></view>
       <view class="field"><text>奖励积分</text><input type="number" value="{{puzzleForm.reward_points}}" data-form="puzzleForm" data-field="reward_points" bindinput="onFormInput" /></view>
@@ -387,6 +402,53 @@
         <view class="field"><text>优先级</text><input type="number" value="{{dudForm.priority}}" data-form="dudForm" data-field="priority" bindinput="onFormInput" /></view>
       </view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createDudKeyword">添加关键词</button>
+    </view>
+
+    <!-- 交友管理 -->
+    <view class="panel" wx:if="{{!error && tab === 'dating'}}">
+      <view class="panel-title">交友管理</view>
+
+      <!-- 统计 -->
+      <view class="panel-row" wx:if="{{dating_stats}}">
+        <view class="panel-stat">
+          <text class="panel-stat-label">交友池人数</text>
+          <text class="panel-stat-value">{{dating_stats.pool_size || 0}}</text>
+        </view>
+        <view class="panel-stat">
+          <text class="panel-stat-label">总匹配数</text>
+          <text class="panel-stat-value">{{dating_stats.total_matches || 0}}</text>
+        </view>
+        <view class="panel-stat">
+          <text class="panel-stat-label">今日新匹配</text>
+          <text class="panel-stat-value">{{dating_stats.today_matches || 0}}</text>
+        </view>
+      </view>
+
+      <!-- 交友池用户列表 -->
+      <view class="panel-subtitle">交友池用户</view>
+      <view class="list-row" wx:for="{{dating_pool}}" wx:key="user_id" wx:for-index="index">
+        <text class="list-index">{{index + 1}}</text>
+        <view class="list-info">
+          <text class="list-title">{{item.user_id}}</text>
+          <text class="list-desc">{{item.campus || ''}} {{item.grade || ''}}</text>
+        </view>
+        <view class="list-status-tag {{item.is_active ? 'online' : 'offline'}}">{{item.is_active ? '活跃' : '离线'}}</view>
+        <button class="small-btn danger-btn" data-user-id="{{item.user_id}}" bindtap="adminRemoveFromPool" wx:if="{{item.is_active}}">移除</button>
+      </view>
+
+      <!-- 匹配记录 -->
+      <view class="panel-subtitle" style="margin-top: 32rpx;">匹配记录</view>
+      <view class="list-row" wx:for="{{dating_matches}}" wx:key="match_id" wx:for-index="index">
+        <text class="list-index">{{index + 1}}</text>
+        <view class="list-info">
+          <text class="list-title">{{item.match_id}}</text>
+          <text class="list-desc">{{item.user_id_1}} ↔ {{item.user_id_2}}</text>
+        </view>
+        <view class="list-status-tag {{item.is_active ? 'online' : 'offline'}}">{{item.is_active ? '活跃' : '已解除'}}</view>
+        <button class="small-btn danger-btn" data-match-id="{{item.match_id}}" bindtap="adminDeactivateMatch" wx:if="{{item.is_active}}">解除</button>
+      </view>
+
+      <empty-state wx:if="{{!dating_pool.length && !dating_matches.length}}" icon="💬" title="暂无交友数据" />
     </view>
 
     <view class="panel" wx:if="{{!error && tab === 'feedback'}}">

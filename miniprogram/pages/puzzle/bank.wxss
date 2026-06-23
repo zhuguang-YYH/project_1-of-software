@@ -1,0 +1,278 @@
+/* pages/puzzle/bank/index.wxss */
+.container {
+  min-height: 100vh;
+  padding: 20rpx 24rpx 80rpx;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
+}
+
+/* 搜索栏 */
+.search-bar {
+  margin-bottom: 20rpx;
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 16rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
+}
+
+.search-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1a1f3a;
+  height: 56rpx;
+  line-height: 56rpx;
+}
+
+.search-placeholder {
+  color: #9aa3b8;
+  font-size: 26rpx;
+}
+
+/* 分类筛选 */
+.filter-bar {
+  white-space: nowrap;
+  margin-bottom: 16rpx;
+  padding: 4rpx 0;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  margin-right: 16rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: #4a5577;
+  background: #fff;
+  border: 2rpx solid #e2e6f3;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.3);
+}
+
+/* 工具栏 */
+.toolbar {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(91, 108, 255, 0.06);
+}
+
+.difficulty-row,
+.sort-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.difficulty-row {
+  margin-bottom: 16rpx;
+}
+
+.diff-chip,
+.sort-chip {
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  color: #4a5577;
+  background: #f4f6fb;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.diff-chip.active,
+.sort-chip.active {
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  color: #5b6cff;
+  border-color: #5b6cff;
+  font-weight: 600;
+}
+
+/* 收藏入口 */
+.favorites-entry {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 24rpx;
+  background: linear-gradient(135deg, #fef3df, #ffd76b);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  gap: 14rpx;
+}
+
+.fav-icon {
+  font-size: 36rpx;
+  color: #92580d;
+}
+
+.fav-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #92580d;
+  font-weight: 600;
+}
+
+.fav-arrow {
+  font-size: 36rpx;
+  color: #92580d;
+}
+
+/* 谜题网格 */
+.puzzle-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.puzzle-card {
+  width: calc(50% - 8rpx);
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  position: relative;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.card-category {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.category-logic { background: #e8eaf6; color: #3a4cd1; }
+.category-crypto { background: #fce4ec; color: #c62828; }
+.category-riddle { background: #f3e5f5; color: #7b1fa2; }
+.category-math { background: #e0f2f1; color: #00695c; }
+.category-observe { background: #fff3e0; color: #e65100; }
+.category-other { background: #f5f5f5; color: #616161; }
+
+.card-difficulty {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+}
+
+.difficulty-easy { background: rgba(52, 211, 153, 0.15); color: #16a085; }
+.difficulty-normal,
+.difficulty-medium { background: rgba(245, 176, 65, 0.15); color: #92580d; }
+.difficulty-hard { background: rgba(231, 76, 60, 0.15); color: #c0392b; }
+.difficulty-extreme { background: rgba(168, 85, 247, 0.2); color: #7b1fa2; }
+
+.card-favorite {
+  font-size: 32rpx;
+  color: #c5cee0;
+}
+
+.card-favorite.favorited {
+  color: #f5b041;
+}
+
+.card-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
+.meta-stats {
+  font-size: 20rpx;
+  color: #9aa3b8;
+}
+
+.card-reward {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: linear-gradient(135deg, #fef3df, #fff8e1);
+  padding: 8rpx 14rpx;
+  border-radius: 8rpx;
+}
+
+.reward-icon {
+  font-size: 22rpx;
+}
+
+.reward-text {
+  font-size: 20rpx;
+  color: #92580d;
+  font-weight: 600;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: #5b6cff;
+  font-weight: 600;
+}
+
+.load-more-text.loading {
+  color: #9aa3b8;
+}
+
+.no-more {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #9aa3b8;
+}
+
+/* 页脚 */
+.page-footer {
+  text-align: center;
+  padding: 40rpx;
+  font-size: 22rpx;
+  color: #9aa3b8;
+}

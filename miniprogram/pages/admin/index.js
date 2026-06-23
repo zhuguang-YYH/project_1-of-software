@@ -176,6 +176,7 @@ Page({
       { key: 'exchange', label: '兑换' },
       { key: 'recommendation', label: '推荐' },
       { key: 'dud', label: 'Dud' },
+      { key: 'dating', label: '交友' },
       { key: 'feedback', label: '反馈' },
       { key: 'logs', label: '日志' },
       { key: 'settings', label: '设置' }
@@ -184,6 +185,14 @@ Page({
       { label: '简单', value: 'easy' },
       { label: '中等', value: 'medium' },
       { label: '困难', value: 'hard' }
+    ],
+    puzzleCategoryOptions: [
+      { label: '逻辑推理', value: '逻辑推理' },
+      { label: '密码解密', value: '密码解密' },
+      { label: '字谜', value: '字谜' },
+      { label: '数学', value: '数学' },
+      { label: '观察力', value: '观察力' },
+      { label: '其他', value: '其他' }
     ],
     answerOptions: [
       { label: 'A', value: 'A' },
@@ -278,9 +287,15 @@ Page({
       start_date: '',
       end_date: ''
     },
+    // 交友管理
+    dating_stats: null,
+    dating_pool: [],
+    dating_matches: [],
+    datingMatchFilter: { status: 'active' },
     publishTimeOptions: buildTimeOptions(30),
     cancelHourOptions: buildHourOptions(),
     puzzleForm: {
+      puzzle_type: 'daily',
       publish_date: '',
       content: '',
       option_a: '',
@@ -290,8 +305,14 @@ Page({
       correct_answer: 'A',
       answer_explanation: '',
       difficulty: 'easy',
+      category: '逻辑推理',
+      tags: '',
       reward_points: '10'
     },
+    puzzleTypeOptions: [
+      { label: '每日谜题', value: 'daily' },
+      { label: '谜题库', value: 'bank' }
+    ],
     activityForm: {
       title: '',
       description: '',
@@ -467,6 +488,64 @@ Page({
     this.setData({ log_list: list });
   },
 
+  // 交友管理
+  async loadDatingStats() {
+    const result = await adminService.getDatingStats();
+    if (result.success) this.setData({ dating_stats: result.data });
+  },
+
+  async loadDatingPool() {
+    const result = await adminService.getDatingPool({ page: 1, page_size: 30 });
+    if (result.success) this.setData({ dating_pool: result.data || [] });
+  },
+
+  async loadDatingMatches() {
+    const result = await adminService.getDatingMatches({ status: this.data.datingMatchFilter.status, page: 1, page_size: 30 });
+    if (result.success) this.setData({ dating_matches: result.data || [] });
+  },
+
+  async adminRemoveFromPool(e) {
+    const user_id = e.currentTarget.dataset.userId;
+    if (!user_id) return;
+    wx.showModal({
+      title: '确认移除',
+      content: '确定将此用户从交友池中移除吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          const result = await adminService.removeFromPool(user_id);
+          if (result.success) {
+            wx.showToast({ title: '已移除', icon: 'success' });
+            this.loadDatingPool();
+            this.loadDatingStats();
+          } else {
+            wx.showToast({ title: result.error || '移除失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  },
+
+  async adminDeactivateMatch(e) {
+    const match_id = e.currentTarget.dataset.matchId;
+    if (!match_id) return;
+    wx.showModal({
+      title: '确认解除',
+      content: '确定要解除此匹配关系吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          const result = await adminService.deactivateMatch(match_id);
+          if (result.success) {
+            wx.showToast({ title: '已解除', icon: 'success' });
+            this.loadDatingMatches();
+            this.loadDatingStats();
+          } else {
+            wx.showToast({ title: result.error || '操作失败', icon: 'none' });
+          }
+        }
+      }
+    });
+  },
+
   async loadBorrowApplications() {
     const result = await adminService.getBorrowApplications({
       ...this.data.borrowFilters,
@@ -547,6 +626,11 @@ Page({
     }
     if (tab === 'feedback') this.loadFeedback();
     if (tab === 'logs') this.loadLogs();
+    if (tab === 'dating') {
+      this.loadDatingStats();
+      this.loadDatingPool();
+      this.loadDatingMatches();
+    }
   },
 
   onFormInput(event) {
@@ -739,9 +823,11 @@ Page({
   buildPuzzlePayload() {
     const form = this.data.puzzleForm;
     const options = [form.option_a, form.option_b, form.option_c, form.option_d].map(item => String(item || '').trim());
+    const tags = String(form.tags || '').split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean);
     return {
       ...form,
       options_text: options.join('\n'),
+      tags,
       reward_points: Number(form.reward_points)
     };
   },

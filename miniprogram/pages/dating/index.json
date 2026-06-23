@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "每日谜题",
+  "navigationBarTitleText": "推理好友",
   "usingComponents": {
     "empty-state": "/components/empty-state/index",
     "common-loading": "/components/common/loading"

@@ -285,15 +285,28 @@ async function getAnswerRecord(user, puzzle_id, answer_date) {
 }
 
 async function getPuzzleByDate(publish_date) {
+  // 只查每日谜题（兼容旧数据无 puzzle_type）
   const res = await db.collection('puzzles')
-    .where({ publish_date, status: 'published' })
+    .where(_.and([
+      { publish_date, status: 'published' },
+      _.or([
+        { puzzle_type: 'daily' },
+        { puzzle_type: _.exists(false) }
+      ])
+    ]))
     .limit(1)
     .get();
 
   if (res.data.length > 0) return res.data[0];
 
   const fallback = await db.collection('puzzles')
-    .where({ publish_date })
+    .where({
+      publish_date,
+      puzzle_type: _.or([
+        _.eq('daily'),
+        _.exists(false)
+      ])
+    })
     .limit(1)
     .get();
   return fallback.data[0] || null;
@@ -629,6 +642,337 @@ async function puzzle_getStats() {
   }
 }
 
+// ========== 谜题库 Actions ==========
+
+async function puzzle_getPuzzleBank(event) {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    const page = Math.max(1, numberValue(event.page, 1));
+    const page_size = Math.min(50, Math.max(1, numberValue(event.page_size, 12)));
+    const { category, difficulty, sort_by, sort_order, keyword } = event;
+
+    // 构建查询条件 — 谜题库自有谜题 + 往期每日谜题 + 无类型旧数据
+    const today = todayText();
+    const conditions = [
+      { status: 'published' },
+      _.or([
+        { puzzle_type: 'bank' },
+        _.and([{ puzzle_type: 'daily' }, { publish_date: _.lt(today) }]),
+        { puzzle_type: _.exists(false) }
+      ])
+    ];
+    if (category) conditions.push({ category });
+    if (difficulty) conditions.push({ difficulty });
+
+    // 关键词搜索
+    if (keyword) {
+      const kw = String(keyword).trim();
+      if (kw) {
+        conditions.push({ content: db.RegExp({ regexp: kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options: 'i' }) });
+      }
+    }
+
+    const where = _.and(conditions);
+
+    // 排序
+    let order_field = 'publish_date';
+    let order_dir = 'desc';
+    if (sort_by === 'difficulty') order_field = 'difficulty_level';
+    else if (sort_by === 'correct_rate') order_field = 'correct_count';
+    else if (sort_by === 'date') order_field = 'publish_date';
+    if (sort_order === 'asc') order_dir = 'asc';
+
+    // 查询总数
+    let total = 0;
+    try {
+      const count_res = await db.collection('puzzles').where(where).count();
+      total = count_res.total || 0;
+    } catch (_) { /* ignore */ }
+
+    const res = await db.collection('puzzles')
+      .where(where)
+      .orderBy(order_field, order_dir)
+      .skip((page - 1) * page_size)
+      .limit(page_size)
+      .get();
+
+    // 获取当前用户的收藏列表
+    const favorite_set = new Set();
+    if (user) {
+      try {
+        const fav_res = await db.collection('puzzle_favorites')
+          .where({ user_id: user._id })
+          .field({ puzzle_id: true })
+          .get();
+        (fav_res.data || []).forEach(item => favorite_set.add(item.puzzle_id));
+      } catch (error) {
+        if (!isCollectionMissing(error)) console.warn('[puzzle bank] load favorites failed:', error.message);
+      }
+    }
+
+    const list = (res.data || []).map(puzzle => {
+      const attempt = numberValue(puzzle.attempt_count, 0);
+      const correct = numberValue(puzzle.correct_count, 0);
+      const correct_rate = attempt > 0 ? Math.round((correct / attempt) * 100) : 0;
+      const DIFFICULTY_MAP = { easy: '简单', normal: '中等', medium: '中等', hard: '困难', extreme: '极限' };
+      const raw = String(puzzle.difficulty || '').toLowerCase();
+
+      return {
+        puzzle_id: puzzle._id || puzzle.puzzle_id || '',
+        title: puzzle.title || '',
+        content: (puzzle.content || '').slice(0, 80),
+        difficulty: puzzle.difficulty || 'normal',
+        _difficulty_class: /^(easy|normal|medium|hard|extreme)$/.test(raw) ? raw : 'normal',
+        _difficulty_text: DIFFICULTY_MAP[raw] || (puzzle.difficulty || '中等'),
+        category: puzzle.category || '未分类',
+        tags: puzzle.tags || [],
+        attempt_count: attempt,
+        correct_count: correct,
+        correct_rate,
+        reward_points: numberValue(puzzle.reward_points, 10),
+        publish_date: puzzle.publish_date || '',
+        is_favorited: favorite_set.has(puzzle._id || puzzle.puzzle_id || '')
+      };
+    });
+
+    return success({
+      list,
+      total,
+      page,
+      page_size,
+      has_more: page * page_size < total
+    }, '获取成功');
+  } catch (error) {
+    return fail('获取谜题库失败: ' + error.message);
+  }
+}
+
+async function puzzle_getPuzzleCategories() {
+  try {
+    const res = await db.collection('puzzles')
+      .where({ status: 'published' })
+      .field({ category: true })
+      .limit(500)
+      .get();
+
+    const count_map = {};
+    (res.data || []).forEach(puzzle => {
+      const cat = puzzle.category || '未分类';
+      count_map[cat] = (count_map[cat] || 0) + 1;
+    });
+
+    const CATEGORY_ORDER = ['逻辑推理', '密码解密', '字谜', '数学', '观察力', '其他'];
+    const categories = CATEGORY_ORDER.map(cat => ({
+      value: cat,
+      label: cat,
+      count: count_map[cat] || 0
+    }));
+
+    // 追加任何未在预定义列表中的分类
+    Object.keys(count_map).forEach(cat => {
+      if (!CATEGORY_ORDER.includes(cat)) {
+        categories.push({ value: cat, label: cat, count: count_map[cat] });
+      }
+    });
+
+    return success(categories, '获取成功');
+  } catch (error) {
+    return fail('获取分类失败: ' + error.message);
+  }
+}
+
+async function puzzle_toggleFavorite(event) {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const puzzle_id = event.puzzle_id;
+    if (!puzzle_id) return fail('缺少谜题编号');
+
+    // 检查是否已收藏
+    const existing = await db.collection('puzzle_favorites')
+      .where({ user_id: user._id, puzzle_id })
+      .limit(1)
+      .get();
+
+    if (existing.data.length > 0) {
+      // 取消收藏
+      await db.collection('puzzle_favorites').doc(existing.data[0]._id).remove();
+      return success({ is_favorited: false }, '已取消收藏');
+    } else {
+      // 添加收藏
+      await db.collection('puzzle_favorites').add({
+        data: {
+          user_id: user._id,
+          puzzle_id,
+          created_at: db.serverDate()
+        }
+      });
+      return success({ is_favorited: true }, '已收藏');
+    }
+  } catch (error) {
+    if (isCollectionMissing(error)) return fail('收藏功能暂不可用，请稍后重试');
+    return fail('操作收藏失败: ' + error.message);
+  }
+}
+
+async function puzzle_getFavorites(event) {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const page = Math.max(1, numberValue(event.page, 1));
+    const page_size = Math.min(50, Math.max(1, numberValue(event.page_size, 12)));
+
+    const fav_res = await db.collection('puzzle_favorites')
+      .where({ user_id: user._id })
+      .orderBy('created_at', 'desc')
+      .skip((page - 1) * page_size)
+      .limit(page_size)
+      .get();
+
+    let total = 0;
+    try {
+      const count_res = await db.collection('puzzle_favorites')
+        .where({ user_id: user._id })
+        .count();
+      total = count_res.total || 0;
+    } catch (_) { /* ignore */ }
+
+    // 获取对应谜题详情
+    const puzzle_ids = (fav_res.data || []).map(item => item.puzzle_id);
+    const list = [];
+    if (puzzle_ids.length > 0) {
+      const puzzles_res = await db.collection('puzzles')
+        .where({ _id: _.in(puzzle_ids) })
+        .get();
+      const puzzle_map = {};
+      (puzzles_res.data || []).forEach(p => { puzzle_map[p._id] = p; });
+
+      const DIFFICULTY_MAP = { easy: '简单', normal: '中等', medium: '中等', hard: '困难', extreme: '极限' };
+
+      (fav_res.data || []).forEach(fav => {
+        const puzzle = puzzle_map[fav.puzzle_id];
+        if (!puzzle) return;
+        const attempt = numberValue(puzzle.attempt_count, 0);
+        const correct = numberValue(puzzle.correct_count, 0);
+        const raw = String(puzzle.difficulty || '').toLowerCase();
+
+        list.push({
+          puzzle_id: puzzle._id || puzzle.puzzle_id || '',
+          title: puzzle.title || '',
+          content: (puzzle.content || '').slice(0, 80),
+          difficulty: puzzle.difficulty || 'normal',
+          _difficulty_class: /^(easy|normal|medium|hard|extreme)$/.test(raw) ? raw : 'normal',
+          _difficulty_text: DIFFICULTY_MAP[raw] || (puzzle.difficulty || '中等'),
+          category: puzzle.category || '未分类',
+          tags: puzzle.tags || [],
+          attempt_count: attempt,
+          correct_count: correct,
+          correct_rate: attempt > 0 ? Math.round((correct / attempt) * 100) : 0,
+          reward_points: numberValue(puzzle.reward_points, 10),
+          publish_date: puzzle.publish_date || '',
+          is_favorited: true,
+          favorited_at: fav.created_at
+        });
+      });
+    }
+
+    return success({
+      list,
+      total,
+      page,
+      page_size,
+      has_more: page * page_size < total
+    }, '获取成功');
+  } catch (error) {
+    if (isCollectionMissing(error)) return success({ list: [], total: 0, page: 1, page_size: 12, has_more: false });
+    return fail('获取收藏失败: ' + error.message);
+  }
+}
+
+async function puzzle_submitPracticeAnswer(event) {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const puzzle_id = event.puzzle_id;
+    const selected_value = event.answer || event.option_id;
+    if (!puzzle_id) return fail('缺少谜题编号');
+    if (!selected_value) return fail('请选择答案');
+
+    // 检查是否已练习过该题
+    const existing = await db.collection('puzzle_practice_answers')
+      .where({ user_id: user._id, puzzle_id })
+      .limit(1)
+      .get();
+    if (existing.data.length > 0) {
+      const record = existing.data[0];
+      return success({
+        answer_id: record._id,
+        is_correct: !!record.is_correct,
+        correct_answer: '',
+        answer_explanation: '',
+        already_answered: true
+      }, '您已经练习过这道谜题了');
+    }
+
+    // 获取谜题和选项
+    const puzzle_res = await db.collection('puzzles').doc(puzzle_id).get();
+    const puzzle = puzzle_res.data;
+    if (!puzzle) return fail('谜题不存在');
+
+    const options = await getPuzzleOptions(puzzle);
+    const selected_option = options.find(item => (
+      item.option_id === selected_value ||
+      item.option_label === selected_value ||
+      item.option_content === selected_value
+    ));
+    const selected_answer = selected_option ? selected_option.option_content : selected_value;
+    const correct_option = options.find(item => item.is_correct);
+    const correct_answer = correct_option ? correct_option.option_content : '';
+    const is_correct = !!correct_answer && selected_answer === correct_answer;
+
+    // 记录练习答案
+    await db.collection('puzzle_practice_answers').add({
+      data: {
+        user_id: user._id,
+        puzzle_id,
+        selected_option_id: selected_option ? selected_option.option_id : '',
+        is_correct,
+        answered_at: db.serverDate()
+      }
+    });
+
+    // 原子更新谜题统计（不计分）
+    try {
+      await db.collection('puzzles').doc(puzzle_id).update({
+        data: {
+          attempt_count: _.inc(1),
+          correct_count: is_correct ? _.inc(1) : _.inc(0)
+        }
+      });
+    } catch (error) {
+      console.warn('[practice] update puzzle stats failed:', error.message);
+    }
+
+    return success({
+      is_correct,
+      correct_answer,
+      answer_explanation: puzzle.answer_explanation || ''
+    }, is_correct ? '答对了！' : '答错了，再接再厉');
+  } catch (error) {
+    if (isCollectionMissing(error)) return fail('练习功能暂不可用，请稍后重试');
+    return fail('提交练习答案失败: ' + error.message);
+  }
+}
+
+// ========== 导出 ==========
+
 exports.main = async (event, context) => {
   if (event && event.Type === 'timer') {
     return runDailyPuzzleReminder();
@@ -642,7 +986,13 @@ exports.main = async (event, context) => {
     getPuzzleDetail: puzzle_getPuzzleDetail,
     getStats: puzzle_getStats,
     subscribeDailyReminder: puzzle_subscribeDailyReminder,
-    runDailyReminder: runDailyPuzzleReminder
+    runDailyReminder: runDailyPuzzleReminder,
+    // 谜题库
+    getPuzzleBank: puzzle_getPuzzleBank,
+    getPuzzleCategories: puzzle_getPuzzleCategories,
+    toggleFavorite: puzzle_toggleFavorite,
+    getFavorites: puzzle_getFavorites,
+    submitPracticeAnswer: puzzle_submitPracticeAnswer
   };
 
   const handler = actions[action];

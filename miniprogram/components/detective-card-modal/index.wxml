@@ -47,6 +47,20 @@
         <text class="card-section-title">注册时间</text>
         <text class="card-section-value">{{card.created_text}}</text>
       </view>
+
+      <!-- 好友操作区 -->
+      <view class="card-friend-actions" wx:if="{{!card.is_self}}">
+        <button class="card-add-friend-btn" wx:if="{{!card.is_friend && !card.request_pending}}" bindtap="onAddFriend">
+          <text class="add-friend-icon">+</text>
+          <text class="add-friend-text">添加好友</text>
+        </button>
+        <view class="card-friend-status already" wx:elif="{{card.is_friend}}">
+          <text>✓ 已是好友</text>
+        </view>
+        <view class="card-friend-status pending" wx:elif="{{card.request_pending}}">
+          <text>⏳ 请求已发送</text>
+        </view>
+      </view>
     </view>
   </view>
 </view>

@@ -10,24 +10,20 @@
     bind:action="onRetry"
   />
 
-  <empty-state
-    wx:elif="{{!puzzle}}"
-    icon="?"
-    title="今日暂无谜题"
-    description="管理员还未发布今日谜题，稍后再来看看。"
-    action-text="刷新"
-    bind:action="onRetry"
-  />
-
   <view class="puzzle-card" wx:elif="{{puzzle}}">
     <view class="puzzle-header">
       <view class="puzzle-title-block">
-        <text class="puzzle-eyebrow">DAILY PUZZLE</text>
-        <text class="puzzle-title">每日谜题</text>
+        <text class="puzzle-eyebrow">PRACTICE PUZZLE</text>
+        <text class="puzzle-title">谜题练习</text>
       </view>
-      <text class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
-        {{puzzle._difficulty_text || '中等'}}
-      </text>
+      <view class="puzzle-header-actions">
+        <view class="fav-btn tap-feedback {{is_favorited ? 'favorited' : ''}}" bindtap="toggleFavorite">
+          <text>{{is_favorited ? '★' : '☆'}}</text>
+        </view>
+        <text class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
+          {{puzzle._difficulty_text || '中等'}}
+        </text>
+      </view>
     </view>
 
     <view class="puzzle-content">
@@ -35,6 +31,9 @@
     </view>
 
     <view class="options-container" wx:if="{{!answered}}">
+      <view class="already-notice" wx:if="{{already_answered}}">
+        <text>您已经练习过这道谜题了</text>
+      </view>
       <view
         class="option {{selected_option_id === item.option_id ? 'selected' : ''}}"
         wx:for="{{options}}"
@@ -74,27 +73,11 @@
       >
         {{submitting ? '提交中...' : '提交答案'}}
       </button>
-      <button class="btn btn-back" bindtap="goBack">返回首页</button>
+      <button class="btn btn-back" bindtap="goBack">返回</button>
     </view>
 
     <view class="bank-link tap-feedback" bindtap="goToBank">
       <text>浏览谜题库 →</text>
-    </view>
-
-    <view class="reward-info" wx:if="{{puzzle.reward_points}}">
-      <view class="reward-line">
-        <text class="reward-label">答对可获得</text>
-        <text class="reward-points">+{{puzzle.reward_points}} 积分</text>
-      </view>
-      <view class="streak-line">
-        <text class="streak-text">连续打卡 {{puzzle.current_streak || 0}} 天</text>
-        <text class="streak-bonus" wx:if="{{puzzle.last_streak_bonus_points}}">
-          本次额外 +{{puzzle.last_streak_bonus_points}} 积分
-        </text>
-        <text class="streak-bonus" wx:elif="{{puzzle.next_streak_bonus_in && puzzle.streak_bonus_points}}">
-          再答对 {{puzzle.next_streak_bonus_in}} 天额外 +{{puzzle.streak_bonus_points}} 积分
-        </text>
-      </view>
     </view>
   </view>
 </view>

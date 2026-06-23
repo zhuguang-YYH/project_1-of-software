@@ -1,6 +1,5 @@
 {
   "navigationBarTitleText": "活动通知",
-  "enableShareAppMessage": true,
   "usingComponents": {
     "skeleton": "/components/skeleton/index",
     "common-modal": "/components/common/modal"

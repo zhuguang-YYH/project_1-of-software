@@ -479,10 +479,13 @@ async function admin_savePuzzle(event, admin_user) {
     .filter(Boolean);
   const content = String(event.content || '').trim();
   const publish_date = String(event.publish_date || '').trim();
+  const puzzle_type = String(event.puzzle_type || 'daily').trim();
   const correct_answer = String(event.correct_answer || '').trim();
   const reward_points = toNumber(event.reward_points, DEFAULT_SYSTEM_SETTINGS.default_puzzle_reward);
+  const category = String(event.category || '').trim();
+  const tags = String(event.tags || '').split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean);
 
-  if (!publish_date) return fail('谜题日期不能为空');
+  if (puzzle_type === 'daily' && !publish_date) return fail('每日谜题必须设置发布日期');
   if (!content) return fail('谜题内容不能为空');
   if (option_list.length < 2) return fail('至少需要两个选项');
   if (!correct_answer) return fail('正确答案不能为空');
@@ -494,6 +497,9 @@ async function admin_savePuzzle(event, admin_user) {
     reward_points,
     answer_explanation: String(event.answer_explanation || '').trim(),
     publish_date,
+    puzzle_type,
+    category: category || '其他',
+    tags,
     status: 'published',
     created_by: admin_user._id,
     updated_at: db.serverDate()
@@ -1145,6 +1151,166 @@ async function admin_getLogs(event) {
   return ok({ list: list.map(normalizeLog), page, page_size });
 }
 
+// ========== 谜题库管理 ==========
+
+async function admin_setFeaturedPuzzle(event, admin_user) {
+  const puzzle_id = String(event.puzzle_id || '').trim();
+  const date = String(event.date || '').trim();
+  if (!puzzle_id) return fail('缺少谜题编号');
+  if (!date) return fail('缺少推荐日期');
+
+  try {
+    // 取消该日期的其他推荐
+    await db.collection('puzzles')
+      .where({ featured_date: date, is_featured: true })
+      .update({
+        data: {
+          is_featured: false,
+          updated_at: db.serverDate()
+        }
+      });
+
+    // 设置新的推荐
+    await db.collection('puzzles').doc(puzzle_id).update({
+      data: {
+        is_featured: true,
+        featured_date: date,
+        publish_date: date,
+        status: 'published',
+        updated_at: db.serverDate()
+      }
+    });
+
+    await logOperation(admin_user, 'set_featured_puzzle', 'puzzles', puzzle_id, { featured_date: date, is_featured: true });
+    return ok({ puzzle_id, date }, '已设为推荐谜题');
+  } catch (error) {
+    return fail('设置推荐失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_updatePuzzleBank(event, admin_user) {
+  const puzzle_id = String(event.puzzle_id || '').trim();
+  if (!puzzle_id) return fail('缺少谜题编号');
+
+  const update = {};
+  if (event.category !== undefined) update.category = String(event.category || '').trim();
+  if (event.tags !== undefined) {
+    update.tags = Array.isArray(event.tags)
+      ? event.tags
+      : String(event.tags || '').split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean);
+  }
+  if (event.difficulty !== undefined) update.difficulty = event.difficulty;
+  if (event.difficulty_level !== undefined) update.difficulty_level = toNumber(event.difficulty_level, 0);
+  if (event.status !== undefined) update.status = event.status;
+
+  if (Object.keys(update).length === 0) return fail('没有需要更新的字段');
+  update.updated_at = db.serverDate();
+
+  try {
+    await db.collection('puzzles').doc(puzzle_id).update({ data: update });
+    await logOperation(admin_user, 'update_puzzle_bank', 'puzzles', puzzle_id, update);
+    return ok({ puzzle_id }, '谜题已更新');
+  } catch (error) {
+    return fail('更新谜题失败: ' + (error.message || '未知错误'));
+  }
+}
+
+// ========== 交友管理 ==========
+
+async function admin_getDatingStats() {
+  try {
+    const pool_size = await safeCount('dating_pool', { is_active: true });
+    let today_matches = 0;
+    let total_matches = 0;
+    try {
+      total_matches = await safeCount('dating_matches', { is_active: true });
+    } catch (_) { /* ignore */ }
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const start = new Date(`${today}T00:00:00.000+08:00`);
+      const end = new Date(`${today}T23:59:59.999+08:00`);
+      today_matches = await safeCount('dating_matches', {
+        is_active: true,
+        matched_at: _.gte(start).and(_.lte(end))
+      });
+    } catch (_) { /* ignore */ }
+
+    return ok({ pool_size, total_matches, today_matches });
+  } catch (error) {
+    return fail('获取交友统计失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_getDatingPool(event) {
+  const page = Math.max(1, toNumber(event.page, 1));
+  const page_size = Math.min(50, Math.max(1, toNumber(event.page_size, 20)));
+
+  try {
+    const list = await safeList('dating_pool', {
+      orderBy: { field: 'last_active_at', direction: 'desc' },
+      skip: (page - 1) * page_size,
+      limit: page_size
+    });
+    return ok({ list, page, page_size });
+  } catch (error) {
+    return fail('获取交友池失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_getDatingMatches(event) {
+  const page = Math.max(1, toNumber(event.page, 1));
+  const page_size = Math.min(50, Math.max(1, toNumber(event.page_size, 20)));
+  const status = String(event.status || 'active').trim();
+
+  try {
+    const where = {};
+    if (status === 'active') where.is_active = true;
+    else if (status === 'inactive') where.is_active = false;
+
+    const list = await safeList('dating_matches', {
+      where,
+      orderBy: { field: 'matched_at', direction: 'desc' },
+      skip: (page - 1) * page_size,
+      limit: page_size
+    });
+    return ok({ list, page, page_size });
+  } catch (error) {
+    return fail('获取匹配记录失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_removeFromPool(event, admin_user) {
+  const user_id = String(event.user_id || '').trim();
+  if (!user_id) return fail('缺少用户编号');
+
+  try {
+    await db.collection('dating_pool').where({ user_id }).update({
+      data: { is_active: false, updated_at: db.serverDate() }
+    });
+    await logOperation(admin_user, 'remove_from_dating_pool', 'dating_pool', user_id, { is_active: false });
+    return ok({ user_id }, '已从交友池移除');
+  } catch (error) {
+    return fail('移除失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_deactivateMatch(event, admin_user) {
+  const match_id = String(event.match_id || '').trim();
+  if (!match_id) return fail('缺少匹配编号');
+
+  try {
+    const res = await db.collection('dating_matches').where({ match_id }).limit(1).get();
+    if (!res.data[0]) return fail('匹配记录不存在');
+    await db.collection('dating_matches').doc(res.data[0]._id).update({
+      data: { is_active: false, updated_at: db.serverDate() }
+    });
+    await logOperation(admin_user, 'deactivate_match', 'dating_matches', match_id, { is_active: false });
+    return ok({ match_id }, '匹配已解除');
+  } catch (error) {
+    return fail('操作失败: ' + (error.message || '未知错误'));
+  }
+}
+
 exports.main = async (event) => {
   const { action = 'getDashboard', ...data } = event;
   const actions = {
@@ -1168,7 +1334,16 @@ exports.main = async (event) => {
     updateFeedback: admin_updateFeedback,
     getSystemSettings: admin_getSystemSettings,
     saveSystemSettings: admin_saveSystemSettings,
-    getLogs: admin_getLogs
+    getLogs: admin_getLogs,
+    // 谜题库管理
+    setFeaturedPuzzle: admin_setFeaturedPuzzle,
+    updatePuzzleBank: admin_updatePuzzleBank,
+    // 交友管理
+    getDatingStats: admin_getDatingStats,
+    getDatingPool: admin_getDatingPool,
+    getDatingMatches: admin_getDatingMatches,
+    removeFromPool: admin_removeFromPool,
+    deactivateMatch: admin_deactivateMatch
   };
   const handler = actions[action];
   if (!handler) return fail(`未知操作：${action}`);
