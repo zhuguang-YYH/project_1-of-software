@@ -245,6 +245,14 @@ Page({
       { label: '精确匹配', value: 'exact' },
       { label: '模糊匹配', value: 'fuzzy' }
     ],
+    dudCategoryOptions: [
+      { label: '通用', value: 'general' },
+      { label: '活动相关', value: 'activity' },
+      { label: '谜题相关', value: 'puzzle' },
+      { label: '排行相关', value: 'ranking' },
+      { label: '委托相关', value: 'commission' },
+      { label: '帮助指引', value: 'help' }
+    ],
     feedbackFilterOptions: [
       { label: '处理中', value: 'active' },
       { label: '全部', value: 'all' },
@@ -363,6 +371,7 @@ Page({
     dudForm: {
       keyword: '',
       reply_content: '',
+      category: 'general',
       match_type: 'exact',
       priority: '0'
     },
@@ -960,6 +969,7 @@ Page({
         dudForm: {
           keyword: '',
           reply_content: '',
+          category: 'general',
           match_type: 'exact',
           priority: '0'
         }
@@ -1064,6 +1074,66 @@ Page({
     } finally {
       wx.stopPullDownRefresh();
     }
+  },
+
+  // ========== 删除操作 ==========
+  async deletePuzzle(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    const confirmed = await new Promise(resolve => {
+      wx.showModal({ title: '确认删除', content: '确定要删除此谜题吗？此操作不可撤销。', confirmColor: '#e74c3c', success: res => resolve(res.confirm) });
+    });
+    if (!confirmed) return;
+    const ok = await this.submitAction('deletePuzzle', { puzzle_id: id }, '谜题已删除');
+    if (ok) await this.loadDashboard();
+  },
+
+  async deleteActivity(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    const confirmed = await new Promise(resolve => {
+      wx.showModal({ title: '确认删除', content: '确定要删除此活动吗？已报名的用户也将被影响。', confirmColor: '#e74c3c', success: res => resolve(res.confirm) });
+    });
+    if (!confirmed) return;
+    const ok = await this.submitAction('deleteActivity', { activity_id: id }, '活动已删除');
+    if (ok) {
+      await Promise.all([this.loadDashboard(), this.loadActivityRegistrations()]);
+    }
+  },
+
+  async deleteExchangeGood(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    const confirmed = await new Promise(resolve => {
+      wx.showModal({ title: '确认删除', content: '确定要删除此商品吗？此操作不可撤销。', confirmColor: '#e74c3c', success: res => resolve(res.confirm) });
+    });
+    if (!confirmed) return;
+    const ok = await this.submitAction('deleteExchangeGood', { item_id: id }, '商品已删除');
+    if (ok) {
+      await Promise.all([this.loadExchangeGoods(), this.loadDashboard()]);
+    }
+  },
+
+  async deleteRecommendation(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    const confirmed = await new Promise(resolve => {
+      wx.showModal({ title: '确认删除', content: '确定要删除此推荐内容吗？', confirmColor: '#e74c3c', success: res => resolve(res.confirm) });
+    });
+    if (!confirmed) return;
+    const ok = await this.submitAction('deleteRecommendation', { recommendation_id: id }, '推荐已删除');
+    if (ok) await this.loadDashboard();
+  },
+
+  async deleteDudKeyword(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    const confirmed = await new Promise(resolve => {
+      wx.showModal({ title: '确认删除', content: '确定要删除此关键词吗？', confirmColor: '#e74c3c', success: res => resolve(res.confirm) });
+    });
+    if (!confirmed) return;
+    const ok = await this.submitAction('deleteDudKeyword', { keyword_id: id }, '关键词已删除');
+    if (ok) await this.loadDashboard();
   },
 
   onRetry() {

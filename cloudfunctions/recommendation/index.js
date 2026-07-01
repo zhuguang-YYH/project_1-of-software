@@ -170,12 +170,56 @@ async function recommendation_getDetail(event) {
   }
 }
 
+async function recommendation_getBanners() {
+  try {
+    const res = await db.collection('banners')
+      .where({ status: 'active' })
+      .orderBy('sort_order', 'asc')
+      .limit(5)
+      .get();
+    const list = (res.data || []).map(item => ({
+      id: item.banner_id || item._id || '',
+      title: item.title || '',
+      description: item.description || '',
+      image_url: item.image_url || item.cover_url || '',
+      link_url: item.link_url || '',
+      link_type: item.link_type || 'page'
+    }));
+    return ok({ list });
+  } catch (error) {
+    if (isCollectionMissing(error)) return ok({ list: [] });
+    return fail(`获取横幅失败: ${error.message}`);
+  }
+}
+
+async function recommendation_getAnnouncement() {
+  try {
+    const res = await db.collection('announcements')
+      .where({ status: 'active' })
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .get();
+    const item = (res.data || [])[0] || null;
+    return ok(item ? {
+      id: item.announcement_id || item._id || '',
+      title: item.title || '',
+      content: item.content || item.title || '',
+      link_url: item.link_url || ''
+    } : null);
+  } catch (error) {
+    if (isCollectionMissing(error)) return ok(null);
+    return fail(`获取公告失败: ${error.message}`);
+  }
+}
+
 exports.main = async (event, context) => {
   const { action = 'getRecommendations', ...data } = event || {};
   const actions = {
     getRecommendations: recommendation_getRecommendations,
     getDetail: recommendation_getDetail,
-    getRecommendationDetail: recommendation_getDetail
+    getRecommendationDetail: recommendation_getDetail,
+    getBanners: recommendation_getBanners,
+    getAnnouncement: recommendation_getAnnouncement
   };
 
   const handler = actions[action];

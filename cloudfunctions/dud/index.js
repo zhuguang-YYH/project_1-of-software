@@ -39,10 +39,12 @@ function normalizeRule(item = {}) {
     rule_name: item.rule_name || keywords[0] || 'Dud 回复规则',
     keyword: item.keyword || keywords[0] || '',
     keywords,
+    category: item.category || 'general',
     match_type: item.match_type || 'exact',
     reply_content: item.reply_content || '',
     priority: Number(item.priority || 0),
     is_enabled: item.is_enabled !== false,
+    match_count: Number(item.match_count || 0),
     created_by: item.created_by || '',
     created_at: item.created_at || '',
     updated_at: item.updated_at || ''
@@ -132,6 +134,17 @@ async function findReply(message) {
       .sort((a, b) => b.priority - a.priority)[0];
 
     if (matched) {
+      // Increment match_count
+      try {
+        await db.collection('dud_keywords').doc(matched.rule_id).update({
+          data: {
+            match_count: _.inc(1),
+            last_matched_at: db.serverDate(),
+            updated_at: db.serverDate()
+          }
+        });
+      } catch (_) { /* best-effort */ }
+
       return {
         reply_content: matched.reply_content,
         matched_keyword: matched.keywords.join(' / '),
@@ -224,11 +237,102 @@ async function dud_getChatHistory(event) {
   }
 }
 
+async function dud_getStats() {
+  try {
+    // Overall stats
+    let total_keywords = 0;
+    let total_messages = 0;
+    let total_matches = 0;
+    try {
+      total_keywords = (await db.collection('dud_keywords').count()).total;
+    } catch (_) { /* ignore */ }
+    try {
+      total_messages = (await db.collection('dud_messages').count()).total;
+    } catch (_) { /* ignore */ }
+    try {
+      total_matches = (await db.collection('dud_messages').where({ matched_rule_id: _.neq('') }).count()).total;
+    } catch (_) { /* ignore */ }
+
+    // Top matched keywords
+    let top_keywords = [];
+    try {
+      const top_res = await db.collection('dud_keywords')
+        .where({ match_count: _.gt(0) })
+        .orderBy('match_count', 'desc')
+        .limit(10)
+        .get();
+      top_keywords = (top_res.data || []).map(item => ({
+        rule_id: item.rule_id || item._id || '',
+        keyword: item.keyword || '',
+        category: item.category || 'general',
+        match_count: Number(item.match_count || 0),
+        is_enabled: item.is_enabled !== false
+      }));
+    } catch (_) { /* ignore */ }
+
+    // Category breakdown
+    let categories = [];
+    try {
+      const all_keywords = await db.collection('dud_keywords').limit(200).get();
+      const cat_map = {};
+      (all_keywords.data || []).forEach(item => {
+        const cat = item.category || 'general';
+        cat_map[cat] = (cat_map[cat] || 0) + 1;
+      });
+      categories = Object.entries(cat_map).map(([name, count]) => ({ name, count }));
+    } catch (_) { /* ignore */ }
+
+    return ok({
+      total_keywords,
+      total_messages,
+      total_matches,
+      top_keywords,
+      categories
+    });
+  } catch (error) {
+    return fail('获取统计失败: ' + error.message);
+  }
+}
+
+async function dud_getKeywords(event) {
+  try {
+    const page = Math.max(Number(event.page) || 1, 1);
+    const page_size = Math.min(Math.max(Number(event.page_size) || 30, 1), 100);
+    const category = String(event.category || '').trim();
+
+    const where = {};
+    if (category && category !== 'all') where.category = category;
+
+    const res = await db.collection('dud_keywords')
+      .where(where)
+      .orderBy('priority', 'desc')
+      .skip((page - 1) * page_size)
+      .limit(page_size)
+      .get();
+    const count_res = await db.collection('dud_keywords').where(where).count();
+
+    return ok({
+      list: (res.data || []).map(normalizeRule),
+      total: count_res.total,
+      page,
+      page_size,
+      has_more: page * page_size < count_res.total
+    });
+  } catch (error) {
+    if (isCollectionMissing(error)) {
+      return ok({ list: [], total: 0, page: 1, page_size: 30, has_more: false });
+    }
+    return fail('获取关键词失败: ' + error.message);
+  }
+}
+
 exports.main = async (event, context) => {
   const { action = 'chat', ...data } = event || {};
   const actions = {
     chat: dud_chat,
-    getChatHistory: dud_getChatHistory
+    getChatHistory: dud_getChatHistory,
+    getStats: dud_getStats,
+    getKeywords: dud_getKeywords
   };
   const handler = actions[action];
   if (!handler) return fail(`未知操作：${action}`);

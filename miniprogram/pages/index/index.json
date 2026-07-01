@@ -2,6 +2,7 @@
   "navigationBarTitleText": "NK推协侦探管理系统",
   "usingComponents": {
     "detective-card-item": "/components/detective-card-item/index",
-    "detective-card-modal": "/components/detective-card-modal/index"
+    "detective-card-modal": "/components/detective-card-modal/index",
+    "skeleton": "/components/skeleton/index"
   }
 }

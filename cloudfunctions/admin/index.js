@@ -1311,6 +1311,78 @@ async function admin_deactivateMatch(event, admin_user) {
   }
 }
 
+// ========== 删除操作 ==========
+
+async function admin_deletePuzzle(event, admin_user) {
+  const puzzle_id = String(event.puzzle_id || '').trim();
+  if (!puzzle_id) return fail('谜题编号不能为空');
+  try {
+    const puzzle = await getDoc('puzzles', puzzle_id);
+    if (!puzzle) return fail('谜题不存在');
+    await db.collection('puzzles').doc(puzzle_id).remove();
+    await logOperation(admin_user, 'delete_puzzle', 'puzzles', puzzle_id, { deleted_title: puzzle.title || puzzle.content || '' });
+    return ok({ puzzle_id }, '谜题已删除');
+  } catch (error) {
+    return fail('删除谜题失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_deleteActivity(event, admin_user) {
+  const activity_id = String(event.activity_id || '').trim();
+  if (!activity_id) return fail('活动编号不能为空');
+  try {
+    const activity = await getDoc('activities', activity_id);
+    if (!activity) return fail('活动不存在');
+    await db.collection('activities').doc(activity_id).remove();
+    await logOperation(admin_user, 'delete_activity', 'activities', activity_id, { deleted_title: activity.title || '' });
+    return ok({ activity_id }, '活动已删除');
+  } catch (error) {
+    return fail('删除活动失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_deleteExchangeGood(event, admin_user) {
+  const item_id = String(event.item_id || '').trim();
+  if (!item_id) return fail('商品编号不能为空');
+  try {
+    const goods = await getDoc('inventory_items', item_id);
+    if (!goods) return fail('商品不存在');
+    await db.collection('inventory_items').doc(item_id).remove();
+    await logOperation(admin_user, 'delete_exchange_good', 'inventory_items', item_id, { deleted_name: goods.item_name || '' });
+    return ok({ item_id }, '商品已删除');
+  } catch (error) {
+    return fail('删除商品失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_deleteRecommendation(event, admin_user) {
+  const recommendation_id = String(event.recommendation_id || '').trim();
+  if (!recommendation_id) return fail('推荐编号不能为空');
+  try {
+    const rec = await getDoc('recommendations', recommendation_id);
+    if (!rec) return fail('推荐不存在');
+    await db.collection('recommendations').doc(recommendation_id).remove();
+    await logOperation(admin_user, 'delete_recommendation', 'recommendations', recommendation_id, { deleted_title: rec.title || '' });
+    return ok({ recommendation_id }, '推荐已删除');
+  } catch (error) {
+    return fail('删除推荐失败: ' + (error.message || '未知错误'));
+  }
+}
+
+async function admin_deleteDudKeyword(event, admin_user) {
+  const keyword_id = String(event.keyword_id || event.rule_id || '').trim();
+  if (!keyword_id) return fail('关键词编号不能为空');
+  try {
+    const keyword = await getDoc('dud_keywords', keyword_id);
+    if (!keyword) return fail('关键词不存在');
+    await db.collection('dud_keywords').doc(keyword_id).remove();
+    await logOperation(admin_user, 'delete_dud_keyword', 'dud_keywords', keyword_id, { deleted_keyword: keyword.keyword || '' });
+    return ok({ keyword_id }, '关键词已删除');
+  } catch (error) {
+    return fail('删除关键词失败: ' + (error.message || '未知错误'));
+  }
+}
+
 exports.main = async (event) => {
   const { action = 'getDashboard', ...data } = event;
   const actions = {
@@ -1335,6 +1407,12 @@ exports.main = async (event) => {
     getSystemSettings: admin_getSystemSettings,
     saveSystemSettings: admin_saveSystemSettings,
     getLogs: admin_getLogs,
+    // 删除操作
+    deletePuzzle: admin_deletePuzzle,
+    deleteActivity: admin_deleteActivity,
+    deleteExchangeGood: admin_deleteExchangeGood,
+    deleteRecommendation: admin_deleteRecommendation,
+    deleteDudKeyword: admin_deleteDudKeyword,
     // 谜题库管理
     setFeaturedPuzzle: admin_setFeaturedPuzzle,
     updatePuzzleBank: admin_updatePuzzleBank,

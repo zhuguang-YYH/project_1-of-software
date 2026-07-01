@@ -14,7 +14,8 @@ const ROUTED_CLOUD_FUNCTIONS = [
   'recommendation',
   'points',
   'dating',
-  'admin'
+  'admin',
+  'notification'
 ];
 
 // 飞行中请求去重窗口，防止用户双击按钮重复提交。

@@ -47,6 +47,9 @@ Page({
     loading: true,
     refreshing: false,
     error: '',
+    banners: [],
+    announcement: null,
+    checkedInToday: false,
     show_card_modal: false,
     card_loading: false,
     selected_card: null
@@ -74,7 +77,9 @@ Page({
         this.loadDailyPuzzle(),
         this.loadTopThree(),
         this.loadRecommendations(),
-        this.loadMyPoints()
+        this.loadMyPoints(),
+        this.loadBanners(),
+        this.loadAnnouncement()
       ]);
     } catch (err) {
       console.error('Failed to init home page:', err);
@@ -157,8 +162,35 @@ Page({
     try {
       const result = await pointsService.getUserPoints();
       this.setData({ myPoints: Number(result.available_points || 0) });
+      // Check if already checked in today
+      if (result.last_checkin_date) {
+        const today = new Date().toISOString().split('T')[0];
+        this.setData({ checkedInToday: result.last_checkin_date === today });
+      }
     } catch (err) {
       console.error('Load user points failed:', err);
+    }
+  },
+
+  async onDailyCheckin() {
+    if (this.data.checkedInToday) {
+      wx.showToast({ title: '今日已签到', icon: 'none' });
+      return;
+    }
+    if (!this.data.isLoggedIn) {
+      this.navigateToLogin();
+      return;
+    }
+    try {
+      const result = await pointsService.dailyCheckin();
+      if (!result.success) throw new Error(result.error || '签到失败');
+      wx.showToast({ title: `签到成功！+${result.data.points || 5} 积分`, icon: 'success' });
+      this.setData({
+        checkedInToday: true,
+        myPoints: this.data.myPoints + (result.data.points || 5)
+      });
+    } catch (err) {
+      wx.showToast({ title: err.message || '签到失败', icon: 'none' });
     }
   },
 
@@ -174,7 +206,9 @@ Page({
         this.loadDailyPuzzle(),
         this.loadTopThree(),
         this.loadRecommendations(),
-        this.loadMyPoints()
+        this.loadMyPoints(),
+        this.loadBanners(),
+        this.loadAnnouncement()
       ]);
     } catch (err) {
       console.error('Pull refresh failed:', err);
@@ -294,6 +328,50 @@ Page({
 
   navigateToLogin() {
     wx.navigateTo({ url: '/pages/profile/index' });
+  },
+
+  async loadBanners() {
+    try {
+      const result = await recommendationService.getBanners();
+      const list = result.data || [];
+      this.setData({ banners: Array.isArray(list) ? list : [] });
+    } catch (_) {
+      this.setData({ banners: [] });
+    }
+  },
+
+  async loadAnnouncement() {
+    try {
+      const result = await recommendationService.getAnnouncement();
+      this.setData({ announcement: (result.success && result.data) || null });
+    } catch (_) {
+      this.setData({ announcement: null });
+    }
+  },
+
+  onBannerTap(e) {
+    const { url, type } = e.currentTarget.dataset;
+    if (!url) return;
+    if (type === 'miniprogram') {
+      wx.navigateTo({ url, fail: () => {} });
+    } else if (type === 'page') {
+      wx.navigateTo({ url, fail: () => {} });
+    } else {
+      // webview or external - copy link for now
+      wx.setClipboardData({ data: url, success: () => wx.showToast({ title: '链接已复制', icon: 'none' }) });
+    }
+  },
+
+  onAnnouncementTap() {
+    const announcement = this.data.announcement;
+    if (!announcement) return;
+    if (announcement.link_url) {
+      wx.navigateTo({ url: announcement.link_url, fail: () => {
+        wx.showModal({ title: announcement.title || '公告', content: announcement.content || '', showCancel: false });
+      }});
+    } else {
+      wx.showModal({ title: announcement.title || '公告', content: announcement.content || '', showCancel: false });
+    }
   },
 
   onRetry() {

@@ -678,10 +678,19 @@ async function puzzle_getPuzzleBank(event) {
     // 排序
     let order_field = 'publish_date';
     let order_dir = 'desc';
-    if (sort_by === 'difficulty') order_field = 'difficulty_level';
-    else if (sort_by === 'correct_rate') order_field = 'correct_count';
-    else if (sort_by === 'date') order_field = 'publish_date';
-    if (sort_order === 'asc') order_dir = 'asc';
+    if (sort_by === 'difficulty') {
+      // 使用 difficulty_order 数值字段排序: easy=1, normal/medium=2, hard=3, extreme=4
+      order_field = 'difficulty_order';
+      order_dir = sort_order === 'desc' ? 'desc' : 'asc';
+    } else if (sort_by === 'correct_rate') {
+      order_field = 'correct_count';
+      order_dir = sort_order === 'desc' ? 'desc' : 'asc';
+    } else if (sort_by === 'date') {
+      order_field = 'publish_date';
+      order_dir = sort_order === 'desc' ? 'desc' : 'asc';
+    } else {
+      order_dir = sort_order === 'asc' ? 'asc' : 'desc';
+    }
 
     // 查询总数
     let total = 0;
@@ -842,15 +851,20 @@ async function puzzle_getFavorites(event) {
       total = count_res.total || 0;
     } catch (_) { /* ignore */ }
 
-    // 获取对应谜题详情
+    // 获取对应谜题详情（分批查询，避免 _.in() 超过100项限制）
     const puzzle_ids = (fav_res.data || []).map(item => item.puzzle_id);
     const list = [];
     if (puzzle_ids.length > 0) {
-      const puzzles_res = await db.collection('puzzles')
-        .where({ _id: _.in(puzzle_ids) })
-        .get();
       const puzzle_map = {};
-      (puzzles_res.data || []).forEach(p => { puzzle_map[p._id] = p; });
+      // 微信云开发 _.in() 限制约100项，分批查询
+      const IN_BATCH = 80;
+      for (let i = 0; i < puzzle_ids.length; i += IN_BATCH) {
+        const batch_ids = puzzle_ids.slice(i, i + IN_BATCH);
+        const puzzles_res = await db.collection('puzzles')
+          .where({ _id: _.in(batch_ids) })
+          .get();
+        (puzzles_res.data || []).forEach(p => { puzzle_map[p._id] = p; });
+      }
 
       const DIFFICULTY_MAP = { easy: '简单', normal: '中等', medium: '中等', hard: '困难', extreme: '极限' };
 
@@ -905,7 +919,10 @@ async function puzzle_submitPracticeAnswer(event) {
     if (!puzzle_id) return fail('缺少谜题编号');
     if (!selected_value) return fail('请选择答案');
 
-    // 检查是否已练习过该题
+    // 幂等防重：使用稳定 _id 防止并发重复提交
+    const stable_id = `ppa_${user._id}_${puzzle_id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+
+    // 先检查已有记录（幂等读取）
     const existing = await db.collection('puzzle_practice_answers')
       .where({ user_id: user._id, puzzle_id })
       .limit(1)
@@ -937,16 +954,33 @@ async function puzzle_submitPracticeAnswer(event) {
     const correct_answer = correct_option ? correct_option.option_content : '';
     const is_correct = !!correct_answer && selected_answer === correct_answer;
 
-    // 记录练习答案
-    await db.collection('puzzle_practice_answers').add({
-      data: {
-        user_id: user._id,
-        puzzle_id,
-        selected_option_id: selected_option ? selected_option.option_id : '',
-        is_correct,
-        answered_at: db.serverDate()
+    // 使用稳定 _id 写入：并发第二次会因 _id 冲突失败 → 防止重复计数
+    try {
+      await db.collection('puzzle_practice_answers').add({
+        data: {
+          _id: stable_id,
+          user_id: user._id,
+          puzzle_id,
+          selected_option_id: selected_option ? selected_option.option_id : '',
+          is_correct,
+          answered_at: db.serverDate()
+        }
+      });
+    } catch (error) {
+      // _id 冲突：说明已被并发写入，幂等返回
+      const dup = await db.collection('puzzle_practice_answers').doc(stable_id).get().catch(() => null);
+      if (dup && dup.data) {
+        return success({
+          answer_id: dup.data._id,
+          is_correct: !!dup.data.is_correct,
+          correct_answer,
+          answer_explanation: puzzle.answer_explanation || '',
+          already_answered: true,
+          idempotent: true
+        }, '您已经练习过这道谜题了');
       }
-    });
+      throw error;
+    }
 
     // 原子更新谜题统计（不计分）
     try {

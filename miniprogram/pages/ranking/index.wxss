@@ -29,13 +29,55 @@
 
 .tab-container { flex: 1; }
 
+/* ===== Period Tabs ===== */
+.period-tabs {
+  display: flex;
+  margin: 24rpx 24rpx 16rpx;
+  gap: 12rpx;
+}
+
+.period-item {
+  flex: 1;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+  color: #8a96a8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(212, 175, 55, 0.16);
+  transition: all 0.25s;
+}
+
+.period-item.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.20), rgba(212, 175, 55, 0.08));
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.48);
+  box-shadow: 0 4rpx 16rpx rgba(212, 175, 55, 0.16);
+}
+
+.theme-blue .period-item {
+  background: #fff;
+  border: 1rpx solid #eef0f3;
+  color: #8a96a8;
+}
+
+.theme-blue .period-item.active {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.25);
+}
+
 .tabs {
   display: flex;
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 10;
-  margin: 24rpx 24rpx 0;
+  margin: 0 24rpx 0;
   border-radius: 18rpx;
   padding: 8rpx;
   box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.08);

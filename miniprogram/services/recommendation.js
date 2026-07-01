@@ -36,6 +36,26 @@ class RecommendationService {
       return { success: false, error: error.message || '获取详情失败' };
     }
   }
+
+  async getBanners() {
+    try {
+      const result = await callFunction(CONFIG.api.recommendation.getBanners, {});
+      return { success: true, data: (result.data && result.data.list) || [] };
+    } catch (error) {
+      console.error('Failed to get banners:', error);
+      return { success: false, data: [] };
+    }
+  }
+
+  async getAnnouncement() {
+    try {
+      const result = await callFunction(CONFIG.api.recommendation.getAnnouncement, {});
+      return { success: true, data: result.data || null };
+    } catch (error) {
+      console.error('Failed to get announcement:', error);
+      return { success: false, data: null };
+    }
+  }
 }
 
 module.exports = new RecommendationService();

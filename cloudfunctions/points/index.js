@@ -159,7 +159,11 @@ async function points_getUserPoints() {
     if (!user) return fail('用户不存在');
 
     const account = await ensurePointAccount(user);
-    return ok(readPoints(user, account), '获取成功');
+    return ok({
+      ...readPoints(user, account),
+      last_checkin_date: account.last_checkin_date || '',
+      checkin_streak: numberValue(account.checkin_streak, 0)
+    }, '获取成功');
   } catch (error) {
     return fail('获取积分失败: ' + error.message);
   }
@@ -380,6 +384,70 @@ async function points_getAnalysis() {
   }
 }
 
+async function points_dailyCheckin() {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('用户不存在');
+
+    const today = new Date().toISOString().split('T')[0];
+    const account = await ensurePointAccount(user);
+
+    // Check if already checked in today
+    if (account.last_checkin_date === today) {
+      return ok({
+        points: 0,
+        message: '今日已签到',
+        last_checkin_date: today,
+        checkin_streak: numberValue(account.checkin_streak, 0)
+      });
+    }
+
+    // Calculate streak: +1 if yesterday was checked in, otherwise reset to 1
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const streak = account.last_checkin_date === yesterday
+      ? numberValue(account.checkin_streak, 0) + 1
+      : 1;
+
+    const bonus_points = Math.min(5 + Math.floor(streak / 7), 15); // Base 5, +1 per week, max 15
+
+    // Atomic update
+    const applied = await applyPointsDelta(
+      user._id,
+      { total_points: bonus_points, available_points: bonus_points }
+    );
+    if (!applied) return fail('签到失败，请重试');
+
+    // Update checkin info on point_account
+    try {
+      await db.collection('point_accounts').doc(account._id).update({
+        data: {
+          last_checkin_date: today,
+          checkin_streak: streak,
+          updated_at: db.serverDate()
+        }
+      });
+    } catch (e) { if (!isCollectionMissing(e)) throw e; }
+
+    await addPointLog({
+      user,
+      amount: bonus_points,
+      reason: `每日签到 (连续第${streak}天)`,
+      type: 'income',
+      point_type: 'available',
+      business_type: 'daily_checkin'
+    });
+
+    return ok({
+      points: bonus_points,
+      checkin_streak: streak,
+      last_checkin_date: today
+    }, '签到成功');
+  } catch (error) {
+    return fail('签到失败: ' + error.message);
+  }
+}
+
 exports.main = async (event, context) => {
   const { action = 'getUserPoints', ...data } = event || {};
   const actions = {
@@ -389,7 +457,8 @@ exports.main = async (event, context) => {
     getHistory: points_getHistory,
     freezePoints: points_freezePoints,
     unfreezePoints: points_unfreezePoints,
-    getAnalysis: points_getAnalysis
+    getAnalysis: points_getAnalysis,
+    dailyCheckin: points_dailyCheckin
   };
 
   const handler = actions[action];

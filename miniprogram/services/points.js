@@ -23,7 +23,9 @@ class PointsService {
         total_points: Number(data.total_points || 0),
         available_points: Number(data.available_points || 0),
         frozen_points: Number(data.frozen_points || 0),
-        used_points: Number(data.used_points || 0)
+        used_points: Number(data.used_points || 0),
+        last_checkin_date: data.last_checkin_date || '',
+        checkin_streak: Number(data.checkin_streak || 0)
       };
     } catch (error) {
       console.error('Failed to get user points:', error);
@@ -153,6 +155,24 @@ class PointsService {
     } catch (error) {
       console.error('Failed to get points analysis:', error);
       return { success: false, sources: [], distribution: {} };
+    }
+  }
+
+  async dailyCheckin() {
+    try {
+      const result = await callFunction('points_dailyCheckin', {});
+      if (!result.success) return { success: false, error: result.message || '签到失败' };
+      return {
+        success: true,
+        data: {
+          points: result.data ? result.data.points : 0,
+          checkin_streak: result.data ? result.data.checkin_streak : 0,
+          last_checkin_date: result.data ? result.data.last_checkin_date : ''
+        }
+      };
+    } catch (error) {
+      console.error('Failed to daily checkin:', error);
+      return { success: false, error: error.message || '签到失败' };
     }
   }
 }

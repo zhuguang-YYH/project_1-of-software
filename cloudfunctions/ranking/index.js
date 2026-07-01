@@ -87,20 +87,71 @@ async function writeRankingSnapshots(list) {
   }));
 }
 
-async function getRankedUsers(limit = 100, skip = 0) {
+async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
+  // For weekly/monthly, calculate points from points_log within the period
+  if (period === 'weekly' || period === 'monthly') {
+    const days = period === 'weekly' ? 7 : 30;
+    const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+
+    try {
+      // Aggregate points from points_log within the period
+      const res = await db.collection('points_log')
+        .where({ created_at: _.gte(since) })
+        .limit(500)
+        .get();
+
+      // Sum points per user
+      const user_points = {};
+      (res.data || []).forEach(log => {
+        const uid = log.user_id || '';
+        if (!uid) return;
+        user_points[uid] = (user_points[uid] || 0) + (Number(log.points || 0) || 0);
+      });
+
+      // Convert to sorted array
+      let ranked = Object.entries(user_points)
+        .map(([user_id, period_points]) => ({ user_id, period_points }))
+        .sort((a, b) => b.period_points - a.period_points);
+
+      // Fetch user info for top users
+      const sliced = ranked.slice(skip, skip + limit);
+      const user_infos = await Promise.all(sliced.map(async item => {
+        try {
+          const user_res = await db.collection('users').doc(item.user_id).get();
+          const user = user_res.data || {};
+          return {
+            ...user,
+            user_id: item.user_id,
+            total_points: item.period_points
+          };
+        } catch (_) {
+          return { user_id: item.user_id, total_points: item.period_points, nickname: '未知用户', avatar_url: '' };
+        }
+      }));
+
+      return { list: user_infos, total: ranked.length };
+    } catch (error) {
+      if (isCollectionMissing(error)) return { list: [], total: 0 };
+      throw error;
+    }
+  }
+
+  // All-time ranking
   const res = await db.collection('users')
     .orderBy('total_points', 'desc')
     .skip(skip)
     .limit(limit)
     .get();
 
-  return res.data || [];
+  return { list: res.data || [], total: null };
 }
 
-async function ranking_getTopThree() {
+async function ranking_getTopThree(event) {
   try {
-    const list = applyTieRanks(await getRankedUsers(3));
-    await writeRankingSnapshots(list);
+    const period = String(event.period || 'all').trim();
+    const result = await getRankedUsers(3, 0, period);
+    const list = applyTieRanks(result.list);
+    if (period === 'all') await writeRankingSnapshots(list);
     return ok(list);
   } catch (error) {
     return fail('get top three failed: ' + error.message);
@@ -113,8 +164,10 @@ async function ranking_getFullRanking(event) {
     const page_size = Math.min(100, Math.max(1, Number(event.page_size) || 20));
     const skip = (page - 1) * page_size;
     const fetch_size = page === 1 && page_size >= 100 ? 200 : page_size;
-    const users = await getRankedUsers(fetch_size, skip);
-    const count_res = await db.collection('users').count();
+    const period = String(event.period || 'all').trim();
+    const result = await getRankedUsers(fetch_size, skip, period);
+    const users = result.list;
+    const totalCount = result.total !== null ? result.total : (await db.collection('users').count()).total;
     let source = users;
 
     if (page === 1 && page_size >= 100 && source.length > 100) {
@@ -127,13 +180,13 @@ async function ranking_getFullRanking(event) {
     }
 
     const list = applyTieRanks(source, skip);
-    await writeRankingSnapshots(list);
+    if (period === 'all') await writeRankingSnapshots(list);
     return ok({
       list,
-      total: count_res.total,
+      total: totalCount,
       page,
       page_size,
-      has_more: page * page_size < count_res.total
+      has_more: page * page_size < totalCount
     });
   } catch (error) {
     return fail('get full ranking failed: ' + error.message);
@@ -179,7 +232,8 @@ async function ranking_generateSnapshot() {
     const wx_context = cloud.getWXContext();
     const allowed = await isAdminOrTimer(wx_context);
     if (!allowed) return fail('permission denied', 'PERMISSION_DENIED');
-    const list = applyTieRanks(await getRankedUsers(100));
+    const result = await getRankedUsers(100);
+    const list = applyTieRanks(result.list);
     await writeRankingSnapshots(list);
     return ok({ count: list.length, ranking_date: todayString() });
   } catch (error) {

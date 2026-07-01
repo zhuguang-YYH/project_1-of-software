@@ -30,6 +30,7 @@ Page({
     refreshing: false,
     error: '',
     tab: 'full',
+    period: 'all',
     show_card_modal: false,
     card_loading: false,
     selected_card: null
@@ -81,7 +82,7 @@ Page({
 
   async loadTopThree() {
     try {
-      const result = await rankingService.getTopThree();
+      const result = await rankingService.getTopThree({ period: this.data.period });
       const list = Array.isArray(result.data) ? result.data : [];
       this.setData({ top_three: list.slice(0, 3).map(normalizeRankUser) });
     } catch (err) {
@@ -94,7 +95,8 @@ Page({
     try {
       const result = await rankingService.getFullRanking({
         page: 1,
-        page_size: 100
+        page_size: 100,
+        period: this.data.period
       });
       const list = result.data || [];
       this.setData({ full_ranking: list.map(normalizeRankUser) });
@@ -125,6 +127,13 @@ Page({
 
   switchTab(e) {
     this.setData({ tab: e.currentTarget.dataset.tab });
+  },
+
+  switchPeriod(e) {
+    const period = e.currentTarget.dataset.period;
+    if (period === this.data.period) return;
+    this.setData({ period, loading: true });
+    this.initPage();
   },
 
   async onPullDownRefresh() {

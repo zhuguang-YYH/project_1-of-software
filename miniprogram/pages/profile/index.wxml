@@ -111,6 +111,11 @@
       <text class="menu-text">事件委托</text>
       <text class="menu-arrow">›</text>
     </view>
+    <view class="menu-item tap-feedback" bindtap="goNotifications">
+      <view class="icon-circle is-cyan">信</view>
+      <text class="menu-text">消息中心</text>
+      <text class="menu-arrow">›</text>
+    </view>
     <view class="menu-item tap-feedback" bindtap="goFeedback">
       <view class="icon-circle is-pink">馈</view>
       <text class="menu-text">反馈建议</text>
@@ -139,7 +144,4 @@
   </view>
 </view>
 
-<view class="loading-state theme-{{theme}} {{a11yFontClass}}" wx:elif="{{loading}}">
-  <view class="loading-spinner"></view>
-  <text class="loading-text">加载中...</text>
-</view>
+<skeleton wx:elif="{{loading}}" variant="card" rows="3" title="加载个人中心..." />

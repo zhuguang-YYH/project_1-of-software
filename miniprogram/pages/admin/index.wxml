@@ -394,13 +394,19 @@
       <view class="field"><text>回复</text><textarea value="{{dudForm.reply_content}}" data-form="dudForm" data-field="reply_content" bindinput="onFormInput" maxlength="300" show-confirm-bar="{{false}}" /></view>
       <view class="grid-2">
         <view class="field">
+          <text>分类</text>
+          <picker range="{{dudCategoryOptions}}" range-key="label" data-form="dudForm" data-field="category" data-options="dudCategoryOptions" bindchange="onPickerChange">
+            <view class="picker-box">{{dudForm.category === 'general' ? '通用' : dudForm.category === 'activity' ? '活动相关' : dudForm.category === 'puzzle' ? '谜题相关' : dudForm.category === 'ranking' ? '排行相关' : dudForm.category === 'commission' ? '委托相关' : dudForm.category === 'help' ? '帮助指引' : '通用'}}</view>
+          </picker>
+        </view>
+        <view class="field">
           <text>匹配方式</text>
           <picker range="{{matchTypeOptions}}" range-key="label" data-form="dudForm" data-field="match_type" data-options="matchTypeOptions" bindchange="onPickerChange">
             <view class="picker-box">{{dudForm.match_type === 'exact' ? '精确匹配' : '模糊匹配'}}</view>
           </picker>
         </view>
-        <view class="field"><text>优先级</text><input type="number" value="{{dudForm.priority}}" data-form="dudForm" data-field="priority" bindinput="onFormInput" /></view>
       </view>
+      <view class="field"><text>优先级</text><input type="number" value="{{dudForm.priority}}" data-form="dudForm" data-field="priority" bindinput="onFormInput" /></view>
       <button class="primary-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="createDudKeyword">添加关键词</button>
     </view>
 

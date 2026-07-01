@@ -18,7 +18,7 @@
 
     <view class="tab-nav">
       <view class="tab-item {{tab === 'submit' ? 'active' : ''}}" data-tab="submit" bindtap="switchTab">提交反馈</view>
-      <view class="tab-item {{tab === 'mine' ? 'active' : ''}}" data-tab="mine" bindtap="switchTab">我的反馈</view>
+      <view class="tab-item {{tab === 'mine' ? 'active' : ''}}" data-tab="mine" bindtap="switchTab">我的反馈<text wx:if="{{unread_reply_count > 0}}" class="tab-badge">{{unread_reply_count}}</text></view>
     </view>
 
     <view class="panel" wx:if="{{tab === 'submit'}}">
@@ -55,24 +55,45 @@
     </view>
 
     <view class="list" wx:if="{{tab === 'mine'}}">
-      <view class="feedback-card" wx:for="{{feedback_list}}" wx:key="feedback_id">
+      <!-- 反馈状态筛选 -->
+      <view class="filter-chips">
+        <view class="filter-chip {{feedbackFilter === 'all' ? 'active' : ''}}" data-filter="all" bindtap="onFeedbackFilter">全部</view>
+        <view class="filter-chip {{feedbackFilter === 'pending' ? 'active' : ''}}" data-filter="pending" bindtap="onFeedbackFilter">待处理</view>
+        <view class="filter-chip {{feedbackFilter === 'processing' ? 'active' : ''}}" data-filter="processing" bindtap="onFeedbackFilter">处理中</view>
+        <view class="filter-chip {{feedbackFilter === 'resolved' ? 'active' : ''}}" data-filter="resolved" bindtap="onFeedbackFilter">已处理</view>
+      </view>
+
+      <view class="feedback-card" wx:for="{{filteredFeedbackList}}" wx:key="feedback_id">
         <view class="card-head">
           <view>
             <text class="card-title">{{item.feedback_type_text}}</text>
             <text class="card-meta">{{item.created_text}}{{item.anonymous_text}}</text>
           </view>
-          <view class="status {{item.is_resolved ? 'resolved' : ''}}">{{item.status_text}}</view>
+          <view class="status {{item.is_resolved ? 'resolved' : ''}}">
+            {{item.status_text}}
+            <view class="unread-dot" wx:if="{{item.has_new_reply}}"></view>
+          </view>
         </view>
         <text class="content">{{item.content}}</text>
-        <view class="remark" wx:if="{{item.admin_remark}}">
+        <!-- 回复历史 -->
+        <view class="reply-history" wx:if="{{item.reply_history && item.reply_history.length > 0}}">
+          <view class="reply-item" wx:for="{{item.reply_history}}" wx:key="replied_at" wx:for-item="reply">
+            <view class="reply-head">
+              <text class="reply-admin">管理员</text>
+              <text class="reply-time">{{reply.replied_text}}</text>
+            </view>
+            <text class="reply-content">{{reply.content}}</text>
+          </view>
+        </view>
+        <view class="remark" wx:elif="{{item.admin_remark && !item.reply_history}}">
           <text class="remark-label">管理员回复</text>
           <text class="remark-text">{{item.admin_remark}}</text>
         </view>
       </view>
 
-      <view class="empty-state" wx:if="{{feedback_list.length === 0}}">
-        <text class="empty-title">还没有反馈记录</text>
-        <text class="empty-text">任何小问题都值得被看见。</text>
+      <view class="empty-state" wx:if="{{filteredFeedbackList.length === 0}}">
+        <text class="empty-title">{{feedbackFilter === 'all' ? '还没有反馈记录' : '没有符合条件的反馈'}}</text>
+        <text class="empty-text">{{feedbackFilter === 'all' ? '任何小问题都值得被看见。' : '试试切换筛选条件'}}</text>
       </view>
     </view>
   </scroll-view>

@@ -304,6 +304,10 @@ Page({
     wx.navigateTo({ url: '/pages/commission/index' });
   },
 
+  goNotifications() {
+    wx.navigateTo({ url: '/pages/notifications/index' });
+  },
+
   goFeedback() {
     wx.navigateTo({ url: '/pages/feedback/index' });
   },

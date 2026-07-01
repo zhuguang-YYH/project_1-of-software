@@ -292,6 +292,77 @@ Page({
     }
   },
 
+  // ========== 游戏邀请响应 ==========
+
+  async respondGameInvite(e) {
+    const { msgId, action } = e.currentTarget.dataset;
+    if (!msgId || !action) return;
+
+    const msgs = this.data.messages.map(m => {
+      if (m.message_id === msgId) {
+        return {
+          ...m,
+          game_data: { ...(m.game_data || {}), responded: action }
+        };
+      }
+      return m;
+    });
+    this.setData({ messages: msgs });
+
+    // 发送响应文本
+    const response_text = action === 'accept'
+      ? '我接受你的游戏邀请！'
+      : '抱歉，我先不参加了~';
+
+    const localMsg = {
+      message_id: `local_resp_${Date.now()}`,
+      is_me: true,
+      content_type: 'text',
+      content: response_text,
+      game_data: null,
+      time_text: this._formatTime(new Date()),
+      _pending: true,
+      _failed: false
+    };
+
+    this.setData({
+      messages: [...this.data.messages, localMsg],
+      sending: true
+    }, () => this.scrollToBottom());
+
+    try {
+      const result = await datingService.sendMessage({
+        match_id: this.data.match_id,
+        to_user_id: this.data.other_user.user_id,
+        content_type: 'text',
+        content: response_text
+      });
+
+      if (!result.success) throw new Error(result.error || '发送失败');
+
+      const serverMsg = result.data && result.data.message;
+      const finalMsgs = this.data.messages.map(m => {
+        if (m.message_id === localMsg.message_id) {
+          return {
+            ...m,
+            message_id: (serverMsg && serverMsg.message_id) || m.message_id,
+            _pending: false
+          };
+        }
+        return m;
+      });
+
+      this.setData({ messages: finalMsgs, sending: false });
+    } catch (err) {
+      const finalMsgs = this.data.messages.map(m => {
+        if (m.message_id === localMsg.message_id) return { ...m, _pending: false, _failed: true };
+        return m;
+      });
+      this.setData({ messages: finalMsgs, sending: false });
+      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+    }
+  },
+
   onRetry() {
     this.loadMessages(1);
   },
@@ -306,5 +377,19 @@ Page({
       title: `NK推协 · 与 ${this.data.other_user.display_name} 的聊天`,
       path: '/pages/dating/matches'
     };
+  },
+
+  // 占位函数 — WXML catchtouchmove 引用
+  noop() {},
+
+  _formatTime(value) {
+    if (!value) return '';
+    try {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const hour = String(date.getHours()).padStart(2, '0');
+      const minute = String(date.getMinutes()).padStart(2, '0');
+      return `${hour}:${minute}`;
+    } catch (_) { return ''; }
   }
 });

@@ -103,7 +103,9 @@ const CONFIG = {
     // 推荐内容
     recommendation: {
       getRecommendations: 'recommendation_getRecommendations',
-      getDetail: 'recommendation_getDetail'
+      getDetail: 'recommendation_getDetail',
+      getBanners: 'recommendation_getBanners',
+      getAnnouncement: 'recommendation_getAnnouncement'
     },
 
     // 交友系统

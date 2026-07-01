@@ -3,16 +3,16 @@ const { callFunction } = require('../utils/request.js');
 const { storage } = require('../utils/storage.js');
 
 class RankingService {
-  async getTopThree() {
+  async getTopThree(options = {}) {
     try {
-      const cached = storage.getRankingCache && storage.getRankingCache();
+      const cached = (!options.period || options.period === 'all') && storage.getRankingCache && storage.getRankingCache();
       if (cached && cached.top_three) {
         return { success: true, data: cached.top_three, from_cache: true };
       }
 
       const result = await callFunction(
         CONFIG.api.ranking.getTopThree,
-        {},
+        { period: options.period || 'all' },
         { timeout: CONFIG.timeout.ranking }
       );
 
@@ -40,7 +40,7 @@ class RankingService {
     try {
       const result = await callFunction(
         CONFIG.api.ranking.getFullRanking,
-        { page, page_size },
+        { page, page_size, period: options.period || 'all' },
         { timeout: CONFIG.timeout.ranking }
       );
 

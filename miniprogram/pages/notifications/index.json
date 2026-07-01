@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "skeleton": "/components/skeleton/index",
+    "empty-state": "/components/empty-state/index"
+  },
+  "navigationBarTitleText": "消息中心"
+}

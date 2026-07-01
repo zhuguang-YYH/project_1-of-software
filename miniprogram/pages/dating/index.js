@@ -1,322 +1,363 @@
-const datingService = require('../../../services/dating.js');
-const { applyTheme } = require('../../../utils/theme.js');
+const datingService = require('../../services/dating.js');
+const { applyTheme } = require('../../utils/theme.js');
 
-const GAME_TYPES = [
-  { key: 'script_kill', label: '剧本杀', icon: '🎭' },
-  { key: 'board_game', label: '桌游', icon: '🎲' },
-  { key: 'puzzle', label: '解谜', icon: '🧩' },
-  { key: 'activity', label: '活动', icon: '🎪' },
-  { key: 'other', label: '其他', icon: '🎯' }
-];
-
-function formatTime(value) {
-  if (!value) return '';
-  try {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    return `${hour}:${minute}`;
-  } catch (_) { return ''; }
-}
+const GAME_TYPE_ICONS = {
+  script_kill: '🎭',
+  board_game: '🎲',
+  puzzle: '🧩',
+  activity: '🎪',
+  other: '🎯'
+};
 
 Page({
   data: {
-    match_id: '',
-    other_user: { user_id: '', display_name: '好友', avatar_url: '' },
-    messages: [],
-    input_value: '',
+    profiles: [],
     loading: true,
-    sending: false,
     error: '',
     theme: 'blue',
-    scroll_into_view: '',
-    // 邀请面板
-    show_invite_panel: false,
-    invite_game_type: 'script_kill',
-    invite_game_name: '',
-    invite_message: '',
-    invite_sending: false,
-    gameTypes: GAME_TYPES,
-    has_more: false,
-    page: 1
+    // 每日状态
+    remaining_swipes: 0,
+    daily_limit: 20,
+    is_in_pool: false,
+    preferences: null,
+    // 偏好编辑弹窗
+    show_prefs_modal: false,
+    edit_visibility: true,
+    edit_tags: [],
+    tag_input: '',
+    edit_campus_pref: 'any',
+    edit_grade_pref: 'any',
+    // 匹配成功弹窗
+    show_match_modal: false,
+    matched_user: null,
+    // 动画
+    swiping_card_id: '',
+    swipe_direction: ''
   },
 
-  onLoad(options) {
-    this.setData({
-      match_id: options.matchId || '',
-      other_user: {
-        user_id: options.userId || '',
-        display_name: decodeURIComponent(options.name || '好友'),
-        avatar_url: decodeURIComponent(options.avatar || '')
-      }
-    });
-    wx.setNavigationBarTitle({ title: this.data.other_user.display_name });
+  onLoad() {
     this.loadTheme();
-    this.loadMessages(1);
+    this.initPage();
   },
 
   onShow() {
     this.loadTheme();
+    if (this._initialized) {
+      this.refreshStatus();
+    }
   },
 
   loadTheme() {
     applyTheme(this);
   },
 
-  async loadMessages(page) {
-    if (!this.data.match_id) return;
-    if (page === 1) this.setData({ loading: true, error: '' });
-
+  async initPage() {
+    this.setData({ loading: true, error: '' });
     try {
-      const result = await datingService.getMessages(this.data.match_id, { page, page_size: 30 });
-      if (!result.success) throw new Error(result.error || '加载失败');
+      await Promise.all([
+        this.loadDailyStatus(),
+        this.loadProfiles()
+      ]);
+      this._initialized = true;
+    } catch (err) {
+      console.error('Failed to init dating discover:', err);
+      this.setData({ error: err.message || '加载失败' });
+    } finally {
+      this.setData({ loading: false });
+    }
+  },
 
-      const data = result.data || {};
-      const list = (data.messages || []).map(item => ({
-        message_id: item.message_id,
-        is_me: item.from_user_id !== this.data.other_user.user_id,
-        content_type: item.content_type,
-        content: item.content,
-        game_data: item.game_data,
-        time_text: formatTime(item.created_at),
-        created_at: item.created_at,
-        _pending: false,
-        _failed: false
-      }));
+  async refreshStatus() {
+    try {
+      await this.loadDailyStatus();
+    } catch (_) { /* ignore */ }
+  },
 
-      if (page === 1) {
+  async loadDailyStatus() {
+    try {
+      const result = await datingService.getDailyStatus();
+      if (result.success && result.data) {
+        const d = result.data;
         this.setData({
-          messages: list,
-          loading: false,
-          page: 1,
-          has_more: !!data.has_more
-        }, () => this.scrollToBottom());
-      } else {
-        // 加载更早的消息（前面插入）
-        this.setData({
-          messages: [...list, ...this.data.messages],
-          page,
-          has_more: !!data.has_more
+          remaining_swipes: d.remaining_swipes || 0,
+          daily_limit: d.daily_limit || 20,
+          is_in_pool: d.is_in_pool || false,
+          preferences: d.preferences || null
         });
       }
     } catch (err) {
-      console.error('Failed to load messages:', err);
-      this.setData({ error: err.message, loading: false });
+      console.error('Failed to load daily status:', err);
     }
   },
 
-  // 下拉加载更多历史消息
-  async onReachTop() {
-    if (this.data.loading || !this.data.has_more) return;
-    await this.loadMessages(this.data.page + 1);
+  async loadProfiles() {
+    try {
+      const result = await datingService.getProfiles();
+      if (!result.success) {
+        this.setData({ error: result.error || '加载推荐失败' });
+        return;
+      }
+
+      const data = result.data || {};
+      const profiles = (data.profiles || []).map(p => ({
+        user_id: p.user_id,
+        display_name: p.display_name || '神秘侦探',
+        avatar_url: p.avatar_url || '',
+        campus: p.campus || '未知校区',
+        grade: p.grade || '未知年级',
+        interests: p.interests || [],
+        self_intro: p.self_intro || '',
+        puzzle_correct_rate: p.puzzle_correct_rate || 50,
+        shared_interests: p.shared_interests || [],
+        _animating: false
+      }));
+
+      this.setData({
+        profiles,
+        remaining_swipes: data.remaining_swipes != null ? data.remaining_swipes : this.data.remaining_swipes,
+        error: profiles.length === 0 ? '' : this.data.error
+      });
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+      this.setData({ error: err.message || '加载推荐失败' });
+    }
   },
 
-  onInput(e) {
-    this.setData({ input_value: e.detail.value });
-  },
+  // ========== 滑动操作 ==========
 
-  async sendMessage() {
-    const text = this.data.input_value.trim();
-    if (!text || this.data.sending) return;
+  async doSwipe(e) {
+    const { userId, action } = e.currentTarget.dataset;
+    if (!userId || !action) return;
+    if (this.data.remaining_swipes <= 0 && action === 'like') {
+      wx.showToast({ title: '今日浏览已达上限', icon: 'none' });
+      return;
+    }
 
-    const localMsg = {
-      message_id: `local_${Date.now()}`,
-      is_me: true,
-      content_type: 'text',
-      content: text,
-      game_data: null,
-      time_text: formatTime(new Date()),
-      _pending: true,
-      _failed: false
-    };
+    const card = this.data.profiles.find(p => p.user_id === userId);
+    if (!card || card._animating) return;
 
+    // 播放滑出动画
+    const direction = action === 'like' ? 'right' : 'left';
     this.setData({
-      input_value: '',
-      sending: true,
-      messages: [...this.data.messages, localMsg]
-    }, () => this.scrollToBottom());
+      swiping_card_id: userId,
+      swipe_direction: direction
+    });
+
+    // 标记动画中
+    const animProfiles = this.data.profiles.map(p => {
+      if (p.user_id === userId) return { ...p, _animating: true };
+      return p;
+    });
+    this.setData({ profiles: animProfiles });
 
     try {
-      const result = await datingService.sendMessage({
-        match_id: this.data.match_id,
-        to_user_id: this.data.other_user.user_id,
-        content_type: 'text',
-        content: text
-      });
+      const result = await datingService.swipe(userId, action);
+      if (!result.success) {
+        wx.showToast({ title: result.error || '操作失败', icon: 'none' });
+        // 恢复
+        const restored = this.data.profiles.map(p => {
+          if (p.user_id === userId) return { ...p, _animating: false };
+          return p;
+        });
+        this.setData({
+          profiles: restored,
+          swiping_card_id: '',
+          swipe_direction: ''
+        });
+        return;
+      }
 
-      if (!result.success) throw new Error(result.error || '发送失败');
+      const respData = result.data || {};
 
-      const serverMsg = result.data && result.data.message;
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) {
-          return {
-            ...m,
-            message_id: (serverMsg && serverMsg.message_id) || m.message_id,
-            _pending: false
-          };
+      // 处理匹配成功
+      if (respData.match_created && respData.match) {
+        this.setData({
+          show_match_modal: true,
+          matched_user: {
+            user_id: respData.match.matched_user_id,
+            display_name: respData.match.matched_user_name || '神秘侦探',
+            match_id: respData.match.match_id
+          }
+        });
+      }
+
+      // 移除已滑动的卡片
+      setTimeout(() => {
+        const remaining = this.data.profiles.filter(p => p.user_id !== userId);
+        this.setData({
+          profiles: remaining,
+          remaining_swipes: respData.remaining_swipes != null ? respData.remaining_swipes : this.data.remaining_swipes - 1,
+          swiping_card_id: '',
+          swipe_direction: ''
+        });
+
+        // 卡片不足时自动加载更多
+        if (remaining.length <= 1) {
+          this.loadProfiles();
         }
-        return m;
-      });
+      }, 350);
 
-      this.setData({ messages: msgs, sending: false });
     } catch (err) {
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) return { ...m, _pending: false, _failed: true };
-        return m;
+      console.error('Swipe failed:', err);
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' });
+      const restored = this.data.profiles.map(p => {
+        if (p.user_id === userId) return { ...p, _animating: false };
+        return p;
       });
-      this.setData({ messages: msgs, sending: false });
-      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+      this.setData({
+        profiles: restored,
+        swiping_card_id: '',
+        swipe_direction: ''
+      });
     }
   },
 
-  // ========== 游戏邀请 ==========
+  // ========== 匹配成功弹窗 ==========
 
-  toggleInvitePanel() {
-    this.setData({
-      show_invite_panel: !this.data.show_invite_panel,
-      invite_game_type: 'script_kill',
-      invite_game_name: '',
-      invite_message: ''
+  closeMatchModal() {
+    this.setData({ show_match_modal: false, matched_user: null });
+  },
+
+  goToChatFromMatch() {
+    const m = this.data.matched_user;
+    if (!m) return;
+    this.setData({ show_match_modal: false, matched_user: null });
+    wx.navigateTo({
+      url: `/pages/dating/chat?matchId=${m.match_id}&userId=${m.user_id}&name=${encodeURIComponent(m.display_name)}`
     });
   },
 
-  selectGameType(e) {
-    this.setData({ invite_game_type: e.currentTarget.dataset.type });
-  },
+  // ========== 交友池 ==========
 
-  onInviteGameNameInput(e) {
-    this.setData({ invite_game_name: e.detail.value });
-  },
-
-  onInviteMessageInput(e) {
-    this.setData({ invite_message: e.detail.value });
-  },
-
-  async sendGameInvite() {
-    if (!this.data.invite_game_type || this.data.invite_sending) return;
-
-    const gameType = GAME_TYPES.find(g => g.key === this.data.invite_game_type) || {};
-    const game_data = {
-      game_type: this.data.invite_game_type,
-      game_name: this.data.invite_game_name.trim() || gameType.label || '游戏邀请',
-      message: this.data.invite_message.trim()
-    };
-
-    const localMsg = {
-      message_id: `local_inv_${Date.now()}`,
-      is_me: true,
-      content_type: 'game_invite',
-      content: game_data.game_name,
-      game_data,
-      time_text: formatTime(new Date()),
-      _pending: true,
-      _failed: false
-    };
-
-    this.setData({
-      show_invite_panel: false,
-      invite_sending: true,
-      messages: [...this.data.messages, localMsg]
-    }, () => this.scrollToBottom());
-
+  async togglePool() {
     try {
-      const result = await datingService.sendMessage({
-        match_id: this.data.match_id,
-        to_user_id: this.data.other_user.user_id,
-        content_type: 'game_invite',
-        game_data
-      });
-
-      if (!result.success) throw new Error(result.error || '发送失败');
-
-      const serverMsg = result.data && result.data.message;
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) {
-          return {
-            ...m,
-            message_id: (serverMsg && serverMsg.message_id) || m.message_id,
-            _pending: false
-          };
+      if (this.data.is_in_pool) {
+        const result = await datingService.leavePool();
+        if (result.success) {
+          this.setData({ is_in_pool: false });
+          wx.showToast({ title: '已退出交友池', icon: 'success' });
+        } else {
+          wx.showToast({ title: result.error || '操作失败', icon: 'none' });
         }
-        return m;
-      });
-
-      this.setData({ messages: msgs, invite_sending: false });
+      } else {
+        const result = await datingService.joinPool();
+        if (result.success) {
+          this.setData({ is_in_pool: true });
+          wx.showToast({ title: '已加入交友池', icon: 'success' });
+          this.loadProfiles();
+        } else {
+          wx.showToast({ title: result.error || '操作失败', icon: 'none' });
+        }
+      }
     } catch (err) {
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) return { ...m, _pending: false, _failed: true };
-        return m;
-      });
-      this.setData({ messages: msgs, invite_sending: false });
-      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' });
     }
   },
 
-  scrollToBottom() {
-    const msgs = this.data.messages;
-    if (msgs.length === 0) return;
-    this.setData({ scroll_into_view: `msg-${msgs[msgs.length - 1].message_id}` });
-  },
+  // ========== 偏好设置 ==========
 
-  retryMessage(e) {
-    const msgId = e.currentTarget.dataset.msgId;
-    const msg = this.data.messages.find(m => m.message_id === msgId);
-    if (!msg || !msg._failed) return;
-
-    // 移除失败消息
-    const filtered = this.data.messages.filter(m => m.message_id !== msgId);
-    this.setData({ messages: filtered });
-
-    // 重新发送
-    if (msg.content_type === 'game_invite') {
-      this.setData({ input_value: '' });
-      // 直接重新发送邀请
-      this.resendGameInvite(msg);
-    } else {
-      this.setData({ input_value: msg.content }, () => this.sendMessage());
-    }
-  },
-
-  async resendGameInvite(msg) {
-    const localMsg = { ...msg, message_id: `local_retry_${Date.now()}`, _pending: true, _failed: false };
+  openPreferences() {
+    const prefs = this.data.preferences || {};
     this.setData({
-      invite_sending: true,
-      messages: [...this.data.messages, localMsg]
-    }, () => this.scrollToBottom());
+      show_prefs_modal: true,
+      edit_visibility: prefs.dating_visibility !== false,
+      edit_tags: prefs.interested_tags || [],
+      tag_input: '',
+      edit_campus_pref: prefs.campus_preference || 'any',
+      edit_grade_pref: prefs.grade_preference || 'any'
+    });
+  },
 
+  closePreferences() {
+    this.setData({ show_prefs_modal: false });
+  },
+
+  onTagInput(e) {
+    this.setData({ tag_input: e.detail.value });
+  },
+
+  addTag() {
+    const tag = this.data.tag_input.trim();
+    if (!tag) return;
+    if (this.data.edit_tags.includes(tag)) {
+      wx.showToast({ title: '标签已存在', icon: 'none' });
+      return;
+    }
+    if (this.data.edit_tags.length >= 8) {
+      wx.showToast({ title: '最多添加8个标签', icon: 'none' });
+      return;
+    }
+    this.setData({
+      edit_tags: [...this.data.edit_tags, tag],
+      tag_input: ''
+    });
+  },
+
+  removeTag(e) {
+    const idx = e.currentTarget.dataset.index;
+    const tags = [...this.data.edit_tags];
+    tags.splice(idx, 1);
+    this.setData({ edit_tags: tags });
+  },
+
+  toggleVisibility() {
+    this.setData({ edit_visibility: !this.data.edit_visibility });
+  },
+
+  selectCampusPref(e) {
+    this.setData({ edit_campus_pref: e.currentTarget.dataset.value });
+  },
+
+  selectGradePref(e) {
+    this.setData({ edit_grade_pref: e.currentTarget.dataset.value });
+  },
+
+  async savePreferences() {
     try {
-      const result = await datingService.sendMessage({
-        match_id: this.data.match_id,
-        to_user_id: this.data.other_user.user_id,
-        content_type: 'game_invite',
-        game_data: msg.game_data
+      const result = await datingService.updatePreferences({
+        dating_visibility: this.data.edit_visibility,
+        interested_tags: this.data.edit_tags,
+        campus_preference: this.data.edit_campus_pref,
+        grade_preference: this.data.edit_grade_pref
       });
-      if (!result.success) throw new Error(result.error || '发送失败');
-      const serverMsg = result.data && result.data.message;
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) {
-          return { ...m, message_id: (serverMsg && serverMsg.message_id) || m.message_id, _pending: false };
-        }
-        return m;
-      });
-      this.setData({ messages: msgs, invite_sending: false });
+
+      if (result.success) {
+        this.setData({
+          show_prefs_modal: false,
+          preferences: {
+            dating_visibility: this.data.edit_visibility,
+            interested_tags: this.data.edit_tags,
+            campus_preference: this.data.edit_campus_pref,
+            grade_preference: this.data.edit_grade_pref
+          }
+        });
+        wx.showToast({ title: '偏好已更新', icon: 'success' });
+      } else {
+        wx.showToast({ title: result.error || '更新失败', icon: 'none' });
+      }
     } catch (err) {
-      const msgs = this.data.messages.map(m => {
-        if (m.message_id === localMsg.message_id) return { ...m, _pending: false, _failed: true };
-        return m;
-      });
-      this.setData({ messages: msgs, invite_sending: false });
+      wx.showToast({ title: err.message || '更新失败', icon: 'none' });
     }
   },
+
+  // ========== 导航 ==========
+
+  goToMatches() {
+    wx.navigateTo({ url: '/pages/dating/matches' });
+  },
+
+  // ========== 生命周期 ==========
 
   onRetry() {
-    this.loadMessages(1);
+    this.initPage();
   },
 
   async onPullDownRefresh() {
     try {
-      await this.loadMessages(1);
+      await Promise.all([
+        this.loadDailyStatus(),
+        this.loadProfiles()
+      ]);
     } finally {
       wx.stopPullDownRefresh();
     }
@@ -324,8 +365,17 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: `NK推协 · 与 ${this.data.other_user.display_name} 的聊天`,
-      path: '/pages/dating/matches'
+      title: 'NK推协 · 推理交友',
+      path: '/pages/dating/index'
     };
-  }
+  },
+
+  onShareTimeline() {
+    return {
+      title: 'NK推协 · 推理交友'
+    };
+  },
+
+  // 占位函数 — WXML 中 catchtouchmove 引用
+  noop() {}
 });

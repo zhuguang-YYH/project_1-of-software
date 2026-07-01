@@ -5,6 +5,13 @@
   </view>
 
   <view class="tab-container" wx:else>
+    <!-- 时间周期 -->
+    <view class="period-tabs">
+      <view class="period-item {{period === 'all' ? 'active' : ''}}" data-period="all" bindtap="switchPeriod">总榜</view>
+      <view class="period-item {{period === 'weekly' ? 'active' : ''}}" data-period="weekly" bindtap="switchPeriod">周榜</view>
+      <view class="period-item {{period === 'monthly' ? 'active' : ''}}" data-period="monthly" bindtap="switchPeriod">月榜</view>
+    </view>
+
     <view class="tabs">
       <view class="tab-item {{tab === 'top3' ? 'active' : ''}}" data-tab="top3" bindtap="switchTab">前三名</view>
       <view class="tab-item {{tab === 'full' ? 'active' : ''}}" data-tab="full" bindtap="switchTab">完整榜单</view>

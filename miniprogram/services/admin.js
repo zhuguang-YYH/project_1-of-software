@@ -189,6 +189,27 @@ class AdminService {
   async deactivateMatch(match_id) {
     return this.mutate('deactivateMatch', { match_id }, '解除匹配失败');
   }
+
+  // ========== 删除操作 ==========
+  async deletePuzzle(puzzle_id) {
+    return this.mutate('deletePuzzle', { puzzle_id }, '删除谜题失败');
+  }
+
+  async deleteActivity(activity_id) {
+    return this.mutate('deleteActivity', { activity_id }, '删除活动失败');
+  }
+
+  async deleteExchangeGood(item_id) {
+    return this.mutate('deleteExchangeGood', { item_id }, '删除商品失败');
+  }
+
+  async deleteRecommendation(recommendation_id) {
+    return this.mutate('deleteRecommendation', { recommendation_id }, '删除推荐失败');
+  }
+
+  async deleteDudKeyword(keyword_id) {
+    return this.mutate('deleteDudKeyword', { keyword_id }, '删除关键词失败');
+  }
 }
 
 module.exports = new AdminService();

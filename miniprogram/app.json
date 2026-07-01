@@ -87,6 +87,14 @@
       "name": "settings"
     },
     {
+      "root": "pages/notifications",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "notifications"
+    },
+    {
       "root": "pages/puzzle",
       "pages": [
         "index",
@@ -145,6 +153,20 @@
   "sitemapLocation": "sitemap.json",
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["puzzle_ext", "activity"]
+    },
+    "pages/ranking/index": {
+      "network": "all",
+      "packages": ["puzzle_ext"]
+    },
+    "pages/profile/index": {
+      "network": "all",
+      "packages": ["activity", "exchange", "borrow", "commission", "settings"]
+    }
+  },
   "requiredPrivateInfos": [
     "chooseAddress",
     "chooseLocation",

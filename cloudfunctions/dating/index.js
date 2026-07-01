@@ -52,7 +52,8 @@ function buildInvitationId(from_user_id, to_user_id) {
 
 function buildMessageId() {
   const ts = Date.now();
-  const rnd = Math.random().toString(36).slice(2, 8);
+  // 使用更长的随机串降低碰撞概率
+  const rnd = Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 8);
   return `msg_${ts}_${rnd}`.slice(0, 64);
 }
 
@@ -211,7 +212,19 @@ async function dating_getProfiles() {
       preferences = pref_res.data[0] || null;
     } catch (_) { /* ignore */ }
 
+    // 获取当前用户的信息（用于 campus/grade 比较）
+    let my_card = {};
+    try {
+      const my_card_res = await db.collection('profile_cards')
+        .where({ user_id: user._id })
+        .limit(1)
+        .get();
+      my_card = my_card_res.data[0] || {};
+    } catch (_) { /* ignore */ }
+
     const current_interests = pool.find(p => p.user_id === user._id)?.interests || [];
+    const my_campus = my_card.campus || '';
+    const my_grade = my_card.grade || '';
 
     // 获取候选用户的 puzzle 统计（正确率）
     const candidate_ids = pool.map(p => p.user_id);
@@ -271,15 +284,15 @@ async function dating_getProfiles() {
       const shared = candidate_interests.filter(tag => current_interests.includes(tag));
       score += shared.length * 3;
 
-      // 同校区 +5
+      // 同校区 +5（当前用户校区 vs 候选人校区）
       if (preferences && preferences.campus_preference === 'same' &&
-          candidate.campus && card.campus && candidate.campus === card.campus) {
+          my_campus && card.campus && my_campus === card.campus) {
         score += 5;
       }
 
-      // 同年级 +3
+      // 同年级 +3（当前用户年级 vs 候选人年级）
       if (preferences && preferences.grade_preference === 'same' &&
-          candidate.grade && card.grade && candidate.grade === card.grade) {
+          my_grade && card.grade && my_grade === card.grade) {
         score += 3;
       }
 
@@ -289,8 +302,10 @@ async function dating_getProfiles() {
       else if (stats_rate >= 60) score += 2;
       else if (stats_rate >= 40) score += 1;
 
-      // 随机扰动 ±1
-      score += (candidate.user_id.charCodeAt(3) || 0) % 3 - 1;
+      // 随机扰动 ±1（基于 user_id 字符串哈希的低位，避免 NaN）
+      const user_id_str = String(candidate.user_id || '');
+      const char_code = user_id_str.length > 3 ? user_id_str.charCodeAt(3) : user_id_str.charCodeAt(0) || 0;
+      score += (char_code % 3) - 1;
 
       return { candidate, score };
     });
@@ -460,37 +475,51 @@ async function dating_getMatches() {
       .limit(50)
       .get();
 
-    const result = [];
-    for (const match of (matches.data || [])) {
-      const other_id = match.user_id_1 === user._id ? match.user_id_2 : match.user_id_1;
+    const matches_list = matches.data || [];
 
-      // 获取对方信息
-      let other_user = null;
-      try {
-        const user_res = await db.collection('users').doc(other_id).get();
-        other_user = user_res.data || null;
-      } catch (_) { /* ignore */ }
+    // 收集所有对方用户 ID
+    const other_ids = matches_list.map(m => m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1);
 
-      let card = null;
-      try {
-        const card_res = await db.collection('profile_cards')
-          .where({ user_id: other_id })
-          .limit(1)
+    // 批量获取用户信息
+    const users_map = {};
+    try {
+      if (other_ids.length > 0) {
+        const users_res = await db.collection('users')
+          .where({ _id: _.in(other_ids) })
+          .field({ _id: true, nickname: true, avatar_url: true })
           .get();
-        card = card_res.data[0] || null;
-      } catch (_) { /* ignore */ }
+        (users_res.data || []).forEach(u => { users_map[u._id] = u; });
+      }
+    } catch (_) { /* ignore */ }
+
+    // 批量获取名片
+    const cards_map = {};
+    try {
+      if (other_ids.length > 0) {
+        const cards_res = await db.collection('profile_cards')
+          .where({ user_id: _.in(other_ids) })
+          .get();
+        (cards_res.data || []).forEach(c => { cards_map[c.user_id] = c; });
+      }
+    } catch (_) { /* ignore */ }
+
+    const result = [];
+    for (const match of matches_list) {
+      const other_id = match.user_id_1 === user._id ? match.user_id_2 : match.user_id_1;
+      const usr = users_map[other_id] || {};
+      const card = cards_map[other_id] || {};
 
       result.push({
         match_id: match.match_id,
         matched_at: match.matched_at,
         matched_user: {
           user_id: other_id,
-          display_name: (other_user && other_user.nickname) || (card && card.display_name) || '神秘侦探',
-          avatar_url: (other_user && other_user.avatar_url) || (card && card.avatar_url) || '',
-          campus: (card && card.campus) || '',
-          grade: (card && card.grade) || '',
-          interests: (card && card.interests) || [],
-          self_intro: (card && card.self_intro || '').slice(0, 60)
+          display_name: usr.nickname || card.display_name || '神秘侦探',
+          avatar_url: usr.avatar_url || card.avatar_url || '',
+          campus: card.campus || '',
+          grade: card.grade || '',
+          interests: card.interests || [],
+          self_intro: (card.self_intro || '').slice(0, 60)
         }
       });
     }
@@ -787,26 +816,39 @@ async function dating_getInvitations(event) {
       .limit(50)
       .get();
 
+    const invitation_list = res.data || [];
+
+    // 收集所有对方用户 ID
+    const other_ids = invitation_list.map(inv =>
+      inv.from_user_id === user._id ? inv.to_user_id : inv.from_user_id
+    );
+
+    // 批量获取用户信息
+    const users_map = {};
+    try {
+      const users_res = await db.collection('users')
+        .where({ _id: _.in(other_ids) })
+        .field({ _id: true, nickname: true, avatar_url: true })
+        .get();
+      (users_res.data || []).forEach(u => { users_map[u._id] = u; });
+    } catch (_) { /* ignore */ }
+
+    // 批量获取名片
+    const cards_map = {};
+    try {
+      const cards_res = await db.collection('profile_cards')
+        .where({ user_id: _.in(other_ids) })
+        .get();
+      (cards_res.data || []).forEach(c => { cards_map[c.user_id] = c; });
+    } catch (_) { /* ignore */ }
+
     const invitations = [];
-    for (const inv of (res.data || [])) {
+    for (const inv of invitation_list) {
       const is_sender = inv.from_user_id === user._id;
       const other_id = is_sender ? inv.to_user_id : inv.from_user_id;
 
-      // 获取对方信息
-      let other_user = null;
-      try {
-        const user_res = await db.collection('users').doc(other_id).get();
-        other_user = user_res.data || null;
-      } catch (_) { /* ignore */ }
-
-      let card = null;
-      try {
-        const card_res = await db.collection('profile_cards')
-          .where({ user_id: other_id })
-          .limit(1)
-          .get();
-        card = card_res.data[0] || null;
-      } catch (_) { /* ignore */ }
+      const usr = users_map[other_id] || {};
+      const card = cards_map[other_id] || {};
 
       invitations.push({
         invitation_id: inv.invitation_id,
@@ -819,8 +861,8 @@ async function dating_getInvitations(event) {
         created_at: inv.created_at,
         other_user: {
           user_id: other_id,
-          display_name: (other_user && other_user.nickname) || (card && card.display_name) || '神秘侦探',
-          avatar_url: (other_user && other_user.avatar_url) || (card && card.avatar_url) || ''
+          display_name: usr.nickname || card.display_name || '神秘侦探',
+          avatar_url: usr.avatar_url || card.avatar_url || ''
         }
       });
     }
@@ -1047,70 +1089,85 @@ async function dating_getConversations() {
       // 集合不存在，返回空列表
     }
 
+    // 收集所有对方用户 ID
+    const other_ids = matches_data.map(m => m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1);
+    const match_ids = matches_data.map(m => m.match_id);
+
+    // 批量获取用户信息
+    const users_map = {};
+    try {
+      const users_res = await db.collection('users')
+        .where({ _id: _.in(other_ids) })
+        .field({ _id: true, nickname: true, avatar_url: true })
+        .get();
+      (users_res.data || []).forEach(u => { users_map[u._id] = u; });
+    } catch (_) { /* ignore */ }
+
+    // 批量获取名片
+    const cards_map = {};
+    try {
+      const cards_res = await db.collection('profile_cards')
+        .where({ user_id: _.in(other_ids) })
+        .get();
+      (cards_res.data || []).forEach(c => { cards_map[c.user_id] = c; });
+    } catch (_) { /* ignore */ }
+
+    // 批量获取每个匹配的最后一条消息（聚合取巧：对每个 match_id 取最新一条）
+    const last_msg_map = {};
+    try {
+      // 微信云开发不支持聚合，改用逐个查询但用 in 缩小范围
+      const all_msgs_res = await db.collection('friend_messages')
+        .where({ match_id: _.in(match_ids) })
+        .orderBy('created_at', 'desc')
+        .limit(200)
+        .get();
+      // 对每个 match_id 取第一条（最新的）
+      (all_msgs_res.data || []).forEach(msg => {
+        if (!last_msg_map[msg.match_id]) {
+          last_msg_map[msg.match_id] = {
+            message_id: msg.message_id,
+            from_user_id: msg.from_user_id,
+            content_type: msg.content_type,
+            content: msg.content,
+            game_data: msg.game_data || null,
+            created_at: msg.created_at
+          };
+        }
+      });
+    } catch (_) { /* ignore */ }
+
+    // 批量获取未读计数 — 逐个 count 不可避免，但总量可控
+    const unread_map = {};
+    try {
+      const unread_results = await Promise.all(
+        match_ids.map(mid =>
+          db.collection('friend_messages')
+            .where({ match_id: mid, to_user_id: user._id, is_read: false })
+            .count()
+            .then(res => ({ mid, count: res.total || 0 }))
+            .catch(() => ({ mid, count: 0 }))
+        )
+      );
+      unread_results.forEach(r => { unread_map[r.mid] = r.count; });
+    } catch (_) { /* ignore */ }
+
     const conversations = [];
     for (const match of matches_data) {
       const other_id = match.user_id_1 === user._id ? match.user_id_2 : match.user_id_1;
 
-      // 获取对方信息
-      let other_user = { user_id: other_id, display_name: '神秘侦探', avatar_url: '' };
-      try {
-        const user_res = await db.collection('users').doc(other_id).get();
-        const u = user_res.data;
-        if (u) {
-          other_user.display_name = u.nickname || other_user.display_name;
-          other_user.avatar_url = u.avatar_url || '';
-        }
-      } catch (_) { /* ignore */ }
+      const usr = users_map[other_id] || {};
+      const card = cards_map[other_id] || {};
 
-      try {
-        const card_res = await db.collection('profile_cards')
-          .where({ user_id: other_id })
-          .limit(1)
-          .get();
-        const card = card_res.data[0];
-        if (card) {
-          if (!other_user.display_name || other_user.display_name === '神秘侦探') {
-            other_user.display_name = card.display_name || other_user.display_name;
-          }
-          if (!other_user.avatar_url) other_user.avatar_url = card.avatar_url || '';
-        }
-      } catch (_) { /* ignore */ }
+      let display_name = usr.nickname || card.display_name || '神秘侦探';
+      let avatar_url = usr.avatar_url || card.avatar_url || '';
 
-      // 最后一条消息
-      let last_message = null;
-      try {
-        const last_res = await db.collection('friend_messages')
-          .where({ match_id: match.match_id })
-          .orderBy('created_at', 'desc')
-          .limit(1)
-          .get();
-        const last = last_res.data[0];
-        if (last) {
-          last_message = {
-            message_id: last.message_id,
-            from_user_id: last.from_user_id,
-            content_type: last.content_type,
-            content: last.content,
-            game_data: last.game_data || null,
-            created_at: last.created_at
-          };
-        }
-      } catch (_) { /* ignore */ }
-
-      // 未读计数
-      let unread_count = 0;
-      try {
-        const unread_res = await db.collection('friend_messages')
-          .where({ match_id: match.match_id, to_user_id: user._id, is_read: false })
-          .count();
-        unread_count = unread_res.total || 0;
-      } catch (_) { /* ignore */ }
+      const other_user = { user_id: other_id, display_name, avatar_url };
 
       conversations.push({
         match_id: match.match_id,
         other_user: other_user,
-        last_message,
-        unread_count,
+        last_message: last_msg_map[match.match_id] || null,
+        unread_count: unread_map[match.match_id] || 0,
         matched_at: match.matched_at
       });
     }
@@ -1213,35 +1270,69 @@ async function dating_getFriendRequests() {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    // 收到的请求
-    let received = [];
+    // 先查询收到的请求和发出的请求
+    let recv_res = { data: [] };
     try {
-      const recv_res = await db.collection('friend_requests')
+      recv_res = await db.collection('friend_requests')
         .where({ to_user_id: user._id, status: 'pending' })
         .orderBy('created_at', 'desc')
         .limit(50)
         .get();
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
 
+    let sent_res = { data: [] };
+    try {
+      sent_res = await db.collection('friend_requests')
+        .where({ from_user_id: user._id, status: 'pending' })
+        .orderBy('created_at', 'desc')
+        .limit(20)
+        .get();
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
+
+    // 收集所有需要查询的用户 ID
+    const recv_user_ids = (recv_res.data || []).map(r => r.from_user_id);
+    const sent_user_ids = (sent_res.data || []).map(r => r.to_user_id);
+    const all_user_ids = [...new Set([...recv_user_ids, ...sent_user_ids])];
+
+    // 批量获取用户信息
+    const user_map = {};
+    try {
+      if (all_user_ids.length > 0) {
+        const users_res = await db.collection('users')
+          .where({ _id: _.in(all_user_ids) })
+          .field({ _id: true, nickname: true, avatar_url: true })
+          .get();
+        (users_res.data || []).forEach(u => { user_map[u._id] = u; });
+      }
+    } catch (_) { /* ignore */ }
+
+    // 批量获取名片
+    const card_map = {};
+    try {
+      if (all_user_ids.length > 0) {
+        const cards_res = await db.collection('profile_cards')
+          .where({ user_id: _.in(all_user_ids) })
+          .get();
+        (cards_res.data || []).forEach(c => { card_map[c.user_id] = c; });
+      }
+    } catch (_) { /* ignore */ }
+
+    // 收到的请求
+    let received = [];
+    try {
       for (const req of (recv_res.data || [])) {
-        let from_user = { user_id: req.from_user_id, display_name: '神秘侦探', avatar_url: '' };
-        try {
-          const u_res = await db.collection('users').doc(req.from_user_id).get();
-          if (u_res.data) {
-            from_user.display_name = u_res.data.nickname || from_user.display_name;
-            from_user.avatar_url = u_res.data.avatar_url || '';
-          }
-        } catch (_) { /* ignore */ }
-        try {
-          const card_res = await db.collection('profile_cards').where({ user_id: req.from_user_id }).limit(1).get();
-          if (card_res.data[0]) {
-            if (from_user.display_name === '神秘侦探') from_user.display_name = card_res.data[0].display_name || from_user.display_name;
-            if (!from_user.avatar_url) from_user.avatar_url = card_res.data[0].avatar_url || '';
-          }
-        } catch (_) { /* ignore */ }
+        const u = user_map[req.from_user_id] || {};
+        const card = card_map[req.from_user_id] || {};
+        const display_name = u.nickname || card.display_name || '神秘侦探';
+        const avatar_url = u.avatar_url || card.avatar_url || '';
 
         received.push({
           request_id: req.request_id,
-          from_user: from_user,
+          from_user: { user_id: req.from_user_id, display_name, avatar_url },
           message: req.message,
           is_sent: false,
           created_at: req.created_at
@@ -1254,32 +1345,15 @@ async function dating_getFriendRequests() {
     // 发出的请求
     let sent = [];
     try {
-      const sent_res = await db.collection('friend_requests')
-        .where({ from_user_id: user._id, status: 'pending' })
-        .orderBy('created_at', 'desc')
-        .limit(20)
-        .get();
-
       for (const req of (sent_res.data || [])) {
-        let to_user = { user_id: req.to_user_id, display_name: '神秘侦探', avatar_url: '' };
-        try {
-          const u_res = await db.collection('users').doc(req.to_user_id).get();
-          if (u_res.data) {
-            to_user.display_name = u_res.data.nickname || to_user.display_name;
-            to_user.avatar_url = u_res.data.avatar_url || '';
-          }
-        } catch (_) { /* ignore */ }
-        try {
-          const card_res = await db.collection('profile_cards').where({ user_id: req.to_user_id }).limit(1).get();
-          if (card_res.data[0]) {
-            if (to_user.display_name === '神秘侦探') to_user.display_name = card_res.data[0].display_name || to_user.display_name;
-            if (!to_user.avatar_url) to_user.avatar_url = card_res.data[0].avatar_url || '';
-          }
-        } catch (_) { /* ignore */ }
+        const u = user_map[req.to_user_id] || {};
+        const card = card_map[req.to_user_id] || {};
+        const display_name = u.nickname || card.display_name || '神秘侦探';
+        const avatar_url = u.avatar_url || card.avatar_url || '';
 
         sent.push({
           request_id: req.request_id,
-          to_user: to_user,
+          to_user: { user_id: req.to_user_id, display_name, avatar_url },
           message: req.message,
           is_sent: true,
           created_at: req.created_at
