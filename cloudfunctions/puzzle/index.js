@@ -176,14 +176,26 @@ async function ensurePointAccount(user) {
   }
 
   const points = readPoints(user);
+  // 使用 user_id 派生稳定 _id，防止并发重复创建
+  const stableId = `pa_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
   const data = {
+    _id: stableId,
     user_id: user._id,
     ...points,
     created_at: db.serverDate(),
     updated_at: db.serverDate()
   };
-  const add_res = await db.collection('point_accounts').add({ data });
-  return { _id: add_res._id, ...data };
+  try {
+    const add_res = await db.collection('point_accounts').add({ data });
+    return { _id: add_res._id, ...data };
+  } catch (error) {
+    // _id 冲突 → 并发创建，读取已存在的记录
+    if (!isCollectionMissing(error)) {
+      const existed = await db.collection('point_accounts').doc(stableId).get();
+      if (existed.data) return existed.data;
+    }
+    throw error;
+  }
 }
 
 async function addPuzzlePoints(user, points, puzzle_id, options = {}) {
@@ -191,7 +203,8 @@ async function addPuzzlePoints(user, points, puzzle_id, options = {}) {
   const reason = options.reason || '每日谜题答对奖励';
   const business_type = options.business_type || 'daily_puzzle';
   await ensurePointAccount(user);
-  // 原子加分：直接使用 _.inc，避免"先读后写"竞态
+
+  // 原子加分：users 表是最权威的积分来源，必须成功
   await db.collection('users').doc(user._id).update({
     data: {
       total_points: db.command.inc(points),
@@ -199,27 +212,43 @@ async function addPuzzlePoints(user, points, puzzle_id, options = {}) {
       updated_at: db.serverDate()
     }
   });
-  await db.collection('point_accounts').where({ user_id: user._id }).update({
-    data: {
-      total_points: db.command.inc(points),
-      available_points: db.command.inc(points),
-      updated_at: db.serverDate()
+
+  // point_accounts 是辅助缓存，best-effort 同步；缺失时后续 ensurePointAccount 会从 users 重建
+  try {
+    await db.collection('point_accounts').where({ user_id: user._id }).update({
+      data: {
+        total_points: db.command.inc(points),
+        available_points: db.command.inc(points),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    if (!isCollectionMissing(error)) {
+      console.warn('[puzzle] sync point_accounts failed:', error && error.message);
     }
-  });
-  await db.collection('points_log').add({
-    data: {
-      user_id: user._id,
-      amount: points,
-      change_amount: points,
-      point_type: 'available',
-      type: 'income',
-      business_type,
-      related_id: puzzle_id,
-      reason,
-      description: reason,
-      created_at: db.serverDate()
+  }
+
+  // 积分流水日志，best-effort
+  try {
+    await db.collection('points_log').add({
+      data: {
+        user_id: user._id,
+        amount: points,
+        change_amount: points,
+        point_type: 'available',
+        type: 'income',
+        business_type,
+        related_id: puzzle_id,
+        reason,
+        description: reason,
+        created_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    if (!isCollectionMissing(error)) {
+      console.warn('[puzzle] add points_log failed:', error && error.message);
     }
-  });
+  }
 }
 
 function calcNextStreakBonusIn(streak) {

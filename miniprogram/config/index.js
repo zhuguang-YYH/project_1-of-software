@@ -139,12 +139,15 @@ const CONFIG = {
     default: 10000,
     login: 12000,
     upload: 30000,
-    // 按模块配置，超出 default 的复杂查询场景
+    // 按模块配置，与对应云函数 config.json 中的 timeout 保持合理关系
     ranking: 12000,
     recommendation: 12000,
     puzzle: 10000,
     dud: 15000,
-    dating: 10000
+    dating: 20000,
+    admin: 15000,
+    commission: 12000,
+    exchange: 12000
   },
 
   // 分页配置

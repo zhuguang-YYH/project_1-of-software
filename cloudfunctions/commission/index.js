@@ -118,7 +118,10 @@ async function ensurePointAccount(user) {
   }
 
   const points = readPoints(user);
+  // 使用 user_id 派生稳定 _id，防止并发重复创建
+  const stableId = `pa_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
   const data = {
+    _id: stableId,
     user_id: user._id,
     total_points: points.total_points,
     available_points: points.available_points,
@@ -127,8 +130,17 @@ async function ensurePointAccount(user) {
     created_at: db.serverDate(),
     updated_at: db.serverDate()
   };
-  const addRes = await db.collection('point_accounts').add({ data });
-  return { _id: addRes._id, ...data };
+  try {
+    const addRes = await db.collection('point_accounts').add({ data });
+    return { _id: addRes._id, ...data };
+  } catch (error) {
+    // _id 冲突 → 并发创建，读取已存在的记录
+    if (!isCollectionMissing(error)) {
+      const existed = await db.collection('point_accounts').doc(stableId).get();
+      if (existed.data) return existed.data;
+    }
+    throw error;
+  }
 }
 
 async function syncPoints(user, nextPoints) {

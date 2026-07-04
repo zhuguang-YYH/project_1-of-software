@@ -78,14 +78,26 @@ async function ensurePointAccount(user) {
   }
 
   const points = readPoints(user);
+  // 使用 user_id 派生稳定 _id，防止并发重复创建
+  const stableId = `pa_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
   const data = {
+    _id: stableId,
     user_id: user._id,
     ...points,
     created_at: db.serverDate(),
     updated_at: db.serverDate()
   };
-  const res = await db.collection('point_accounts').add({ data });
-  return { _id: res._id, ...data };
+  try {
+    const res = await db.collection('point_accounts').add({ data });
+    return { _id: res._id, ...data };
+  } catch (error) {
+    // _id 冲突 → 并发创建，读取已存在的记录
+    if (!isCollectionMissing(error)) {
+      const existed = await db.collection('point_accounts').doc(stableId).get();
+      if (existed.data) return existed.data;
+    }
+    throw error;
+  }
 }
 
 // 原子增量更新积分：对 users 与 point_accounts 同步 _.inc。

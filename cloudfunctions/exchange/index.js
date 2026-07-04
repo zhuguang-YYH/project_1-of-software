@@ -156,7 +156,10 @@ async function ensurePointAccount(user) {
     if (!isCollectionMissing(error)) throw error;
   }
 
+  // 使用 user_id 派生稳定 _id，防止并发重复创建
+  const stableId = `pa_${user._id}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
   const data = {
+    _id: stableId,
     user_id: user._id,
     total_points: toNumber(user.total_points),
     available_points: toNumber(user.available_points),
@@ -165,8 +168,17 @@ async function ensurePointAccount(user) {
     created_at: db.serverDate(),
     updated_at: db.serverDate()
   };
-  const res = await db.collection('point_accounts').add({ data });
-  return { _id: res._id, ...data };
+  try {
+    const res = await db.collection('point_accounts').add({ data });
+    return { _id: res._id, ...data };
+  } catch (error) {
+    // _id 冲突 → 并发创建，读取已存在的记录
+    if (!isCollectionMissing(error)) {
+      const existed = await db.collection('point_accounts').doc(stableId).get();
+      if (existed.data) return existed.data;
+    }
+    throw error;
+  }
 }
 
 function readPoints(user = {}, account = {}) {
@@ -273,7 +285,13 @@ async function exchange_getGoods(event) {
     const page_size = Math.min(50, Math.max(1, Number(event.page_size) || 10));
     const skip = (page - 1) * page_size;
 
-    const where = { item_type: 'exchange_good', status: _.neq('discontinued') };
+    // 将过滤条件放入 DB 查询，确保分页 total/list/has_more 一致
+    const where = {
+      item_type: 'exchange_good',
+      status: _.nin(['discontinued', 'offline']),
+      available_quantity: _.gt(0),
+      exchange_points: _.gt(0)
+    };
     const res = await db.collection('inventory_items')
       .where(where)
       .orderBy('created_at', 'desc')
@@ -281,9 +299,7 @@ async function exchange_getGoods(event) {
       .limit(page_size)
       .get();
     const count_res = await db.collection('inventory_items').where(where).count();
-    const list = (res.data || [])
-      .map(normalizeGood)
-      .filter(item => item.status !== 'offline' && item.available_quantity > 0 && item.exchange_points > 0);
+    const list = (res.data || []).map(normalizeGood);
 
     return ok({
       list,

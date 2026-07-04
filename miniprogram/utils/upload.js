@@ -8,10 +8,18 @@ const IMAGE_EXT_WHITELIST = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 // 判断是否为需要上传的本地临时路径（排除云存储、网络地址、本地静态资源、空值）
 function isLocalTempPath(path) {
   if (!path || typeof path !== 'string') return false;
-  return !path.startsWith('cloud://')
-    && !path.startsWith('http://')
-    && !path.startsWith('https://')
-    && !path.startsWith('/images/');
+  // 云存储 fileID
+  if (path.startsWith('cloud://')) return false;
+  // 本地静态资源
+  if (path.startsWith('/images/')) return false;
+  // 微信开发者工具代理的临时文件（http://127.0.0.1:PORT/__tmp__/...）
+  if (path.includes('/__tmp__/')) return true;
+  // 真机上的临时路径（http://tmp/...、wxfile://... 等）
+  if (path.startsWith('http://tmp/') || path.startsWith('wxfile://')) return true;
+  // 其余 http/https 地址视为远程网络地址
+  if (path.startsWith('http://') || path.startsWith('https://')) return false;
+  // 其它本地路径（如真机上不带协议的临时路径）
+  return true;
 }
 
 function extOf(path, fallback = 'jpg') {
