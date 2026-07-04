@@ -106,6 +106,11 @@ class Request {
     if (parts.length >= 2 && ROUTED_CLOUD_FUNCTIONS.includes(parts[0])) {
       const moduleName = parts[0];
       const action = parts.slice(1).join('_');
+      const payload = { ...data };
+      if (Object.prototype.hasOwnProperty.call(payload, 'action')) {
+        payload.business_action = payload.action;
+        delete payload.action;
+      }
       // 若调用方未显式指定 timeout，自动应用模块专属超时或默认值
       const routedOptions = options.timeout ? options : {
         ...options,
@@ -114,7 +119,7 @@ class Request {
 
       return this.callFunction(moduleName, {
         action,
-        ...data
+        ...payload
       }, routedOptions);
     }
 

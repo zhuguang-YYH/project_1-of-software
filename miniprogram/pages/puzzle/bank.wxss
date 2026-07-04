@@ -320,18 +320,26 @@
 .theme-gold .filter-chip,
 .theme-gold .diff-chip,
 .theme-gold .sort-chip {
-  color: #dbcda9;
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(212, 175, 55, 0.2);
+  color: rgba(247, 236, 209, 0.78);
+  background: rgba(255, 250, 240, 0.055);
+  border-color: rgba(212, 175, 55, 0.26);
+  box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.03);
 }
 
 .theme-gold .filter-chip.active,
 .theme-gold .diff-chip.active,
 .theme-gold .sort-chip.active {
   color: #15110a;
-  background: linear-gradient(135deg, #f1d56a, #c89422);
+  background: linear-gradient(135deg, #f0d46a 0%, #d4af37 48%, #a86f16 100%);
   border-color: transparent;
-  box-shadow: 0 6rpx 14rpx rgba(212, 175, 55, 0.25);
+  font-weight: 800;
+  box-shadow: 0 8rpx 18rpx rgba(212, 175, 55, 0.26);
+}
+
+.theme-gold .filter-chip:active,
+.theme-gold .diff-chip:active,
+.theme-gold .sort-chip:active {
+  opacity: 0.86;
 }
 
 .theme-gold .favorites-entry {

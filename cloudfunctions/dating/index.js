@@ -357,7 +357,7 @@ async function dating_swipe(event) {
     if (!user) return fail('请先完成授权登录');
 
     const target_user_id = event.target_user_id;
-    const action = event.action;
+    const action = event.swipe_action || event.business_action || event.action;
     if (!target_user_id) return fail('缺少目标用户编号');
     if (!action || !['like', 'pass'].includes(action)) return fail('操作类型错误');
 
@@ -885,7 +885,8 @@ async function dating_respondInvitation(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const { invitation_id, action } = event;
+    const invitation_id = event.invitation_id;
+    const action = event.invitation_action || event.business_action || event.action;
     if (!invitation_id) return fail('缺少邀请编号');
     if (!action || !['accept', 'decline'].includes(action)) return fail('操作类型错误');
 
@@ -1445,7 +1446,8 @@ async function dating_respondFriendRequest(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const { request_id, action } = event;
+    const request_id = event.request_id;
+    const action = event.friend_action || event.business_action || event.action;
     if (!request_id) return fail('缺少请求编号');
     if (!action || !['accept', 'decline'].includes(action)) return fail('操作类型错误');
 

@@ -59,3 +59,24 @@
   margin-bottom: 18rpx;
 }
 .variant-compact .empty-title { font-size: 26rpx; }
+
+.theme-gold .empty-icon {
+  background: linear-gradient(135deg, #292111, #d4af37);
+  color: #fff6d6;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .empty-title {
+  color: #f2d77c;
+}
+
+.theme-gold .empty-desc {
+  color: rgba(247, 236, 209, 0.74);
+}
+
+.theme-gold .empty-action {
+  background: linear-gradient(135deg, #f1d56a, #b77b18);
+  color: #17130c;
+  font-weight: 700;
+  box-shadow: 0 10rpx 22rpx rgba(183, 123, 24, 0.28);
+}

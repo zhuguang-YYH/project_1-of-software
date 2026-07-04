@@ -76,6 +76,7 @@
 
   <empty-state
     wx:if="{{error && puzzles.length === 0}}"
+    theme="{{theme}}"
     icon="!"
     title="{{error}}"
     description="请检查网络后重试"
@@ -120,6 +121,7 @@
 
   <empty-state
     wx:elif="{{!error && puzzles.length === 0}}"
+    theme="{{theme}}"
     icon="?"
     title="暂无谜题"
     description="{{searchKeyword ? '没有找到匹配的谜题，换个关键词试试' : '该筛选条件下暂无谜题'}}"

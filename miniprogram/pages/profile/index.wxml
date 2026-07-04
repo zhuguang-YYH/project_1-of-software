@@ -111,6 +111,16 @@
       <text class="menu-text">事件委托</text>
       <text class="menu-arrow">›</text>
     </view>
+    <view class="menu-item tap-feedback" bindtap="goPuzzleBank">
+      <view class="icon-circle is-indigo">谜</view>
+      <text class="menu-text">谜题库</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item tap-feedback" bindtap="goFriends">
+      <view class="icon-circle is-teal">友</view>
+      <text class="menu-text">我的好友</text>
+      <text class="menu-arrow">›</text>
+    </view>
     <view class="menu-item tap-feedback" bindtap="goNotifications">
       <view class="icon-circle is-cyan">信</view>
       <text class="menu-text">消息中心</text>

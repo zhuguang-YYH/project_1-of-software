@@ -1,4 +1,4 @@
-<view class="empty-state-wrap variant-{{variant}}">
+<view class="empty-state-wrap variant-{{variant}} theme-{{theme}}">
   <view class="empty-icon">
     <slot name="icon">
       <text>{{icon}}</text>
