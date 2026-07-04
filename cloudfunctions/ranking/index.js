@@ -105,7 +105,12 @@ async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
       (res.data || []).forEach(log => {
         const uid = log.user_id || '';
         if (!uid) return;
-        user_points[uid] = (user_points[uid] || 0) + (Number(log.points || 0) || 0);
+        const raw_amount = log.change_amount !== undefined
+          ? log.change_amount
+          : log.amount !== undefined
+            ? log.amount
+            : log.points;
+        user_points[uid] = (user_points[uid] || 0) + (Number(raw_amount || 0) || 0);
       });
 
       // Convert to sorted array
@@ -193,8 +198,9 @@ async function ranking_getFullRanking(event) {
   }
 }
 
-async function ranking_getUserRanking() {
+async function ranking_getUserRanking(event) {
   try {
+    const period = String((event && event.period) || 'all').trim();
     const wx_context = cloud.getWXContext();
     const user_res = await db.collection('users')
       .where({ openid: wx_context.OPENID })
@@ -204,6 +210,19 @@ async function ranking_getUserRanking() {
     if (user_res.data.length === 0) return fail('user not found', 'USER_NOT_FOUND');
 
     const user = user_res.data[0];
+    if (period === 'weekly' || period === 'monthly') {
+      const result = await getRankedUsers(500, 0, period);
+      const ranked = applyTieRanks(result.list);
+      const user_id = user._id || user.user_id || '';
+      const current = ranked.find(item => item.user_id === user_id);
+      if (current) return ok(current);
+
+      return ok({
+        ...normalizeRankUser(user, (result.total || 0) + 1),
+        total_points: 0
+      });
+    }
+
     const score = toNumber(user.total_points);
     const rank_res = await db.collection('users')
       .where({ total_points: _.gt(score) })

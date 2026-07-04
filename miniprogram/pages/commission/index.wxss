@@ -92,6 +92,9 @@
 .publish-btn,
 .primary-btn,
 .small-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 14rpx;
   font-size: 26rpx;
   line-height: 72rpx;
@@ -116,6 +119,9 @@
 }
 
 .secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #4a5577 !important;
   background: #f4f6fb !important;
   border-radius: 14rpx;
@@ -126,6 +132,9 @@
 }
 
 .ghost-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #8a96a8 !important;
   background: #f4f6fb !important;
   border-radius: 14rpx;
@@ -569,6 +578,7 @@
 .field-label {
   display: block;
   margin-bottom: 10rpx;
+  line-height: 1.35;
   font-size: 25rpx;
   color: #475569;
   font-weight: 700;
@@ -590,18 +600,21 @@
 .field input,
 .reward-input {
   height: 80rpx;
+  line-height: 80rpx;
   padding: 0 20rpx;
 }
 
 .field textarea {
   min-height: 180rpx;
   padding: 18rpx 20rpx;
+  line-height: 1.55;
 }
 
 .counter,
 .hint {
   display: block;
   margin-top: 8rpx;
+  line-height: 1.4;
   font-size: 22rpx;
   color: #8a96a8;
 }
@@ -614,10 +627,12 @@
 
 .deadline-picker-row picker {
   min-width: 0;
+  width: 100%;
 }
 
 .picker-input {
   height: 80rpx;
+  line-height: 80rpx;
   padding: 0 20rpx;
   box-sizing: border-box;
   display: flex;
@@ -631,6 +646,7 @@
 .field-error {
   display: block;
   margin-top: 8rpx;
+  line-height: 1.4;
   font-size: 22rpx;
   color: #dc2626;
 }
@@ -647,6 +663,9 @@
 }
 
 .modal-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 84rpx !important;
   margin: 0 !important;
   line-height: 84rpx !important;

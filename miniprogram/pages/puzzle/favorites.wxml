@@ -4,6 +4,7 @@
   <!-- 错误状态 -->
   <empty-state
     wx:if="{{error && puzzles.length === 0}}"
+    theme="{{theme}}"
     icon="!"
     title="{{error}}"
     description="请检查网络后重试"
@@ -45,6 +46,7 @@
   <!-- 空状态 -->
   <empty-state
     wx:elif="{{!error && puzzles.length === 0}}"
+    theme="{{theme}}"
     icon="☆"
     title="暂无收藏"
     description="浏览谜题库，收藏你喜欢的谜题吧"

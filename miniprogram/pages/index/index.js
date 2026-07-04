@@ -249,14 +249,15 @@ Page({
       const result = await profileService.getPublicCard(user_id);
       if (!result.success) throw new Error(result.error || '加载名片失败');
       const card = normalizePublicCard(result.data || {}, fallback);
-      card.is_self = myId === user_id;
+      const targetId = card.user_id || user_id;
+      card.is_self = myId === targetId;
       if (!card.is_self && myId) {
         try {
           const frResult = await datingService.getFriendRequests();
           if (frResult.success) {
             const data = frResult.data || {};
-            card.is_friend = !!(data.friend_ids || []).includes(user_id);
-            card.request_pending = !!(data.pending_sent_ids || []).includes(user_id);
+            card.is_friend = !!(data.friend_ids || []).includes(targetId);
+            card.request_pending = !!(data.pending_sent_ids || []).includes(targetId);
           }
         } catch (_) { /* ignore */ }
       }
@@ -276,13 +277,34 @@ Page({
       const result = await datingService.sendFriendRequest(user_id);
       if (!result.success) throw new Error(result.error || '发送失败');
 
-      wx.showToast({ title: '好友请求已发送', icon: 'success' });
       // 更新卡片状态
       const targetId = result.data && result.data.to_user_id;
-      const card = { ...this.data.selected_card, user_id: targetId || user_id, request_pending: true };
+      const status = result.data && result.data.status;
+      const card = {
+        ...this.data.selected_card,
+        user_id: targetId || user_id,
+        is_friend: status === 'friend',
+        request_pending: status !== 'friend'
+      };
       this.setData({ selected_card: card });
+      wx.showToast({
+        title: status === 'friend' ? '你们已经是好友了' : '好友请求已发送',
+        icon: 'success'
+      });
     } catch (err) {
-      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+      const message = err.message || '发送失败';
+      const card = { ...this.data.selected_card, user_id };
+
+      if (message.includes('已经是好友')) {
+        card.is_friend = true;
+        card.request_pending = false;
+        this.setData({ selected_card: card });
+      } else if (message.includes('待处理') || message.includes('已发送')) {
+        card.request_pending = true;
+        this.setData({ selected_card: card });
+      }
+
+      wx.showToast({ title: message, icon: 'none' });
     }
   },
 

@@ -462,7 +462,7 @@ async function commission_publishCommission(event) {
 
     if (!officialReward) {
       await addPointLog(user_id, {
-        amount: reward,
+        amount: -reward,
         type: 'freeze',
         point_type: 'frozen',
         business_type: 'commission_freeze',

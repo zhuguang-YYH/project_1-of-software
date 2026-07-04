@@ -62,11 +62,11 @@ class RankingService {
     return { success: false, data: [], error: 'Load ranking failed' };
   }
 
-  async getUserRanking() {
+  async getUserRanking(options = {}) {
     try {
       const result = await callFunction(
         CONFIG.api.ranking.getUserRanking,
-        {},
+        { period: options.period || 'all' },
         { timeout: CONFIG.timeout.ranking }
       );
 

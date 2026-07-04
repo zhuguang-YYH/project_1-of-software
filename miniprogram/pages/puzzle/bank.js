@@ -55,6 +55,9 @@ Page({
 
   onShow() {
     this.loadTheme();
+    if (!this.data.loading) {
+      this.loadPuzzles(true);
+    }
   },
 
   loadTheme() {

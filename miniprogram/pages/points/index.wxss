@@ -184,6 +184,8 @@
 
 .log-card:has(.log-amount.income)::before { background: #16a085; }
 .log-card:has(.log-amount.expense)::before { background: #e74c3c; }
+.log-card.income::before { background: #16a085; }
+.log-card.expense::before { background: #e74c3c; }
 
 .log-left {
   flex: 1;
