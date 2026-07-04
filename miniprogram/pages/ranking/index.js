@@ -137,8 +137,10 @@ Page({
   switchPeriod(e) {
     const period = e.currentTarget.dataset.period;
     if (period === this.data.period) return;
-    this.setData({ period, loading: true });
-    this.initPage();
+    if (rankingService.refreshCache) rankingService.refreshCache();
+    this.setData({ period, loading: true }, () => {
+      this.initPage();
+    });
   },
 
   async onPullDownRefresh() {

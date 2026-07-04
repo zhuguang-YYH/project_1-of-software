@@ -5,21 +5,25 @@ const { storage } = require('../utils/storage.js');
 class RankingService {
   async getTopThree(options = {}) {
     try {
-      const cached = (!options.period || options.period === 'all') && storage.getRankingCache && storage.getRankingCache();
-      if (cached && cached.top_three) {
+      const period = options.period || 'all';
+      const cached = period === 'all' && storage.getRankingCache && storage.getRankingCache();
+      if (cached && cached.period === 'all' && cached.top_three) {
         return { success: true, data: cached.top_three, from_cache: true };
       }
 
       const result = await callFunction(
         CONFIG.api.ranking.getTopThree,
-        { period: options.period || 'all' },
+        { period },
         { timeout: CONFIG.timeout.ranking }
       );
 
       if (result.success) {
-        const next_cache = cached || {};
-        next_cache.top_three = result.data || [];
-        if (storage.setRankingCache) storage.setRankingCache(next_cache);
+        if (period === 'all' && storage.setRankingCache) {
+          const next_cache = cached || {};
+          next_cache.period = 'all';
+          next_cache.top_three = result.data || [];
+          storage.setRankingCache(next_cache);
+        }
         return { success: true, data: result.data || [] };
       }
     } catch (error) {

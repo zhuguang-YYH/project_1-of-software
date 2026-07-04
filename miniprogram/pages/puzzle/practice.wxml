@@ -20,9 +20,9 @@
         <view class="fav-btn tap-feedback {{is_favorited ? 'favorited' : ''}}" bindtap="toggleFavorite">
           <text>{{is_favorited ? '★' : '☆'}}</text>
         </view>
-        <text class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
-          {{puzzle._difficulty_text || '中等'}}
-        </text>
+        <view class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
+          <text>{{puzzle._difficulty_text || '中等'}}</text>
+        </view>
       </view>
     </view>
 

@@ -32,6 +32,10 @@ Component({
     confirmColor: {
       type: String,
       value: '#5b6cff'
+    },
+    theme: {
+      type: String,
+      value: 'blue'
     }
   },
 
@@ -56,7 +60,8 @@ Component({
         content: options.content || this.data.content,
         confirmText: options.confirmText || this.data.confirmText,
         cancelText: options.cancelText || this.data.cancelText,
-        showCancel: options.showCancel !== undefined ? options.showCancel : this.data.showCancel
+        showCancel: options.showCancel !== undefined ? options.showCancel : this.data.showCancel,
+        theme: options.theme || this.data.theme
       });
     },
 

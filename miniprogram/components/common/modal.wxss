@@ -22,7 +22,7 @@
   z-index: 1000;
   width: 85%;
   max-width: 600rpx;
-  background: white;
+  background: #fff;
   border-radius: 20rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.2);
@@ -35,14 +35,14 @@
 
 .modal-title {
   font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
   line-height: 1.4;
+  font-weight: 700;
+  color: #333;
 }
 
 .modal-body {
-  padding: 28rpx 40rpx 36rpx;
   min-height: 80rpx;
+  padding: 28rpx 40rpx 36rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,21 +57,27 @@
 
 .modal-footer {
   display: flex;
+  min-height: 88rpx;
   border-top: 1rpx solid #eee;
 }
 
 .modal-btn {
   flex: 1;
+  height: 88rpx;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  color: #999;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 88rpx;
-  padding: 0;
-  border: none;
-  border-radius: 0;
   font-size: 30rpx;
+  font-weight: 600;
   line-height: 1;
-  background: white;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .modal-btn::after {
@@ -80,10 +86,48 @@
 
 .cancel-btn {
   border-right: 1rpx solid #eee;
-  color: #999;
 }
 
 .confirm-btn {
   color: #5b6cff;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.theme-gold .modal-mask {
+  background-color: rgba(0, 0, 0, 0.68);
+}
+
+.theme-gold .modal-content {
+  background: #151515;
+  border: 1rpx solid rgba(212, 175, 55, 0.24);
+  box-shadow: 0 28rpx 68rpx rgba(0, 0, 0, 0.42);
+}
+
+.theme-gold .modal-header,
+.theme-gold .modal-footer {
+  border-color: rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .modal-title {
+  color: #f4ecd6;
+}
+
+.theme-gold .modal-text {
+  color: rgba(244, 236, 214, 0.78);
+}
+
+.theme-gold .modal-btn {
+  background: #151515;
+}
+
+.theme-gold .cancel-btn {
+  color: rgba(244, 236, 214, 0.76);
+  border-right-color: rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .confirm-btn {
+  color: #17110a !important;
+  border-color: rgba(212, 175, 55, 0.6) !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%);
+  font-weight: 800;
 }
