@@ -2,6 +2,33 @@ const puzzleService = require('../../services/puzzle.js');
 const { applyTheme } = require('../../utils/theme.js');
 const interaction = require('../../utils/interaction.js');
 
+const CATEGORY_CLASS_MAP = {
+  '逻辑推理': 'logic',
+  '密码解密': 'crypto',
+  '字谜': 'riddle',
+  '数学': 'math',
+  '观察力': 'observe',
+  '其他': 'other',
+  '未分类': 'other'
+};
+
+function normalizePuzzleCard(item = {}) {
+  const category = item.category || '未分类';
+  const title = item.title || item.content || '未命名谜题';
+
+  return {
+    ...item,
+    display_title: title,
+    display_category: category,
+    category_class: CATEGORY_CLASS_MAP[category] || 'other',
+    attempt_count: Number(item.attempt_count || 0),
+    correct_rate: Number(item.correct_rate || 0),
+    reward_points: Number(item.reward_points || 0),
+    _difficulty_class: item._difficulty_class || 'normal',
+    _difficulty_text: item._difficulty_text || '中等'
+  };
+}
+
 Page({
   data: {
     puzzles: [],
@@ -85,7 +112,8 @@ Page({
       }
 
       const data = result.data || {};
-      const newList = reset ? (data.list || []) : [...this.data.puzzles, ...(data.list || [])];
+      const incoming = (data.list || []).map(normalizePuzzleCard);
+      const newList = reset ? incoming : [...this.data.puzzles, ...incoming];
 
       this.setData({
         puzzles: newList,
@@ -149,6 +177,43 @@ Page({
 
   goToFavorites() {
     wx.navigateTo({ url: '/pages/puzzle/favorites' });
+  },
+
+  resetFilters() {
+    this.setData({
+      activeCategory: '',
+      activeDifficulty: '',
+      searchKeyword: '',
+      sortBy: 'date',
+      sortOrder: 'desc'
+    }, () => {
+      this.loadPuzzles(true);
+    });
+  },
+
+  async toggleFavorite(e) {
+    const puzzle_id = e.currentTarget.dataset.puzzleId;
+    if (!puzzle_id) return;
+
+    const oldList = this.data.puzzles;
+    const target = oldList.find(item => item.puzzle_id === puzzle_id);
+    const nextFavorited = !(target && target.is_favorited);
+    const nextList = oldList.map(item => (
+      item.puzzle_id === puzzle_id ? { ...item, is_favorited: nextFavorited } : item
+    ));
+    this.setData({ puzzles: nextList });
+
+    try {
+      const result = await puzzleService.toggleFavorite(puzzle_id);
+      if (!result.success) throw new Error(result.error || '收藏操作失败');
+      wx.showToast({
+        title: nextFavorited ? '已收藏' : '已取消收藏',
+        icon: 'none'
+      });
+    } catch (err) {
+      this.setData({ puzzles: oldList });
+      wx.showToast({ title: err.message || '收藏操作失败', icon: 'none' });
+    }
   },
 
   async onPullDownRefresh() {

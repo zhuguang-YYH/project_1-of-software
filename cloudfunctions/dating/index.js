@@ -58,6 +58,10 @@ function buildMessageId() {
 }
 
 // 预设游戏类型
+function safeIdPart(value, max = 28) {
+  return String(value || '').replace(/[^A-Za-z0-9_]/g, '_').slice(0, max);
+}
+
 const GAME_TYPES = ['script_kill', 'board_game', 'puzzle', 'activity', 'other'];
 const GAME_TYPE_LABELS = {
   script_kill: '剧本杀',
@@ -935,6 +939,8 @@ async function dating_sendMessage(event) {
     const match = match_res.data[0];
     if (!match) return fail('匹配关系不存在或已解除');
     if (match.user_id_1 !== user._id && match.user_id_2 !== user._id) return fail('无权发送消息');
+    const expected_to_user_id = match.user_id_1 === user._id ? match.user_id_2 : match.user_id_1;
+    if (to_user_id !== expected_to_user_id) return fail('接收方与好友关系不一致');
 
     let final_content = '';
     let final_game_data = null;
@@ -999,11 +1005,11 @@ async function dating_getMessages(event) {
 
     // 验证匹配归属
     const match_res = await db.collection('dating_matches')
-      .where({ match_id })
+      .where({ match_id, is_active: true })
       .limit(1)
       .get();
     const match = match_res.data[0];
-    if (!match) return fail('匹配关系不存在');
+    if (!match) return fail('匹配关系不存在或已解除');
     if (match.user_id_1 !== user._id && match.user_id_2 !== user._id) return fail('无权查看');
 
     const page = Math.max(1, Number(event.page) || 1);
@@ -1115,40 +1121,44 @@ async function dating_getConversations() {
     // 批量获取每个匹配的最后一条消息（聚合取巧：对每个 match_id 取最新一条）
     const last_msg_map = {};
     try {
-      // 微信云开发不支持聚合，改用逐个查询但用 in 缩小范围
-      const all_msgs_res = await db.collection('friend_messages')
-        .where({ match_id: _.in(match_ids) })
-        .orderBy('created_at', 'desc')
-        .limit(200)
-        .get();
-      // 对每个 match_id 取第一条（最新的）
-      (all_msgs_res.data || []).forEach(msg => {
-        if (!last_msg_map[msg.match_id]) {
-          last_msg_map[msg.match_id] = {
-            message_id: msg.message_id,
-            from_user_id: msg.from_user_id,
-            content_type: msg.content_type,
-            content: msg.content,
-            game_data: msg.game_data || null,
-            created_at: msg.created_at
-          };
-        }
-      });
+      if (match_ids.length > 0) {
+        // 微信云开发不支持聚合，改用逐个查询但用 in 缩小范围
+        const all_msgs_res = await db.collection('friend_messages')
+          .where({ match_id: _.in(match_ids) })
+          .orderBy('created_at', 'desc')
+          .limit(200)
+          .get();
+        // 对每个 match_id 取第一条（最新的）
+        (all_msgs_res.data || []).forEach(msg => {
+          if (!last_msg_map[msg.match_id]) {
+            last_msg_map[msg.match_id] = {
+              message_id: msg.message_id,
+              from_user_id: msg.from_user_id,
+              content_type: msg.content_type,
+              content: msg.content,
+              game_data: msg.game_data || null,
+              created_at: msg.created_at
+            };
+          }
+        });
+      }
     } catch (_) { /* ignore */ }
 
     // 批量获取未读计数 — 逐个 count 不可避免，但总量可控
     const unread_map = {};
     try {
-      const unread_results = await Promise.all(
-        match_ids.map(mid =>
-          db.collection('friend_messages')
-            .where({ match_id: mid, to_user_id: user._id, is_read: false })
-            .count()
-            .then(res => ({ mid, count: res.total || 0 }))
-            .catch(() => ({ mid, count: 0 }))
-        )
-      );
-      unread_results.forEach(r => { unread_map[r.mid] = r.count; });
+      if (match_ids.length > 0) {
+        const unread_results = await Promise.all(
+          match_ids.map(mid =>
+            db.collection('friend_messages')
+              .where({ match_id: mid, to_user_id: user._id, is_read: false })
+              .count()
+              .then(res => ({ mid, count: res.total || 0 }))
+              .catch(() => ({ mid, count: 0 }))
+          )
+        );
+        unread_results.forEach(r => { unread_map[r.mid] = r.count; });
+      }
     } catch (_) { /* ignore */ }
 
     const conversations = [];
@@ -1188,8 +1198,8 @@ async function dating_getConversations() {
 // ========== 好友请求 ==========
 
 function buildRequestId(from_user_id, to_user_id) {
-  const ts = Date.now();
-  return `fr_${from_user_id}_${to_user_id}_${ts}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+  const ids = [safeIdPart(from_user_id), safeIdPart(to_user_id)].sort();
+  return `fr_${ids[0]}_${ids[1]}`.slice(0, 64);
 }
 
 // 发送好友请求
@@ -1205,7 +1215,8 @@ async function dating_sendFriendRequest(event) {
 
     // 检查目标用户是否存在
     try {
-      await db.collection('users').doc(to_user_id).get();
+      const target_res = await db.collection('users').doc(to_user_id).get();
+      if (!target_res.data) return fail('目标用户不存在');
     } catch (_) {
       return fail('目标用户不存在');
     }
@@ -1226,8 +1237,24 @@ async function dating_sendFriendRequest(event) {
     }
     if (already_friend) return fail('你们已经是好友了');
 
-    // 检查是否有待处理请求
-    let has_pending = false;
+    const request_id = buildRequestId(user._id, to_user_id);
+    const message = String(event.message || '').trim().slice(0, 100);
+    const pair_key = request_id.replace(/^fr_/, '');
+
+    // 一对用户只保留一条请求记录：pending 防重复，declined 后允许重新发起。
+    let existing_request = null;
+    try {
+      const existing_res = await db.collection('friend_requests')
+        .where({ request_id })
+        .limit(1)
+        .get();
+      existing_request = existing_res.data[0] || null;
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
+
+    // 兼容旧数据：如果历史请求使用过非稳定 request_id，也不能再生成一条新的 pending。
+    let legacy_pending_request = null;
     try {
       const pending_res = await db.collection('friend_requests')
         .where(_.or([
@@ -1236,23 +1263,45 @@ async function dating_sendFriendRequest(event) {
         ]))
         .limit(1)
         .get();
-      has_pending = pending_res.data.length > 0;
+      legacy_pending_request = pending_res.data[0] || null;
     } catch (error) {
       if (!isCollectionMissing(error)) throw error;
     }
-    if (has_pending) return fail('已有一条待处理的好友请求');
+    if (legacy_pending_request && legacy_pending_request.request_id !== request_id) {
+      return fail('已有一条待处理的好友请求');
+    }
 
-    const request_id = buildRequestId(user._id, to_user_id);
-    const message = String(event.message || '').trim().slice(0, 100);
+    if (existing_request) {
+      if (existing_request.status === 'pending') return fail('已有一条待处理的好友请求');
+      if (existing_request.status === 'accepted') return fail('你们已经是好友了');
+
+      await db.collection('friend_requests').doc(existing_request._id).update({
+        data: {
+          from_user_id: user._id,
+          to_user_id,
+          status: 'pending',
+          message,
+          pair_key,
+          created_at: db.serverDate(),
+          updated_at: db.serverDate(),
+          responded_at: _.remove()
+        }
+      });
+
+      return success({ request_id, status: 'pending' }, '好友请求已重新发送');
+    }
 
     await db.collection('friend_requests').add({
       data: {
+        _id: request_id,
         request_id,
+        pair_key,
         from_user_id: user._id,
         to_user_id,
         status: 'pending',
         message,
-        created_at: db.serverDate()
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
       }
     });
 
@@ -1411,6 +1460,17 @@ async function dating_respondFriendRequest(event) {
 
     const new_status = action === 'accept' ? 'accepted' : 'declined';
 
+    const update_res = await db.collection('friend_requests')
+      .where({ _id: req._id, status: 'pending' })
+      .update({
+        data: {
+          status: new_status,
+          responded_at: db.serverDate(),
+          updated_at: db.serverDate()
+        }
+      });
+    if (!update_res.stats || update_res.stats.updated === 0) return fail('该请求已处理');
+
     // 接受：创建好友关系
     let match_id = null;
     if (action === 'accept') {
@@ -1431,31 +1491,32 @@ async function dating_respondFriendRequest(event) {
           });
         } else {
           const ids = [req.from_user_id, req.to_user_id].sort();
-          match_id = `match_${ids[0]}_${ids[1]}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
-          await db.collection('dating_matches').add({
-            data: {
-              match_id,
-              user_id_1: ids[0],
-              user_id_2: ids[1],
-              matched_at: db.serverDate(),
-              is_active: true,
-              created_at: db.serverDate()
-            }
-          });
+          match_id = buildMatchId(ids[0], ids[1]);
+          try {
+            await db.collection('dating_matches').add({
+              data: {
+                _id: match_id,
+                match_id,
+                user_id_1: ids[0],
+                user_id_2: ids[1],
+                matched_at: db.serverDate(),
+                is_active: true,
+                created_at: db.serverDate(),
+                updated_at: db.serverDate()
+              }
+            });
+          } catch (error) {
+            if (isCollectionMissing(error)) return fail('好友功能暂不可用');
+            await db.collection('dating_matches').doc(match_id).update({
+              data: { is_active: true, matched_at: db.serverDate(), updated_at: db.serverDate() }
+            });
+          }
         }
       } catch (error) {
         if (isCollectionMissing(error)) return fail('好友功能暂不可用');
         throw error;
       }
     }
-
-    // 更新请求状态
-    await db.collection('friend_requests').doc(req._id).update({
-      data: {
-        status: new_status,
-        responded_at: db.serverDate()
-      }
-    });
 
     return success({
       request_id,
