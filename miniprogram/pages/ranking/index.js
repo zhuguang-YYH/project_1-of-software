@@ -202,7 +202,8 @@ Page({
       if (!result.success) throw new Error(result.error || '发送失败');
 
       wx.showToast({ title: '好友请求已发送', icon: 'success' });
-      const card = { ...this.data.selected_card, request_pending: true };
+      const targetId = result.data && result.data.to_user_id;
+      const card = { ...this.data.selected_card, user_id: targetId || user_id, request_pending: true };
       this.setData({ selected_card: card });
     } catch (err) {
       wx.showToast({ title: err.message || '发送失败', icon: 'none' });

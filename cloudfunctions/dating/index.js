@@ -39,6 +39,51 @@ async function getCurrentUser(openid) {
   return res.data[0] || null;
 }
 
+async function resolveUserByIdentifier(identifier) {
+  const value = String(identifier || '').trim();
+  if (!value) return null;
+
+  try {
+    const doc_res = await db.collection('users').doc(value).get();
+    if (doc_res.data) return doc_res.data;
+  } catch (_) { /* try compatible lookups */ }
+
+  const userFields = ['user_id', 'openid'];
+  for (const field of userFields) {
+    try {
+      const res = await db.collection('users')
+        .where({ [field]: value })
+        .limit(1)
+        .get();
+      if (res.data && res.data[0]) return res.data[0];
+    } catch (_) { /* try next user field */ }
+  }
+
+  const cardFields = ['card_id', 'user_id'];
+  for (const field of cardFields) {
+    try {
+      const card_res = await db.collection('profile_cards')
+        .where({ [field]: value })
+        .limit(1)
+        .get();
+      const card = card_res.data && card_res.data[0];
+      if (card && card.user_id && card.user_id !== value) {
+        return resolveUserByIdentifier(card.user_id);
+      }
+    } catch (_) { /* try next card field */ }
+  }
+
+  try {
+    const card_doc_res = await db.collection('profile_cards').doc(value).get();
+    const card = card_doc_res.data;
+    if (card && card.user_id && card.user_id !== value) {
+      return resolveUserByIdentifier(card.user_id);
+    }
+  } catch (_) { /* ignore */ }
+
+  return null;
+}
+
 function buildMatchId(user_id_1, user_id_2) {
   const ids = [user_id_1, user_id_2].sort();
   return `match_${ids[0]}_${ids[1]}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
@@ -1210,17 +1255,14 @@ async function dating_sendFriendRequest(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const to_user_id = event.to_user_id;
-    if (!to_user_id) return fail('请选择要添加的用户');
-    if (to_user_id === user._id) return fail('不能添加自己为好友');
+    const raw_to_user_id = String(event.to_user_id || event.user_id || '').trim();
+    if (!raw_to_user_id) return fail('请选择要添加的用户');
 
-    // 检查目标用户是否存在
-    try {
-      const target_res = await db.collection('users').doc(to_user_id).get();
-      if (!target_res.data) return fail('目标用户不存在');
-    } catch (_) {
-      return fail('目标用户不存在');
-    }
+    const target_user = await resolveUserByIdentifier(raw_to_user_id);
+    if (!target_user || !target_user._id) return fail('目标用户不存在');
+
+    const to_user_id = target_user._id;
+    if (to_user_id === user._id || target_user.openid === wx_context.OPENID) return fail('不能添加自己为好友');
 
     // 检查是否已经是好友
     let already_friend = false;
@@ -1289,7 +1331,7 @@ async function dating_sendFriendRequest(event) {
         }
       });
 
-      return success({ request_id, status: 'pending' }, '好友请求已重新发送');
+      return success({ request_id, to_user_id, status: 'pending' }, '好友请求已重新发送');
     }
 
     await db.collection('friend_requests').add({
@@ -1306,7 +1348,7 @@ async function dating_sendFriendRequest(event) {
       }
     });
 
-    return success({ request_id, status: 'pending' }, '好友请求已发送');
+    return success({ request_id, to_user_id, status: 'pending' }, '好友请求已发送');
   } catch (error) {
     if (isCollectionMissing(error)) return fail('好友功能暂不可用');
     return fail('发送好友请求失败: ' + error.message);
