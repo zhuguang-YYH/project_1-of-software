@@ -32,6 +32,7 @@ const CONFIG = {
       getPuzzleCategories: 'puzzle_getPuzzleCategories',
       toggleFavorite: 'puzzle_toggleFavorite',
       getFavorites: 'puzzle_getFavorites',
+      getFavoriteIds: 'puzzle_getFavoriteIds',
       submitPracticeAnswer: 'puzzle_submitPracticeAnswer'
     },
 

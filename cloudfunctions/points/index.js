@@ -246,11 +246,19 @@ async function points_getHistory(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     const page = numberValue(event.page, 1);
     const page_size = numberValue(event.page_size, 10);
-    const type = event.type || '';
+    const filter = event.type || event.filter || '';
 
     if (!user) return fail('用户不存在');
 
-    const where = type ? { user_id: user._id, type } : { user_id: user._id };
+    // Filter by amount sign: income (positive) or expense (negative)
+    const where = { user_id: user._id };
+    if (filter === 'income') {
+      where.amount = _.gt(0);
+    } else if (filter === 'expense') {
+      where.amount = _.lt(0);
+    }
+    // 'all' or empty: no amount filter — returns everything
+
     const res = await db.collection('points_log')
       .where(where)
       .orderBy('created_at', 'desc')

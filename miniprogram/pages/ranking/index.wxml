@@ -22,27 +22,33 @@
       <view class="podium-wrap" wx:if="{{top_three.length > 0}}">
         <image class="podium-decor" src="/images/rank_card/排行榜背景装饰.svg" mode="aspectFit" />
         <view class="podium">
-          <view class="podium-item rank-2 tap-feedback" wx:if="{{top_three[1]}}" data-user_id="{{top_three[1].user_id}}" bindtap="openDetectiveCard">
+          <view class="podium-item rank-2 {{top_three[1]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[1]}}" data-user_id="{{top_three[1].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-silver" src="/images/rank_card/第二名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-silver" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
-            <text class="podium-name">{{top_three[1].nickname}}</text>
-            <text class="podium-points">{{top_three[1].total_points}} 分</text>
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-silver" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[1].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[1]._placeholder ? '—' : top_three[1].total_points + ' 分'}}</text>
             <view class="podium-base base-silver"><text>2nd</text></view>
           </view>
 
-          <view class="podium-item rank-1 tap-feedback" wx:if="{{top_three[0]}}" data-user_id="{{top_three[0].user_id}}" bindtap="openDetectiveCard">
+          <view class="podium-item rank-1 {{top_three[0]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[0]}}" data-user_id="{{top_three[0].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-gold" src="/images/rank_card/第一名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-gold" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
-            <text class="podium-name">{{top_three[0].nickname}}</text>
-            <text class="podium-points">{{top_three[0].total_points}} 分</text>
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-gold" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[0].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[0]._placeholder ? '—' : top_three[0].total_points + ' 分'}}</text>
             <view class="podium-base base-gold"><text>1st</text></view>
           </view>
 
-          <view class="podium-item rank-3 tap-feedback" wx:if="{{top_three[2]}}" data-user_id="{{top_three[2].user_id}}" bindtap="openDetectiveCard">
+          <view class="podium-item rank-3 {{top_three[2]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[2]}}" data-user_id="{{top_three[2].user_id}}" bindtap="openDetectiveCard">
             <image class="podium-medal medal-bronze" src="/images/rank_card/第三名奖牌.svg" mode="aspectFit" />
-            <image class="podium-avatar avatar-bronze" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
-            <text class="podium-name">{{top_three[2].nickname}}</text>
-            <text class="podium-points">{{top_three[2].total_points}} 分</text>
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-bronze" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[2].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[2]._placeholder ? '—' : top_three[2].total_points + ' 分'}}</text>
             <view class="podium-base base-bronze"><text>3rd</text></view>
           </view>
         </view>

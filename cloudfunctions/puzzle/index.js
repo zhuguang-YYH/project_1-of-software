@@ -937,6 +937,25 @@ async function puzzle_getFavorites(event) {
   }
 }
 
+async function puzzle_getFavoriteIds(event) {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const fav_res = await db.collection('puzzle_favorites')
+      .where({ user_id: user._id })
+      .field({ puzzle_id: true })
+      .get();
+
+    const ids = (fav_res.data || []).map(item => item.puzzle_id);
+    return success({ ids }, '获取成功');
+  } catch (error) {
+    if (isCollectionMissing(error)) return success({ ids: [] });
+    return fail('获取收藏ID失败: ' + error.message);
+  }
+}
+
 async function puzzle_submitPracticeAnswer(event) {
   try {
     const wx_context = cloud.getWXContext();
@@ -1055,6 +1074,7 @@ exports.main = async (event, context) => {
     getPuzzleCategories: puzzle_getPuzzleCategories,
     toggleFavorite: puzzle_toggleFavorite,
     getFavorites: puzzle_getFavorites,
+    getFavoriteIds: puzzle_getFavoriteIds,
     submitPracticeAnswer: puzzle_submitPracticeAnswer
   };
 

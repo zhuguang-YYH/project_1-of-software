@@ -119,11 +119,11 @@
 .podium-decor {
   position: absolute;
   left: 50%;
-  top: 8rpx;
+  top: -16rpx;
   width: 640rpx;
-  height: 300rpx;
+  height: 240rpx;
   transform: translateX(-50%);
-  opacity: 0.55;
+  opacity: 0.35;
   pointer-events: none;
   z-index: 0;
 }
@@ -134,45 +134,53 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 18rpx;
   margin-bottom: 40rpx;
 }
 
 .podium-item {
-  position: relative;
+  flex: 1;
+  width: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14rpx;
   text-align: center;
-  flex: 1;
 }
 
-.rank-1 { order: 2; transform: translateY(-30rpx); }
-.rank-2 { order: 1; }
-.rank-3 { order: 3; }
+.podium-avatar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rank-1 { z-index: 2; }
 
 .podium-medal {
-  width: 72rpx;
-  height: 72rpx;
-  margin-bottom: -34rpx;
+  width: 68rpx;
+  height: 68rpx;
+  margin-bottom: -28rpx;
   z-index: 2;
+  flex-shrink: 0;
   filter: drop-shadow(0 6rpx 10rpx rgba(0, 0, 0, 0.18));
 }
 
 .medal-gold {
-  width: 84rpx;
-  height: 84rpx;
-  margin-bottom: -40rpx;
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: -34rpx;
 }
 
 .podium-avatar {
-  width: 130rpx;
-  height: 130rpx;
+  width: 124rpx;
+  height: 124rpx;
   border-radius: 50%;
   background: #fff;
+  flex-shrink: 0;
+  align-self: center;
+  display: block;
 }
-.avatar-gold { border: 6rpx solid #f5b041; box-shadow: 0 10rpx 28rpx rgba(245, 176, 65, 0.4); width: 150rpx; height: 150rpx; }
+.avatar-gold { border: 6rpx solid #f5b041; box-shadow: 0 10rpx 28rpx rgba(245, 176, 65, 0.4); width: 140rpx; height: 140rpx; }
 .avatar-silver { border: 6rpx solid #c0c8d4; box-shadow: 0 8rpx 20rpx rgba(149, 165, 166, 0.25); }
 .avatar-bronze { border: 6rpx solid #cd853f; box-shadow: 0 8rpx 20rpx rgba(205, 133, 63, 0.25); }
 
@@ -184,6 +192,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-top: 4rpx;
 }
 
 .podium-points {
@@ -193,11 +202,12 @@
   background: #fef3df;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
+  margin-top: 4rpx;
 }
 
 .podium-base {
   width: 100%;
-  margin-top: 6rpx;
+  margin-top: 10rpx;
   border-radius: 14rpx 14rpx 0 0;
   color: #fff;
   font-weight: 800;
@@ -207,9 +217,17 @@
   align-items: center;
   justify-content: center;
 }
-.base-gold { height: 160rpx; background: linear-gradient(180deg, #ffd76b, #f5a623); box-shadow: 0 10rpx 24rpx rgba(245, 166, 35, 0.3); }
-.base-silver { height: 120rpx; background: linear-gradient(180deg, #d8dee9, #95a5a6); }
+.base-gold { height: 170rpx; background: linear-gradient(180deg, #ffd76b, #f5a623); box-shadow: 0 10rpx 24rpx rgba(245, 166, 35, 0.3); }
+.base-silver { height: 130rpx; background: linear-gradient(180deg, #d8dee9, #95a5a6); }
 .base-bronze { height: 90rpx; background: linear-gradient(180deg, #d4977a, #a0522d); }
+
+.podium-placeholder {
+  opacity: 0.5;
+}
+
+.podium-placeholder .podium-avatar {
+  filter: grayscale(1);
+}
 
 .podium-tip {
   text-align: center;
@@ -299,4 +317,34 @@
 .empty-text {
   font-size: 28rpx;
   color: #8a96a8;
+}
+
+/* ===== 黑金主题适配 ===== */
+.theme-gold .podium-name {
+  color: #f4ecd6;
+}
+
+.theme-gold .podium-tip {
+  color: rgba(244, 236, 214, 0.64);
+}
+
+.theme-gold .period-item {
+  color: rgba(244, 236, 214, 0.68);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.theme-gold .period-item.active {
+  color: #d4af37;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.20), rgba(212, 175, 55, 0.08));
+  border-color: rgba(212, 175, 55, 0.48);
+}
+
+.theme-gold .error-text {
+  color: #ff6b6b;
+}
+
+.theme-gold .retry-btn {
+  background: linear-gradient(135deg, #f8e7a8, #d4af37) !important;
+  color: #17110a !important;
+  box-shadow: 0 8rpx 20rpx rgba(212, 175, 55, 0.28);
 }

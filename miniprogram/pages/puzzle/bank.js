@@ -28,10 +28,27 @@ Page({
 
   onShow() {
     this.loadTheme();
+    this.refreshFavoriteStatus();
   },
 
   loadTheme() {
     applyTheme(this);
+  },
+
+  async refreshFavoriteStatus() {
+    const { puzzles } = this.data;
+    if (!puzzles || puzzles.length === 0) return;
+    try {
+      const result = await puzzleService.getFavoriteIds();
+      if (result.success && result.data && result.data.ids) {
+        const favSet = new Set(result.data.ids);
+        const updated = puzzles.map(p => ({
+          ...p,
+          is_favorited: favSet.has(p.puzzle_id)
+        }));
+        this.setData({ puzzles: updated });
+      }
+    } catch (_) { /* ignore */ }
   },
 
   async initPage() {

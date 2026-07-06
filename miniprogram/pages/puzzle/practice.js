@@ -63,9 +63,9 @@ Page({
       // 检查收藏状态
       let is_favorited = false;
       try {
-        const favResult = await puzzleService.getFavorites({ page: 1, page_size: 100 });
-        if (favResult.success && favResult.data && favResult.data.list) {
-          is_favorited = favResult.data.list.some(f => f.puzzle_id === this.data.puzzle_id);
+        const favResult = await puzzleService.getFavoriteIds();
+        if (favResult.success && favResult.data && favResult.data.ids) {
+          is_favorited = favResult.data.ids.includes(this.data.puzzle_id);
         }
       } catch (_) { /* ignore */ }
 

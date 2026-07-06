@@ -196,6 +196,17 @@ class PuzzleService {
     }
   }
 
+  async getFavoriteIds() {
+    try {
+      const result = await callFunction(CONFIG.api.puzzle.getFavoriteIds, {});
+      if (!result.success) return { success: false, error: result.message || '获取收藏ID失败' };
+      return { success: true, data: result.data };
+    } catch (error) {
+      console.error('Failed to get favorite ids:', error);
+      return { success: false, error: error.message || '获取收藏ID失败' };
+    }
+  }
+
   async submitPracticeAnswer(puzzle_id, option_id) {
     if (!puzzle_id || !option_id) return { success: false, error: '答题参数不完整' };
     try {

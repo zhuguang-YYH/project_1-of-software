@@ -87,26 +87,43 @@ async function writeRankingSnapshots(list) {
   }));
 }
 
+async function aggregatePeriodPoints(days) {
+  const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+  const BATCH = 100;
+  const MAX_BATCHES = 100; // safety ceiling: 10,000 entries max
+  let all_logs = [];
+  let offset = 0;
+
+  while (all_logs.length < BATCH * MAX_BATCHES) {
+    const res = await db.collection('points_log')
+      .where({ created_at: _.gte(since) })
+      .orderBy('created_at', 'desc')
+      .skip(offset)
+      .limit(BATCH)
+      .get();
+    if (!res.data || res.data.length === 0) break;
+    all_logs = all_logs.concat(res.data);
+    if (res.data.length < BATCH) break;
+    offset += BATCH;
+  }
+
+  const user_points = {};
+  all_logs.forEach(log => {
+    const uid = log.user_id || '';
+    if (!uid) return;
+    user_points[uid] = (user_points[uid] || 0) + (Number(log.points || 0) || 0);
+  });
+
+  return user_points;
+}
+
 async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
   // For weekly/monthly, calculate points from points_log within the period
   if (period === 'weekly' || period === 'monthly') {
     const days = period === 'weekly' ? 7 : 30;
-    const since = new Date(Date.now() - days * 24 * 3600 * 1000);
 
     try {
-      // Aggregate points from points_log within the period
-      const res = await db.collection('points_log')
-        .where({ created_at: _.gte(since) })
-        .limit(500)
-        .get();
-
-      // Sum points per user
-      const user_points = {};
-      (res.data || []).forEach(log => {
-        const uid = log.user_id || '';
-        if (!uid) return;
-        user_points[uid] = (user_points[uid] || 0) + (Number(log.points || 0) || 0);
-      });
+      const user_points = await aggregatePeriodPoints(days);
 
       // Convert to sorted array
       let ranked = Object.entries(user_points)
@@ -193,23 +210,47 @@ async function ranking_getFullRanking(event) {
   }
 }
 
-async function ranking_getUserRanking() {
+async function ranking_getUserRanking(event) {
   try {
     const wx_context = cloud.getWXContext();
+    const period = String(event.period || 'all').trim();
+
     const user_res = await db.collection('users')
       .where({ openid: wx_context.OPENID })
       .limit(1)
       .get();
 
     if (user_res.data.length === 0) return fail('user not found', 'USER_NOT_FOUND');
+    const current_user = user_res.data[0];
 
-    const user = user_res.data[0];
-    const score = toNumber(user.total_points);
+    // For weekly/monthly, calculate rank from points_log in that period
+    if (period === 'weekly' || period === 'monthly') {
+      const days = period === 'weekly' ? 7 : 30;
+      try {
+        const user_points = await aggregatePeriodPoints(days);
+        const my_score = user_points[current_user._id] || 0;
+
+        let rank_no = 1;
+        for (const pts of Object.values(user_points)) {
+          if (pts > my_score) rank_no++;
+        }
+
+        return ok(normalizeRankUser({ ...current_user, total_points: my_score }, rank_no));
+      } catch (error) {
+        if (isCollectionMissing(error)) {
+          return ok(normalizeRankUser({ ...current_user, total_points: 0 }, 1));
+        }
+        throw error;
+      }
+    }
+
+    // All-time ranking (existing logic)
+    const score = toNumber(current_user.total_points);
     const rank_res = await db.collection('users')
       .where({ total_points: _.gt(score) })
       .count();
 
-    return ok(normalizeRankUser(user, rank_res.total + 1));
+    return ok(normalizeRankUser(current_user, rank_res.total + 1));
   } catch (error) {
     return fail('get user ranking failed: ' + error.message);
   }

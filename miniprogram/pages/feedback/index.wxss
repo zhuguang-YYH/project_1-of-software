@@ -243,11 +243,14 @@
 
 .status {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
   color: #9a3412;
   background: #ffedd5;
   font-size: 22rpx;
+  line-height: 1.4;
 }
 
 .status.resolved {
@@ -293,11 +296,15 @@
 }
 
 .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10rpx 22rpx;
   border-radius: 999rpx;
   background: #f4f6fb;
   color: #8a96a8;
   font-size: 23rpx;
+  line-height: 1.4;
   transition: all 0.2s;
 }
 

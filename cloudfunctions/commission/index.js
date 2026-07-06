@@ -9,7 +9,7 @@ const _ = db.command;
 const COMMISSION_ACCEPTED_TMPL = process.env.COMMISSION_ACCEPTED_TMPL || '';
 const COMMISSION_REWARD_TMPL = process.env.COMMISSION_REWARD_TMPL || '';
 
-function ok(data = null, message = '鎿嶄綔鎴愬姛') {
+function ok(data = null, message = '操作成功') {
   return { code: 0, data, message };
 }
 
@@ -267,7 +267,7 @@ async function commission_getCommissions(event) {
     const countRes = await db.collection('commissions').where(where).count();
     const list = await Promise.all((res.data || []).map(item => getCommissionWithMeta(item, currentUser)));
 
-    return ok({ list, total: countRes.total, page, page_size }, '鑾峰彇鎴愬姛');
+    return ok({ list, total: countRes.total, page, page_size }, '获取成功');
   } catch (error) {
     if (isCollectionMissing(error)) return ok({ list: [], total: 0, page: 1, page_size: 10 }, '鑾峰彇鎴愬姛');
     return fail('鑾峰彇濮旀墭澶辫触: ' + error.message);
@@ -462,16 +462,16 @@ async function commission_publishCommission(event) {
 
     if (!officialReward) {
       await addPointLog(user_id, {
-        amount: reward,
+        amount: -reward,
         type: 'freeze',
         point_type: 'frozen',
         business_type: 'commission_freeze',
         related_id: commission_doc_id,
-        reason: `鍙戝竷濮旀墭鍐荤粨绉垎 - ${title}`
+        reason: `发布委托冻结积分 - ${title}`
       });
     }
 
-    return ok({ commission_id: commission_doc_id }, '鍙戝竷鎴愬姛');
+    return ok({ commission_id: commission_doc_id }, '发布成功');
   } catch (error) {
     // 鍥炴粴鍐荤粨锛堥潪瀹樻柟濮旀墭涓旂‘宸插喕缁擄級
     if (points_frozen && !officialReward && user_id && reward > 0) {
@@ -753,7 +753,7 @@ async function commission_allocateRewards(event) {
       point_type: 'available',
       business_type: officialReward ? 'official_commission_reward' : 'commission_reward',
       related_id: realCommissionId,
-      reason: `濮旀墭濂栧姳 - ${commission.title || ''}`
+      reason: `委托奖励 - ${commission.title || ''}`
     });
 
     if (receiver.openid) {

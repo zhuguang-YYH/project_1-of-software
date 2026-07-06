@@ -84,7 +84,12 @@ Page({
     try {
       const result = await rankingService.getTopThree({ period: this.data.period });
       const list = Array.isArray(result.data) ? result.data : [];
-      this.setData({ top_three: list.slice(0, 3).map(normalizeRankUser) });
+      const ranked = list.slice(0, 3).map(normalizeRankUser);
+      // Always pad to 3 positions so the podium layout is complete
+      while (ranked.length < 3) {
+        ranked.push({ user_id: '', rank_no: ranked.length + 1, nickname: '虚位以待', avatar_url: '', total_points: 0, _placeholder: true });
+      }
+      this.setData({ top_three: ranked });
     } catch (err) {
       console.error('Load top three failed:', err);
       this.setData({ top_three: [] });
@@ -114,7 +119,7 @@ Page({
     }
 
     try {
-      const result = await rankingService.getUserRanking();
+      const result = await rankingService.getUserRanking(this.data.period);
       const user_ranking = normalizeRankUser(result.data || {}, 0);
       this.setData({
         user_ranking,
