@@ -78,7 +78,7 @@
 }
 
 .message-row.from-me {
-  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
 .msg-avatar {
@@ -95,6 +95,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.my-avatar-img {
+  display: block;
 }
 
 .my-avatar-text {
@@ -485,4 +489,191 @@
 
 .invite-send-btn[disabled] {
   opacity: 0.6;
+}
+
+/* 黑金主题 */
+.theme-gold {
+  background: radial-gradient(circle at 70% 12%, rgba(212, 175, 55, 0.2), transparent 34%),
+    linear-gradient(180deg, #080807 0%, #11100d 56%, #070707 100%);
+}
+
+.theme-gold .loading-state {
+  color: #9d9277;
+}
+
+.theme-gold .loading-spinner {
+  border-color: rgba(212, 175, 55, 0.16);
+  border-top-color: #d4af37;
+}
+
+.theme-gold .message-list {
+  background: transparent;
+}
+
+.theme-gold .load-more-hint text,
+.theme-gold .message-meta {
+  color: #8f8468;
+}
+
+.theme-gold .msg-avatar {
+  background: #17140f;
+  border: 2rpx solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.35);
+}
+
+.theme-gold .my-avatar {
+  background: linear-gradient(135deg, #d4af37, #7d6119);
+}
+
+.theme-gold .my-avatar-text {
+  color: #0d0b08;
+}
+
+.theme-gold .from-friend .text-bubble {
+  color: #efe7cf;
+  background: #1b1915;
+  border: 1rpx solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+}
+
+.theme-gold .from-me .text-bubble {
+  color: #15120b;
+  background: linear-gradient(135deg, #dfbd4b, #b78a1f);
+  box-shadow: 0 8rpx 22rpx rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .game-invite-bubble {
+  background: #1b1915 !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.36);
+}
+
+.theme-gold .gi-label {
+  color: #15120b;
+  background: #d4af37;
+}
+
+.theme-gold .gi-game-name {
+  color: #f2df9b;
+}
+
+.theme-gold .gi-message {
+  color: #c7b98d;
+}
+
+.theme-gold .gi-btn.accept {
+  background: linear-gradient(135deg, #d4af37, #a57b19);
+  color: #11100d;
+}
+
+.theme-gold .gi-btn.decline {
+  background: #2a261d;
+  color: #a99b76;
+}
+
+.theme-gold .gi-responded-text,
+.theme-gold .meta-status {
+  color: #a99b76;
+}
+
+.theme-gold .meta-status.failed {
+  color: #ff8b7d;
+}
+
+.theme-gold .composer {
+  background: rgba(17, 16, 13, 0.98);
+  border-top-color: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.28);
+}
+
+.theme-gold .composer-plus {
+  color: #d4af37;
+  background: #201c13;
+  border: 1rpx solid rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .composer-plus.active {
+  background: rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .message-input {
+  background: #1b1915;
+  color: #f4ead0;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .input-placeholder,
+.theme-gold .invite-placeholder {
+  color: #766d56;
+}
+
+.theme-gold .send-btn {
+  color: #11100d;
+  background: linear-gradient(135deg, #dfbd4b, #b78a1f);
+  box-shadow: 0 8rpx 18rpx rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .send-btn[disabled] {
+  color: #11100d !important;
+  background: #8a7330 !important;
+  opacity: 0.48;
+}
+
+.theme-gold .invite-overlay {
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.theme-gold .invite-panel {
+  background: #11100d;
+  border: 1rpx solid rgba(212, 175, 55, 0.2);
+  border-bottom: none;
+}
+
+.theme-gold .invite-panel-header {
+  background: #11100d;
+}
+
+.theme-gold .invite-panel-title {
+  color: #f2df9b;
+}
+
+.theme-gold .invite-panel-close {
+  background: #201c13;
+  color: #d4af37;
+}
+
+.theme-gold .invite-section-label {
+  color: #d2c394;
+}
+
+.theme-gold .game-type-item {
+  background: #1b1915;
+  border-color: rgba(212, 175, 55, 0.12);
+}
+
+.theme-gold .game-type-item.selected {
+  background: rgba(212, 175, 55, 0.16);
+  border-color: #d4af37;
+  box-shadow: 0 6rpx 18rpx rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .game-type-label {
+  color: #b8aa83;
+}
+
+.theme-gold .game-type-item.selected .game-type-label {
+  color: #f2df9b;
+}
+
+.theme-gold .invite-input,
+.theme-gold .invite-textarea {
+  background: #1b1915;
+  color: #f4ead0;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+}
+
+.theme-gold .invite-send-btn {
+  color: #11100d;
+  background: linear-gradient(135deg, #dfbd4b, #b78a1f);
+  box-shadow: 0 10rpx 24rpx rgba(212, 175, 55, 0.24);
 }

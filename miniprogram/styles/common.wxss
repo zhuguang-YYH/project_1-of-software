@@ -492,6 +492,8 @@ page {
 .icon-circle.is-purple { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 4rpx 12rpx rgba(124, 58, 237, 0.25); }
 .icon-circle.is-cyan { background: linear-gradient(135deg, #22d3ee, #0891b2); box-shadow: 0 4rpx 12rpx rgba(8, 145, 178, 0.25); }
 .icon-circle.is-orange { background: linear-gradient(135deg, #fb923c, #ea580c); box-shadow: 0 4rpx 12rpx rgba(234, 88, 12, 0.25); }
+.icon-circle.is-indigo { background: linear-gradient(135deg, #818cf8, #4f46e5); box-shadow: 0 4rpx 12rpx rgba(79, 70, 229, 0.25); }
+.icon-circle.is-teal { background: linear-gradient(135deg, #2dd4bf, #0f766e); box-shadow: 0 4rpx 12rpx rgba(15, 118, 110, 0.25); }
 .icon-circle.is-sm { width: 56rpx; height: 56rpx; font-size: 24rpx; }
 .icon-circle.is-lg { width: 96rpx; height: 96rpx; font-size: 42rpx; }
 

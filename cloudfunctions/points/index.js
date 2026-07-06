@@ -35,8 +35,43 @@ function readPoints(user = {}, account = {}) {
   };
 }
 
+const EXPENSE_BUSINESS_TYPES = [
+  'expense',
+  'freeze',
+  'commission_freeze',
+  'exchange_freeze',
+  'exchange_complete',
+  'exchange_redeem',
+  'borrow_penalty'
+];
+
+const INCOME_BUSINESS_TYPES = [
+  'income',
+  'unfreeze',
+  'commission_reward',
+  'official_commission_reward',
+  'daily_puzzle',
+  'daily_puzzle_streak',
+  'exchange_cancel',
+  'admin_adjust'
+];
+
+function readLogAmount(item = {}) {
+  const raw = item.change_amount !== undefined
+    ? item.change_amount
+    : item.amount !== undefined
+      ? item.amount
+      : item.points;
+  let amount = numberValue(raw, 0);
+  const kind = String(item.business_type || item.type || '').trim();
+
+  if (EXPENSE_BUSINESS_TYPES.includes(kind) && amount > 0) amount = -amount;
+  if (INCOME_BUSINESS_TYPES.includes(kind) && kind !== 'admin_adjust' && amount < 0) amount = Math.abs(amount);
+  return amount;
+}
+
 function normalizeLog(item = {}) {
-  const amount = numberValue(item.change_amount !== undefined ? item.change_amount : item.amount, 0);
+  const amount = readLogAmount(item);
   const type = item.type || (amount < 0 ? 'expense' : 'income');
 
   return {
@@ -44,7 +79,7 @@ function normalizeLog(item = {}) {
     user_id: item.user_id || '',
     amount,
     change_amount: amount,
-    type,
+    type: amount < 0 ? 'expense' : type,
     point_type: item.point_type || 'available',
     business_type: item.business_type || '',
     related_id: item.related_id || '',
@@ -250,29 +285,27 @@ async function points_getHistory(event) {
 
     if (!user) return fail('用户不存在');
 
-    // Filter by amount sign: income (positive) or expense (negative)
     const where = { user_id: user._id };
-    if (filter === 'income') {
-      where.amount = _.gt(0);
-    } else if (filter === 'expense') {
-      where.amount = _.lt(0);
-    }
-    // 'all' or empty: no amount filter — returns everything
-
     const res = await db.collection('points_log')
       .where(where)
       .orderBy('created_at', 'desc')
-      .skip((page - 1) * page_size)
-      .limit(page_size)
+      .limit(500)
       .get();
-    const count_res = await db.collection('points_log').where(where).count();
+    const normalized = (res.data || []).map(normalizeLog);
+    const filtered = type === 'income'
+      ? normalized.filter(item => item.amount > 0)
+      : type === 'expense'
+        ? normalized.filter(item => item.amount < 0)
+        : normalized;
+    const offset = (page - 1) * page_size;
+    const list = filtered.slice(offset, offset + page_size);
 
     return ok({
-      list: (res.data || []).map(normalizeLog),
-      total: count_res.total,
+      list,
+      total: filtered.length,
       page,
       page_size,
-      has_more: page * page_size < count_res.total
+      has_more: page * page_size < filtered.length
     }, '获取成功');
   } catch (error) {
     if (isCollectionMissing(error)) {
@@ -382,7 +415,7 @@ async function points_getAnalysis() {
 
     for (const item of res.data || []) {
       const key = item.business_type || item.type || 'other';
-      const amount = numberValue(item.change_amount || item.amount, 0);
+      const amount = readLogAmount(item);
       if (!distribution[key]) {
         distribution[key] = { business_type: key, income: 0, expense: 0, count: 0 };
       }

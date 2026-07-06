@@ -304,6 +304,14 @@ Page({
     wx.navigateTo({ url: '/pages/commission/index' });
   },
 
+  goPuzzleBank() {
+    wx.navigateTo({ url: '/pages/puzzle/bank' });
+  },
+
+  goFriends() {
+    wx.navigateTo({ url: '/pages/dating/matches' });
+  },
+
   goNotifications() {
     wx.navigateTo({ url: '/pages/notifications/index' });
   },

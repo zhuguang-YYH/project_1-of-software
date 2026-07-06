@@ -6,7 +6,7 @@ const db = cloud.database();
 const _ = db.command;
 
 // Configure this with the template ID created in the WeChat public platform.
-const BORROW_STATUS_CHANGE_TMPL = process.env.BORROW_STATUS_CHANGE_TMPL || '';
+const BORROW_STATUS_CHANGE_TMPL = process.env.BORROW_STATUS_CHANGE_TMPL || 'LFk_O5Rv1K4u68Xv7YcsNnKks5OH-ICd1HZ10vrYMzc';
 
 const DEFAULT_SYSTEM_SETTINGS = {
   puzzle_publish_time: '09:00',
@@ -900,8 +900,8 @@ async function admin_updateBorrowStatus(event, admin_user) {
       await sendSubscribeMessage(borrower.openid, BORROW_STATUS_CHANGE_TMPL, {
         thing1: { value: asThing(application.item_name || '借阅物资', 20) },
         phrase2: { value: status === 'borrowed' ? '已借出' : '已归还' },
-        time3: { value: nowCstText() },
-        thing4: { value: asThing(status === 'borrowed' ? '请按约定时间归还' : '借阅流程已完成', 20) }
+        time4: { value: nowCstText() },
+        thing8: { value: asThing(status === 'borrowed' ? '请按约定时间归还' : '借阅流程已完成', 20) }
       }, 'pages/borrow/index');
     }
   }

@@ -23,27 +23,67 @@ function typeText(type) {
   return ({
     income: '收入',
     expense: '支出',
-    freeze: '冻结',
-    unfreeze: '解冻',
-    commission_freeze: '委托冻结',
+    freeze: '积分冻结',
+    unfreeze: '积分解冻',
+    commission_freeze: '发布委托',
     commission_reward: '委托奖励',
+    official_commission_reward: '委托奖励',
     daily_puzzle: '每日谜题',
-    exchange_complete: '兑换完成',
+    daily_puzzle_streak: '连续答题奖励',
+    exchange_freeze: '兑换冻结',
+    exchange_complete: '积分兑换',
+    exchange_redeem: '积分兑换',
     exchange_cancel: '兑换取消',
-    admin_adjust: '后台调整'
+    admin_adjust: '后台调整',
+    checkin: '签到奖励'
   })[type] || type || '变动';
 }
 
+const EXPENSE_TYPES = [
+  'expense',
+  'freeze',
+  'commission_freeze',
+  'exchange_freeze',
+  'exchange_complete',
+  'exchange_redeem',
+  'borrow_penalty'
+];
+
+const INCOME_TYPES = [
+  'income',
+  'unfreeze',
+  'commission_reward',
+  'official_commission_reward',
+  'daily_puzzle',
+  'daily_puzzle_streak',
+  'exchange_cancel',
+  'checkin'
+];
+
+function readAmount(item = {}) {
+  const raw = item.change_amount !== undefined
+    ? item.change_amount
+    : item.amount !== undefined
+      ? item.amount
+      : item.points;
+  let amount = Number(raw || 0);
+  const type = item.business_type || item.type || '';
+  if (EXPENSE_TYPES.includes(type) && amount > 0) amount = -amount;
+  if (INCOME_TYPES.includes(type) && amount < 0) amount = Math.abs(amount);
+  return amount;
+}
+
 function normalizeLog(item) {
-  const amount = Number(item.change_amount !== undefined ? item.change_amount : item.amount || 0);
+  const amount = readAmount(item);
+  const type = item.business_type || item.type;
   return {
     ...item,
     log_id: item.log_id || item._id || '',
     amount,
     display_amount: amount > 0 ? `+${amount}` : String(amount),
     is_income: amount > 0,
-    type_text: typeText(item.business_type || item.type),
-    reason: item.reason || '积分变动',
+    type_text: typeText(type),
+    reason: item.reason || item.description || typeText(type),
     created_text: formatTime(item.created_at)
   };
 }

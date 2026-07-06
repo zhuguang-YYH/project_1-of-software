@@ -25,7 +25,7 @@ Component({
 
     onAddFriend() {
       const card = this.data.card || {};
-      this.triggerEvent('addfriend', { user_id: card.user_id });
+      this.triggerEvent('addfriend', { user_id: card.user_id || card.card_id || card._id || '' });
     },
 
     noop() {}

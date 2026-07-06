@@ -1,11 +1,9 @@
-/* pages/puzzle/bank/index.wxss */
 .container {
   min-height: 100vh;
   padding: 20rpx 24rpx 80rpx;
-  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 58%, #fff6e4 100%);
 }
 
-/* 搜索栏 */
 .search-bar {
   margin-bottom: 20rpx;
 }
@@ -13,65 +11,76 @@
 .search-input-wrap {
   display: flex;
   align-items: center;
-  background: #fff;
+  min-height: 72rpx;
+  background: #ffffff;
+  border: 2rpx solid rgba(91, 108, 255, 0.12);
   border-radius: 16rpx;
-  padding: 16rpx 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
+  padding: 0 24rpx;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.08);
 }
 
 .search-icon {
-  font-size: 32rpx;
-  margin-right: 16rpx;
+  width: 42rpx;
+  height: 42rpx;
+  margin-right: 14rpx;
+  border-radius: 50%;
+  background: #eef0ff;
+  color: #3a4cd1;
+  font-size: 22rpx;
+  line-height: 42rpx;
+  text-align: center;
+  font-weight: 700;
 }
 
 .search-input {
   flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  line-height: 72rpx;
   font-size: 28rpx;
   color: #1a1f3a;
-  height: 56rpx;
-  line-height: 56rpx;
 }
 
 .search-placeholder {
   color: #9aa3b8;
-  font-size: 26rpx;
 }
 
-/* 分类筛选 */
 .filter-bar {
   white-space: nowrap;
   margin-bottom: 16rpx;
-  padding: 4rpx 0;
+  padding: 2rpx 0 6rpx;
 }
 
-.filter-chip {
+.filter-chip,
+.diff-chip,
+.sort-chip {
   display: inline-flex;
   align-items: center;
-  padding: 12rpx 28rpx;
-  margin-right: 16rpx;
+  justify-content: center;
+  min-height: 56rpx;
+  padding: 0 26rpx;
+  margin-right: 14rpx;
   border-radius: 999rpx;
   font-size: 24rpx;
   color: #4a5577;
-  background: #fff;
+  background: #ffffff;
   border: 2rpx solid #e2e6f3;
-  transition: all 0.2s;
   white-space: nowrap;
 }
 
 .filter-chip.active {
+  color: #ffffff;
   background: linear-gradient(135deg, #5b6cff, #3a4cd1);
-  color: #fff;
   border-color: transparent;
-  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.3);
+  box-shadow: 0 6rpx 14rpx rgba(91, 108, 255, 0.26);
 }
 
-/* 工具栏 */
 .toolbar {
-  background: #fff;
+  background: #ffffff;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(91, 108, 255, 0.06);
+  margin-bottom: 18rpx;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
 }
 
 .difficulty-row,
@@ -88,36 +97,35 @@
 
 .diff-chip,
 .sort-chip {
-  padding: 10rpx 22rpx;
-  border-radius: 999rpx;
-  font-size: 23rpx;
-  color: #4a5577;
+  margin-right: 0;
   background: #f4f6fb;
-  border: 2rpx solid transparent;
-  transition: all 0.2s;
+  border-color: transparent;
 }
 
 .diff-chip.active,
 .sort-chip.active {
-  background: linear-gradient(135deg, #eef0ff, #fef3df);
-  color: #5b6cff;
-  border-color: #5b6cff;
-  font-weight: 600;
+  color: #3a4cd1;
+  background: #eef0ff;
+  border-color: #6f7dff;
+  font-weight: 700;
 }
 
-/* 收藏入口 */
 .favorites-entry {
   display: flex;
   align-items: center;
-  padding: 22rpx 24rpx;
-  background: linear-gradient(135deg, #fef3df, #ffd76b);
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
   gap: 14rpx;
+  min-height: 84rpx;
+  padding: 0 24rpx;
+  margin-bottom: 20rpx;
+  background: linear-gradient(135deg, #fff4cf 0%, #ffd76b 100%);
+  border-radius: 16rpx;
+  color: #7a4700;
+  box-shadow: 0 6rpx 16rpx rgba(146, 88, 13, 0.16);
 }
 
-.fav-icon {
-  font-size: 36rpx;
+.fav-icon,
+.fav-arrow {
+  font-size: 34rpx;
   color: #92580d;
 }
 
@@ -125,15 +133,9 @@
   flex: 1;
   font-size: 28rpx;
   color: #92580d;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.fav-arrow {
-  font-size: 36rpx;
-  color: #92580d;
-}
-
-/* 谜题网格 */
 .puzzle-grid {
   display: flex;
   flex-wrap: wrap;
@@ -142,71 +144,84 @@
 
 .puzzle-card {
   width: calc(50% - 8rpx);
-  background: #fff;
+  min-height: 300rpx;
+  padding: 22rpx 20rpx;
   border-radius: 16rpx;
-  padding: 24rpx 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
-  transition: all 0.2s;
+  background: #ffffff;
+  border: 2rpx solid rgba(91, 108, 255, 0.08);
+  box-shadow: 0 6rpx 18rpx rgba(30, 36, 75, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  position: relative;
+  gap: 14rpx;
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: 12rpx;
+  min-height: 46rpx;
 }
 
 .card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8rpx;
+  min-width: 0;
 }
 
-.card-category {
-  font-size: 20rpx;
+.card-category,
+.card-difficulty {
+  max-width: 128rpx;
   padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  font-weight: 600;
-  letter-spacing: 0.5rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  line-height: 1.4;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-logic { background: #e8eaf6; color: #3a4cd1; }
-.category-crypto { background: #fce4ec; color: #c62828; }
-.category-riddle { background: #f3e5f5; color: #7b1fa2; }
+.category-crypto { background: #fce4ec; color: #a91919; }
+.category-riddle { background: #f3e5f5; color: #6d1b8d; }
 .category-math { background: #e0f2f1; color: #00695c; }
-.category-observe { background: #fff3e0; color: #e65100; }
-.category-other { background: #f5f5f5; color: #616161; }
+.category-observe { background: #fff3e0; color: #a84500; }
+.category-other { background: #f1f3f7; color: #4a5577; }
 
-.card-difficulty {
-  font-size: 20rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  font-weight: 600;
-}
-
-.difficulty-easy { background: rgba(52, 211, 153, 0.15); color: #16a085; }
+.difficulty-easy { background: rgba(52, 211, 153, 0.16); color: #087a5b; }
 .difficulty-normal,
-.difficulty-medium { background: rgba(245, 176, 65, 0.15); color: #92580d; }
-.difficulty-hard { background: rgba(231, 76, 60, 0.15); color: #c0392b; }
-.difficulty-extreme { background: rgba(168, 85, 247, 0.2); color: #7b1fa2; }
+.difficulty-medium { background: rgba(245, 176, 65, 0.18); color: #7a4700; }
+.difficulty-hard { background: rgba(231, 76, 60, 0.16); color: #a42a20; }
+.difficulty-extreme { background: rgba(168, 85, 247, 0.18); color: #6920a0; }
 
 .card-favorite {
-  font-size: 32rpx;
+  flex-shrink: 0;
+  width: 42rpx;
+  height: 42rpx;
   color: #c5cee0;
+  font-size: 32rpx;
+  line-height: 42rpx;
+  text-align: center;
 }
 
 .card-favorite.favorited {
-  color: #f5b041;
+  color: #d08b00;
+}
+
+.card-divider {
+  width: 100%;
+  height: 2rpx;
+  background: #edf0f7;
 }
 
 .card-title {
+  min-height: 76rpx;
   font-size: 26rpx;
-  font-weight: 700;
-  color: #1a1f3a;
-  line-height: 1.5;
+  font-weight: 800;
+  color: #1a1f3a !important;
+  line-height: 1.46;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -220,31 +235,42 @@
 }
 
 .meta-stats {
-  font-size: 20rpx;
-  color: #9aa3b8;
+  font-size: 21rpx;
+  color: #7b849a;
+  line-height: 1.4;
 }
 
 .card-reward {
   display: flex;
   align-items: center;
-  gap: 6rpx;
-  background: linear-gradient(135deg, #fef3df, #fff8e1);
-  padding: 8rpx 14rpx;
+  gap: 8rpx;
+  min-height: 48rpx;
+  margin-top: auto;
+  padding: 0 14rpx;
   border-radius: 8rpx;
+  background: #fff4d8;
 }
 
 .reward-icon {
-  font-size: 22rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: #f5b041;
+  color: #4b2b00;
+  font-size: 18rpx;
+  line-height: 28rpx;
+  text-align: center;
+  font-weight: 800;
 }
 
 .reward-text {
-  font-size: 20rpx;
-  color: #92580d;
-  font-weight: 600;
+  font-size: 21rpx;
+  color: #7a4700;
+  font-weight: 700;
 }
 
-/* 加载更多 */
-.load-more {
+.load-more,
+.no-more {
   text-align: center;
   padding: 32rpx;
 }
@@ -252,27 +278,105 @@
 .load-more-text {
   font-size: 26rpx;
   color: #5b6cff;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.load-more-text.loading {
-  color: #9aa3b8;
-}
-
-.no-more {
-  text-align: center;
-  padding: 32rpx;
-}
-
+.load-more-text.loading,
 .no-more-text {
   font-size: 24rpx;
-  color: #9aa3b8;
+  color: #8b94aa;
 }
 
-/* 页脚 */
 .page-footer {
-  text-align: center;
   padding: 40rpx;
+  text-align: center;
   font-size: 22rpx;
-  color: #9aa3b8;
+  color: #8b94aa;
+}
+
+.theme-gold.container {
+  background: radial-gradient(circle at 18% 0%, rgba(212, 175, 55, 0.2), transparent 36%),
+    linear-gradient(180deg, #090909 0%, #12100a 56%, #090909 100%) !important;
+}
+
+.theme-gold .search-input-wrap,
+.theme-gold .toolbar,
+.theme-gold .puzzle-card {
+  background: #171717 !important;
+  border-color: rgba(212, 175, 55, 0.28) !important;
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.34);
+}
+
+.theme-gold .search-icon {
+  color: #1a1406;
+  background: #d4af37;
+}
+
+.theme-gold .search-input {
+  color: #f7ecd1 !important;
+  background: transparent !important;
+}
+
+.theme-gold .filter-chip,
+.theme-gold .diff-chip,
+.theme-gold .sort-chip {
+  color: rgba(247, 236, 209, 0.78);
+  background: rgba(255, 250, 240, 0.055);
+  border-color: rgba(212, 175, 55, 0.26);
+  box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.03);
+}
+
+.theme-gold .filter-chip.active,
+.theme-gold .diff-chip.active,
+.theme-gold .sort-chip.active {
+  color: #15110a;
+  background: linear-gradient(135deg, #f0d46a 0%, #d4af37 48%, #a86f16 100%);
+  border-color: transparent;
+  font-weight: 800;
+  box-shadow: 0 8rpx 18rpx rgba(212, 175, 55, 0.26);
+}
+
+.theme-gold .filter-chip:active,
+.theme-gold .diff-chip:active,
+.theme-gold .sort-chip:active {
+  opacity: 0.86;
+}
+
+.theme-gold .favorites-entry {
+  background: linear-gradient(135deg, #4a3211 0%, #d4af37 100%);
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.32);
+}
+
+.theme-gold .fav-icon,
+.theme-gold .fav-text,
+.theme-gold .fav-arrow {
+  color: #fff7d8 !important;
+}
+
+.theme-gold .card-divider {
+  background: rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .card-title {
+  color: #f7ecd1 !important;
+}
+
+.theme-gold .meta-stats,
+.theme-gold .page-footer,
+.theme-gold .no-more-text {
+  color: rgba(247, 236, 209, 0.72) !important;
+}
+
+.theme-gold .card-reward {
+  background: rgba(212, 175, 55, 0.16);
+  border: 1rpx solid rgba(212, 175, 55, 0.2);
+}
+
+.theme-gold .reward-text {
+  color: #f1d56a;
+}
+
+.font-large .puzzle-card,
+.font-xlarge .puzzle-card {
+  min-height: 336rpx;
 }

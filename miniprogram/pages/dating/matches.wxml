@@ -3,6 +3,7 @@
 <view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <empty-state
     wx:if="{{error}}"
+    theme="{{theme}}"
     icon="!"
     title="{{error}}"
     description="请稍后再试"
@@ -69,6 +70,7 @@
     <!-- 全空状态 -->
     <empty-state
       wx:if="{{conversations.length === 0 && friendRequests.length === 0}}"
+      theme="{{theme}}"
       icon="🎭"
       title="暂无推理好友"
       description="可在排行榜或首页点击他人名片添加好友。"

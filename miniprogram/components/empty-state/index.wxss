@@ -37,13 +37,17 @@
 
 .empty-action {
   margin-top: 32rpx;
+  min-width: 180rpx;
   padding: 16rpx 48rpx;
   border-radius: 999rpx;
   background: linear-gradient(135deg, #5b6cff, #3a4cd1);
   color: #fff;
   font-size: 26rpx;
   font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
   box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.3);
+  box-sizing: border-box;
 }
 .empty-action:active {
   opacity: 0.85;
@@ -59,3 +63,24 @@
   margin-bottom: 18rpx;
 }
 .variant-compact .empty-title { font-size: 26rpx; }
+
+.theme-gold .empty-icon {
+  background: linear-gradient(135deg, #292111, #d4af37);
+  color: #fff6d6;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .empty-title {
+  color: #f2d77c;
+}
+
+.theme-gold .empty-desc {
+  color: rgba(247, 236, 209, 0.74);
+}
+
+.theme-gold .empty-action {
+  background: linear-gradient(135deg, #f1d56a, #b77b18);
+  color: #17130c;
+  font-weight: 700;
+  box-shadow: 0 10rpx 22rpx rgba(183, 123, 24, 0.28);
+}

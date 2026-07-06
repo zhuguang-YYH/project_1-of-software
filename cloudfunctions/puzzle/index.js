@@ -6,7 +6,7 @@ const db = cloud.database();
 const _ = db.command;
 
 // Configure this with the template ID created in the WeChat public platform.
-const PUZZLE_DAILY_REMINDER_TMPL = process.env.PUZZLE_DAILY_REMINDER_TMPL || '';
+const PUZZLE_DAILY_REMINDER_TMPL = process.env.PUZZLE_DAILY_REMINDER_TMPL || '2FmECqS9gnBrJTtaj8aeMtap6eIC-axy3Es7BxdIa08';
 const PUZZLE_REMINDER_MAX_PER_RUN = 500;
 const PUZZLE_STREAK_BONUS_DAYS = Math.max(2, Number(process.env.PUZZLE_STREAK_BONUS_DAYS) || 3);
 const PUZZLE_STREAK_BONUS_POINTS = Math.max(0, Number(process.env.PUZZLE_STREAK_BONUS_POINTS) || 5);
@@ -40,6 +40,12 @@ function shiftDateText(dateText, deltaDays) {
 function asThing(value, max = 20) {
   const text = String(value == null ? '' : value).trim();
   return text ? text.slice(0, max) : '—';
+}
+
+function nowCstText() {
+  const cst = new Date(Date.now() + 8 * 3600 * 1000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${cst.getUTCFullYear()}-${p(cst.getUTCMonth() + 1)}-${p(cst.getUTCDate())} ${p(cst.getUTCHours())}:${p(cst.getUTCMinutes())}:${p(cst.getUTCSeconds())}`;
 }
 
 async function sendSubscribeMessage(touser, templateId, data, page) {
@@ -616,9 +622,9 @@ async function runDailyPuzzleReminder() {
   for (const item of subscribers) {
     const sent = await sendSubscribeMessage(item.openid, PUZZLE_DAILY_REMINDER_TMPL, {
       thing1: { value: asThing(puzzle.title || puzzle.content || '每日谜题', 20) },
-      date2: { value: current_date },
-      thing3: { value: asThing(puzzle.difficulty || '中等', 20) },
-      thing4: { value: asThing('今日谜题已发布，快来挑战', 20) }
+      thing5: { value: asThing('今日谜题已发布，快来挑战', 20) },
+      time6: { value: nowCstText() },
+      thing8: { value: asThing('每日谜题', 20) }
     }, 'pages/puzzle/index');
 
     if (sent) {

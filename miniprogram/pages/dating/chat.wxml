@@ -73,7 +73,14 @@
           </view>
         </view>
 
-        <view wx:if="{{item.is_me}}" class="msg-avatar my-avatar">
+        <image
+          wx:if="{{item.is_me && my_avatar_url}}"
+          class="msg-avatar my-avatar-img"
+          src="{{my_avatar_url}}"
+          mode="aspectFill"
+          lazy-load="{{true}}"
+        />
+        <view wx:elif="{{item.is_me}}" class="msg-avatar my-avatar">
           <text class="my-avatar-text">我</text>
         </view>
       </view>

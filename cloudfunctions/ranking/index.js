@@ -123,7 +123,24 @@ async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
     const days = period === 'weekly' ? 7 : 30;
 
     try {
-      const user_points = await aggregatePeriodPoints(days);
+      // Aggregate points from points_log within the period
+      const res = await db.collection('points_log')
+        .where({ created_at: _.gte(since) })
+        .limit(500)
+        .get();
+
+      // Sum points per user
+      const user_points = {};
+      (res.data || []).forEach(log => {
+        const uid = log.user_id || '';
+        if (!uid) return;
+        const raw_amount = log.change_amount !== undefined
+          ? log.change_amount
+          : log.amount !== undefined
+            ? log.amount
+            : log.points;
+        user_points[uid] = (user_points[uid] || 0) + (Number(raw_amount || 0) || 0);
+      });
 
       // Convert to sorted array
       let ranked = Object.entries(user_points)
@@ -212,6 +229,7 @@ async function ranking_getFullRanking(event) {
 
 async function ranking_getUserRanking(event) {
   try {
+    const period = String((event && event.period) || 'all').trim();
     const wx_context = cloud.getWXContext();
     const period = String(event.period || 'all').trim();
 
@@ -223,29 +241,21 @@ async function ranking_getUserRanking(event) {
     if (user_res.data.length === 0) return fail('user not found', 'USER_NOT_FOUND');
     const current_user = user_res.data[0];
 
-    // For weekly/monthly, calculate rank from points_log in that period
+    const user = user_res.data[0];
     if (period === 'weekly' || period === 'monthly') {
-      const days = period === 'weekly' ? 7 : 30;
-      try {
-        const user_points = await aggregatePeriodPoints(days);
-        const my_score = user_points[current_user._id] || 0;
+      const result = await getRankedUsers(500, 0, period);
+      const ranked = applyTieRanks(result.list);
+      const user_id = user._id || user.user_id || '';
+      const current = ranked.find(item => item.user_id === user_id);
+      if (current) return ok(current);
 
-        let rank_no = 1;
-        for (const pts of Object.values(user_points)) {
-          if (pts > my_score) rank_no++;
-        }
-
-        return ok(normalizeRankUser({ ...current_user, total_points: my_score }, rank_no));
-      } catch (error) {
-        if (isCollectionMissing(error)) {
-          return ok(normalizeRankUser({ ...current_user, total_points: 0 }, 1));
-        }
-        throw error;
-      }
+      return ok({
+        ...normalizeRankUser(user, (result.total || 0) + 1),
+        total_points: 0
+      });
     }
 
-    // All-time ranking (existing logic)
-    const score = toNumber(current_user.total_points);
+    const score = toNumber(user.total_points);
     const rank_res = await db.collection('users')
       .where({ total_points: _.gt(score) })
       .count();

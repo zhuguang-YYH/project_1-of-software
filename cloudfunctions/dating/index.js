@@ -39,6 +39,51 @@ async function getCurrentUser(openid) {
   return res.data[0] || null;
 }
 
+async function resolveUserByIdentifier(identifier) {
+  const value = String(identifier || '').trim();
+  if (!value) return null;
+
+  try {
+    const doc_res = await db.collection('users').doc(value).get();
+    if (doc_res.data) return doc_res.data;
+  } catch (_) { /* try compatible lookups */ }
+
+  const userFields = ['user_id', 'openid'];
+  for (const field of userFields) {
+    try {
+      const res = await db.collection('users')
+        .where({ [field]: value })
+        .limit(1)
+        .get();
+      if (res.data && res.data[0]) return res.data[0];
+    } catch (_) { /* try next user field */ }
+  }
+
+  const cardFields = ['card_id', 'user_id'];
+  for (const field of cardFields) {
+    try {
+      const card_res = await db.collection('profile_cards')
+        .where({ [field]: value })
+        .limit(1)
+        .get();
+      const card = card_res.data && card_res.data[0];
+      if (card && card.user_id && card.user_id !== value) {
+        return resolveUserByIdentifier(card.user_id);
+      }
+    } catch (_) { /* try next card field */ }
+  }
+
+  try {
+    const card_doc_res = await db.collection('profile_cards').doc(value).get();
+    const card = card_doc_res.data;
+    if (card && card.user_id && card.user_id !== value) {
+      return resolveUserByIdentifier(card.user_id);
+    }
+  } catch (_) { /* ignore */ }
+
+  return null;
+}
+
 function buildMatchId(user_id_1, user_id_2) {
   const ids = [user_id_1, user_id_2].sort();
   return `match_${ids[0]}_${ids[1]}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
@@ -58,6 +103,10 @@ function buildMessageId() {
 }
 
 // 预设游戏类型
+function safeIdPart(value, max = 28) {
+  return String(value || '').replace(/[^A-Za-z0-9_]/g, '_').slice(0, max);
+}
+
 const GAME_TYPES = ['script_kill', 'board_game', 'puzzle', 'activity', 'other'];
 const GAME_TYPE_LABELS = {
   script_kill: '剧本杀',
@@ -353,7 +402,7 @@ async function dating_swipe(event) {
     if (!user) return fail('请先完成授权登录');
 
     const target_user_id = event.target_user_id;
-    const action = event.action;
+    const action = event.swipe_action || event.business_action || event.action;
     if (!target_user_id) return fail('缺少目标用户编号');
     if (!action || !['like', 'pass'].includes(action)) return fail('操作类型错误');
 
@@ -466,16 +515,29 @@ async function dating_getMatches() {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const matches = await db.collection('dating_matches')
-      .where(_.or([
-        { user_id_1: user._id, is_active: true },
-        { user_id_2: user._id, is_active: true }
-      ]))
-      .orderBy('matched_at', 'desc')
-      .limit(50)
-      .get();
+    const [as_user_1, as_user_2] = await Promise.all([
+      db.collection('dating_matches')
+        .where({ user_id_1: user._id, is_active: true })
+        .limit(50)
+        .get(),
+      db.collection('dating_matches')
+        .where({ user_id_2: user._id, is_active: true })
+        .limit(50)
+        .get()
+    ]);
 
-    const matches_list = matches.data || [];
+    const match_map = {};
+    [...(as_user_1.data || []), ...(as_user_2.data || [])].forEach(match => {
+      const key = match._id || match.match_id || buildMatchId(match.user_id_1, match.user_id_2);
+      if (key) match_map[key] = match;
+    });
+
+    const matches_list = await Promise.all(Object.values(match_map).map(normalizeMatchRecord));
+    matches_list.sort((a, b) => {
+      const time_a = new Date(a.matched_at || a.created_at || 0).getTime();
+      const time_b = new Date(b.matched_at || b.created_at || 0).getTime();
+      return time_b - time_a;
+    });
 
     // 收集所有对方用户 ID
     const other_ids = matches_list.map(m => m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1);
@@ -881,7 +943,8 @@ async function dating_respondInvitation(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const { invitation_id, action } = event;
+    const invitation_id = event.invitation_id;
+    const action = event.invitation_action || event.business_action || event.action;
     if (!invitation_id) return fail('缺少邀请编号');
     if (!action || !['accept', 'decline'].includes(action)) return fail('操作类型错误');
 
@@ -935,6 +998,8 @@ async function dating_sendMessage(event) {
     const match = match_res.data[0];
     if (!match) return fail('匹配关系不存在或已解除');
     if (match.user_id_1 !== user._id && match.user_id_2 !== user._id) return fail('无权发送消息');
+    const expected_to_user_id = match.user_id_1 === user._id ? match.user_id_2 : match.user_id_1;
+    if (to_user_id !== expected_to_user_id) return fail('接收方与好友关系不一致');
 
     let final_content = '';
     let final_game_data = null;
@@ -999,11 +1064,11 @@ async function dating_getMessages(event) {
 
     // 验证匹配归属
     const match_res = await db.collection('dating_matches')
-      .where({ match_id })
+      .where({ match_id, is_active: true })
       .limit(1)
       .get();
     const match = match_res.data[0];
-    if (!match) return fail('匹配关系不存在');
+    if (!match) return fail('匹配关系不存在或已解除');
     if (match.user_id_1 !== user._id && match.user_id_2 !== user._id) return fail('无权查看');
 
     const page = Math.max(1, Number(event.page) || 1);
@@ -1072,83 +1137,116 @@ async function dating_getConversations() {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
+    await repairAcceptedFriendRequestsForUser(user._id);
+
     // 获取所有活跃匹配
     let matches_data = [];
     try {
-      const matches_res = await db.collection('dating_matches')
-        .where(_.or([
-          { user_id_1: user._id, is_active: true },
-          { user_id_2: user._id, is_active: true }
-        ]))
-        .orderBy('matched_at', 'desc')
-        .limit(50)
-        .get();
-      matches_data = matches_res.data || [];
+      const [as_user_1, as_user_2] = await Promise.all([
+        db.collection('dating_matches')
+          .where({ user_id_1: user._id, is_active: true })
+          .limit(50)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          }),
+        db.collection('dating_matches')
+          .where({ user_id_2: user._id, is_active: true })
+          .limit(50)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          })
+      ]);
+
+      const match_map = {};
+      [...(as_user_1.data || []), ...(as_user_2.data || [])].forEach(match => {
+        const key = match._id || match.match_id || buildMatchId(match.user_id_1, match.user_id_2);
+        if (key) match_map[key] = match;
+      });
+
+      matches_data = await Promise.all(Object.values(match_map).map(normalizeMatchRecord));
+      matches_data.sort((a, b) => {
+        const time_a = new Date(a.matched_at || a.created_at || 0).getTime();
+        const time_b = new Date(b.matched_at || b.created_at || 0).getTime();
+        return time_b - time_a;
+      });
+      matches_data = matches_data.slice(0, 50);
     } catch (error) {
       if (!isCollectionMissing(error)) throw error;
       // 集合不存在，返回空列表
     }
 
     // 收集所有对方用户 ID
-    const other_ids = matches_data.map(m => m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1);
-    const match_ids = matches_data.map(m => m.match_id);
+    const other_ids = [...new Set(matches_data.map(m => m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1).filter(Boolean))];
+    const match_ids = [...new Set(matches_data.map(m => m.match_id).filter(Boolean))];
 
     // 批量获取用户信息
     const users_map = {};
     try {
-      const users_res = await db.collection('users')
-        .where({ _id: _.in(other_ids) })
-        .field({ _id: true, nickname: true, avatar_url: true })
-        .get();
-      (users_res.data || []).forEach(u => { users_map[u._id] = u; });
+      if (other_ids.length > 0) {
+        const users_res = await db.collection('users')
+          .where({ _id: _.in(other_ids) })
+          .field({ _id: true, nickname: true, avatar_url: true })
+          .get();
+        (users_res.data || []).forEach(u => { users_map[u._id] = u; });
+      }
     } catch (_) { /* ignore */ }
 
     // 批量获取名片
     const cards_map = {};
     try {
-      const cards_res = await db.collection('profile_cards')
-        .where({ user_id: _.in(other_ids) })
-        .get();
-      (cards_res.data || []).forEach(c => { cards_map[c.user_id] = c; });
+      if (other_ids.length > 0) {
+        const cards_res = await db.collection('profile_cards')
+          .where({ user_id: _.in(other_ids) })
+          .get();
+        (cards_res.data || []).forEach(c => { cards_map[c.user_id] = c; });
+      }
     } catch (_) { /* ignore */ }
 
     // 批量获取每个匹配的最后一条消息（聚合取巧：对每个 match_id 取最新一条）
     const last_msg_map = {};
     try {
-      // 微信云开发不支持聚合，改用逐个查询但用 in 缩小范围
-      const all_msgs_res = await db.collection('friend_messages')
-        .where({ match_id: _.in(match_ids) })
-        .orderBy('created_at', 'desc')
-        .limit(200)
-        .get();
-      // 对每个 match_id 取第一条（最新的）
-      (all_msgs_res.data || []).forEach(msg => {
-        if (!last_msg_map[msg.match_id]) {
-          last_msg_map[msg.match_id] = {
-            message_id: msg.message_id,
-            from_user_id: msg.from_user_id,
-            content_type: msg.content_type,
-            content: msg.content,
-            game_data: msg.game_data || null,
-            created_at: msg.created_at
-          };
-        }
-      });
+      if (match_ids.length > 0) {
+        // 微信云开发不支持聚合，改用逐个查询但用 in 缩小范围
+        const all_msgs_res = await db.collection('friend_messages')
+          .where({ match_id: _.in(match_ids) })
+          .orderBy('created_at', 'desc')
+          .limit(200)
+          .get();
+        // 对每个 match_id 取第一条（最新的）
+        (all_msgs_res.data || []).forEach(msg => {
+          if (!last_msg_map[msg.match_id]) {
+            last_msg_map[msg.match_id] = {
+              message_id: msg.message_id,
+              from_user_id: msg.from_user_id,
+              content_type: msg.content_type,
+              content: msg.content,
+              game_data: msg.game_data || null,
+              created_at: msg.created_at
+            };
+          }
+        });
+      }
     } catch (_) { /* ignore */ }
 
     // 批量获取未读计数 — 逐个 count 不可避免，但总量可控
     const unread_map = {};
     try {
-      const unread_results = await Promise.all(
-        match_ids.map(mid =>
-          db.collection('friend_messages')
-            .where({ match_id: mid, to_user_id: user._id, is_read: false })
-            .count()
-            .then(res => ({ mid, count: res.total || 0 }))
-            .catch(() => ({ mid, count: 0 }))
-        )
-      );
-      unread_results.forEach(r => { unread_map[r.mid] = r.count; });
+      if (match_ids.length > 0) {
+        const unread_results = await Promise.all(
+          match_ids.map(mid =>
+            db.collection('friend_messages')
+              .where({ match_id: mid, to_user_id: user._id, is_read: false })
+              .count()
+              .then(res => ({ mid, count: res.total || 0 }))
+              .catch(() => ({ mid, count: 0 }))
+          )
+        );
+        unread_results.forEach(r => { unread_map[r.mid] = r.count; });
+      }
     } catch (_) { /* ignore */ }
 
     const conversations = [];
@@ -1188,8 +1286,144 @@ async function dating_getConversations() {
 // ========== 好友请求 ==========
 
 function buildRequestId(from_user_id, to_user_id) {
-  const ts = Date.now();
-  return `fr_${from_user_id}_${to_user_id}_${ts}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
+  const ids = [safeIdPart(from_user_id), safeIdPart(to_user_id)].sort();
+  return `fr_${ids[0]}_${ids[1]}`.slice(0, 64);
+}
+
+async function normalizeMatchRecord(match = {}) {
+  const user_id_1 = match.user_id_1 || '';
+  const user_id_2 = match.user_id_2 || '';
+  const match_id = match.match_id || (user_id_1 && user_id_2 ? buildMatchId(user_id_1, user_id_2) : '');
+  const patch = {};
+
+  if (!match.match_id && match_id) patch.match_id = match_id;
+  if (!match.updated_at) patch.updated_at = db.serverDate();
+
+  if (Object.keys(patch).length > 0 && match._id) {
+    try {
+      await db.collection('dating_matches').doc(match._id).update({ data: patch });
+    } catch (_) { /* 历史数据修补失败不影响展示 */ }
+  }
+
+  return {
+    ...match,
+    match_id,
+    matched_at: match.matched_at || match.created_at || null
+  };
+}
+
+async function ensureActiveMatchBetweenUsers(user_id_a, user_id_b) {
+  if (!user_id_a || !user_id_b || user_id_a === user_id_b) return null;
+
+  const [forward, reverse] = await Promise.all([
+    db.collection('dating_matches')
+      .where({ user_id_1: user_id_a, user_id_2: user_id_b })
+      .limit(1)
+      .get()
+      .catch(error => {
+        if (isCollectionMissing(error)) return { data: [] };
+        throw error;
+      }),
+    db.collection('dating_matches')
+      .where({ user_id_1: user_id_b, user_id_2: user_id_a })
+      .limit(1)
+      .get()
+      .catch(error => {
+        if (isCollectionMissing(error)) return { data: [] };
+        throw error;
+      })
+  ]);
+
+  const existing = [...(forward.data || []), ...(reverse.data || [])][0];
+  if (existing) {
+    const normalized = await normalizeMatchRecord(existing);
+    await db.collection('dating_matches').doc(existing._id).update({
+      data: {
+        match_id: normalized.match_id,
+        is_active: true,
+        matched_at: normalized.matched_at || db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+    return normalized.match_id;
+  }
+
+  const ids = [user_id_a, user_id_b].sort();
+  const match_id = buildMatchId(ids[0], ids[1]);
+  try {
+    await db.collection('dating_matches').add({
+      data: {
+        _id: match_id,
+        match_id,
+        user_id_1: ids[0],
+        user_id_2: ids[1],
+        matched_at: db.serverDate(),
+        is_active: true,
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+  } catch (error) {
+    if (isCollectionMissing(error)) throw error;
+    await db.collection('dating_matches').doc(match_id).update({
+      data: {
+        match_id,
+        user_id_1: ids[0],
+        user_id_2: ids[1],
+        matched_at: db.serverDate(),
+        is_active: true,
+        updated_at: db.serverDate()
+      }
+    });
+  }
+  return match_id;
+}
+
+async function repairAcceptedFriendRequestsForUser(user_id) {
+  if (!user_id) return { repaired: 0, failed: 0 };
+
+  let repaired = 0;
+  let failed = 0;
+
+  try {
+    const [sent_accepted, received_accepted] = await Promise.all([
+      db.collection('friend_requests')
+        .where({ from_user_id: user_id, status: 'accepted' })
+        .limit(100)
+        .get()
+        .catch(error => {
+          if (isCollectionMissing(error)) return { data: [] };
+          throw error;
+        }),
+      db.collection('friend_requests')
+        .where({ to_user_id: user_id, status: 'accepted' })
+        .limit(100)
+        .get()
+        .catch(error => {
+          if (isCollectionMissing(error)) return { data: [] };
+          throw error;
+        })
+    ]);
+
+    const request_map = {};
+    [...(sent_accepted.data || []), ...(received_accepted.data || [])].forEach(req => {
+      const key = req.request_id || `${req.from_user_id}_${req.to_user_id}`;
+      if (key) request_map[key] = req;
+    });
+
+    for (const req of Object.values(request_map)) {
+      try {
+        const match_id = await ensureActiveMatchBetweenUsers(req.from_user_id, req.to_user_id);
+        if (match_id) repaired += 1;
+      } catch (_) {
+        failed += 1;
+      }
+    }
+  } catch (error) {
+    if (!isCollectionMissing(error)) throw error;
+  }
+
+  return { repaired, failed };
 }
 
 // 发送好友请求
@@ -1199,64 +1433,134 @@ async function dating_sendFriendRequest(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const to_user_id = event.to_user_id;
-    if (!to_user_id) return fail('请选择要添加的用户');
-    if (to_user_id === user._id) return fail('不能添加自己为好友');
+    const raw_to_user_id = String(event.to_user_id || event.user_id || '').trim();
+    if (!raw_to_user_id) return fail('请选择要添加的用户');
 
-    // 检查目标用户是否存在
-    try {
-      await db.collection('users').doc(to_user_id).get();
-    } catch (_) {
-      return fail('目标用户不存在');
-    }
+    const target_user = await resolveUserByIdentifier(raw_to_user_id);
+    if (!target_user || !target_user._id) return fail('目标用户不存在');
+
+    const to_user_id = target_user._id;
+    if (to_user_id === user._id || target_user.openid === wx_context.OPENID) return fail('不能添加自己为好友');
 
     // 检查是否已经是好友
     let already_friend = false;
     try {
-      const existing = await db.collection('dating_matches')
-        .where(_.or([
-          { user_id_1: user._id, user_id_2: to_user_id, is_active: true },
-          { user_id_1: to_user_id, user_id_2: user._id, is_active: true }
-        ]))
-        .limit(1)
-        .get();
-      already_friend = existing.data.length > 0;
+      const [forward, reverse] = await Promise.all([
+        db.collection('dating_matches')
+          .where({ user_id_1: user._id, user_id_2: to_user_id, is_active: true })
+          .limit(1)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          }),
+        db.collection('dating_matches')
+          .where({ user_id_1: to_user_id, user_id_2: user._id, is_active: true })
+          .limit(1)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          })
+      ]);
+      already_friend = (forward.data || []).length > 0 || (reverse.data || []).length > 0;
     } catch (error) {
       if (!isCollectionMissing(error)) throw error;
     }
-    if (already_friend) return fail('你们已经是好友了');
-
-    // 检查是否有待处理请求
-    let has_pending = false;
-    try {
-      const pending_res = await db.collection('friend_requests')
-        .where(_.or([
-          { from_user_id: user._id, to_user_id, status: 'pending' },
-          { from_user_id: to_user_id, to_user_id: user._id, status: 'pending' }
-        ]))
-        .limit(1)
-        .get();
-      has_pending = pending_res.data.length > 0;
-    } catch (error) {
-      if (!isCollectionMissing(error)) throw error;
+    if (already_friend) {
+      const match_id = await ensureActiveMatchBetweenUsers(user._id, to_user_id);
+      return success({ request_id: null, to_user_id, status: 'friend', is_friend: true, match_id }, '你们已经是好友了');
     }
-    if (has_pending) return fail('已有一条待处理的好友请求');
 
     const request_id = buildRequestId(user._id, to_user_id);
     const message = String(event.message || '').trim().slice(0, 100);
+    const pair_key = request_id.replace(/^fr_/, '');
+
+    // 一对用户只保留一条请求记录：pending 防重复，declined 后允许重新发起。
+    let existing_request = null;
+    try {
+      const existing_res = await db.collection('friend_requests')
+        .where({ request_id })
+        .limit(1)
+        .get();
+      existing_request = existing_res.data[0] || null;
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
+
+    // 兼容旧数据：如果历史请求使用过非稳定 request_id，也不能再生成一条新的 pending。
+    let legacy_pending_request = null;
+    try {
+      const [sent_pending, received_pending] = await Promise.all([
+        db.collection('friend_requests')
+          .where({ from_user_id: user._id, to_user_id, status: 'pending' })
+          .limit(1)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          }),
+        db.collection('friend_requests')
+          .where({ from_user_id: to_user_id, to_user_id: user._id, status: 'pending' })
+          .limit(1)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          })
+      ]);
+      legacy_pending_request = (sent_pending.data || [])[0] || (received_pending.data || [])[0] || null;
+    } catch (error) {
+      if (!isCollectionMissing(error)) throw error;
+    }
+    if (legacy_pending_request && legacy_pending_request.request_id !== request_id) {
+      return fail('已有一条待处理的好友请求');
+    }
+
+    if (existing_request) {
+      if (existing_request.status === 'pending') return fail('已有一条待处理的好友请求');
+      if (existing_request.status === 'accepted') {
+        let match_id = null;
+        try {
+          match_id = await ensureActiveMatchBetweenUsers(user._id, to_user_id);
+        } catch (error) {
+          if (isCollectionMissing(error)) return fail('好友功能暂不可用');
+          throw error;
+        }
+        return success({ request_id, to_user_id, status: 'friend', is_friend: true, match_id }, '你们已经是好友了');
+      }
+
+      await db.collection('friend_requests').doc(existing_request._id).update({
+        data: {
+          from_user_id: user._id,
+          to_user_id,
+          status: 'pending',
+          message,
+          pair_key,
+          created_at: db.serverDate(),
+          updated_at: db.serverDate(),
+          responded_at: _.remove()
+        }
+      });
+
+      return success({ request_id, to_user_id, status: 'pending' }, '好友请求已重新发送');
+    }
 
     await db.collection('friend_requests').add({
       data: {
+        _id: request_id,
         request_id,
+        pair_key,
         from_user_id: user._id,
         to_user_id,
         status: 'pending',
         message,
-        created_at: db.serverDate()
+        created_at: db.serverDate(),
+        updated_at: db.serverDate()
       }
     });
 
-    return success({ request_id, status: 'pending' }, '好友请求已发送');
+    return success({ request_id, to_user_id, status: 'pending' }, '好友请求已发送');
   } catch (error) {
     if (isCollectionMissing(error)) return fail('好友功能暂不可用');
     return fail('发送好友请求失败: ' + error.message);
@@ -1269,6 +1573,8 @@ async function dating_getFriendRequests() {
     const wx_context = cloud.getWXContext();
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
+
+    await repairAcceptedFriendRequestsForUser(user._id);
 
     // 先查询收到的请求和发出的请求
     let recv_res = { data: [] };
@@ -1366,15 +1672,28 @@ async function dating_getFriendRequests() {
     // 构建 ID 列表方便前端判断
     const friend_ids = [];
     try {
-      const fm_res = await db.collection('dating_matches')
-        .where(_.or([
-          { user_id_1: user._id, is_active: true },
-          { user_id_2: user._id, is_active: true }
-        ]))
-        .limit(100)
-        .get();
-      (fm_res.data || []).forEach(m => {
-        friend_ids.push(m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1);
+      const [as_user_1, as_user_2] = await Promise.all([
+        db.collection('dating_matches')
+          .where({ user_id_1: user._id, is_active: true })
+          .limit(100)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          }),
+        db.collection('dating_matches')
+          .where({ user_id_2: user._id, is_active: true })
+          .limit(100)
+          .get()
+          .catch(error => {
+            if (isCollectionMissing(error)) return { data: [] };
+            throw error;
+          })
+      ]);
+
+      [...(as_user_1.data || []), ...(as_user_2.data || [])].forEach(m => {
+        const friend_id = m.user_id_1 === user._id ? m.user_id_2 : m.user_id_1;
+        if (friend_id && !friend_ids.includes(friend_id)) friend_ids.push(friend_id);
       });
     } catch (error) {
       if (!isCollectionMissing(error)) console.warn('load friend_ids failed:', error.message);
@@ -1396,7 +1715,8 @@ async function dating_respondFriendRequest(event) {
     const user = await getCurrentUser(wx_context.OPENID);
     if (!user) return fail('请先完成授权登录');
 
-    const { request_id, action } = event;
+    const request_id = event.request_id;
+    const action = event.friend_action || event.business_action || event.action;
     if (!request_id) return fail('缺少请求编号');
     if (!action || !['accept', 'decline'].includes(action)) return fail('操作类型错误');
 
@@ -1411,51 +1731,76 @@ async function dating_respondFriendRequest(event) {
 
     const new_status = action === 'accept' ? 'accepted' : 'declined';
 
+    const update_res = await db.collection('friend_requests')
+      .where({ _id: req._id, status: 'pending' })
+      .update({
+        data: {
+          status: new_status,
+          responded_at: db.serverDate(),
+          updated_at: db.serverDate()
+        }
+      });
+    if (!update_res.stats || update_res.stats.updated === 0) return fail('该请求已处理');
+
     // 接受：创建好友关系
     let match_id = null;
     if (action === 'accept') {
       try {
-        const existing = await db.collection('dating_matches')
-          .where(_.or([
-            { user_id_1: req.from_user_id, user_id_2: req.to_user_id },
-            { user_id_1: req.to_user_id, user_id_2: req.from_user_id }
-          ]))
-          .limit(1)
-          .get();
+        const [forward, reverse] = await Promise.all([
+          db.collection('dating_matches')
+            .where({ user_id_1: req.from_user_id, user_id_2: req.to_user_id })
+            .limit(1)
+            .get()
+            .catch(error => {
+              if (isCollectionMissing(error)) return { data: [] };
+              throw error;
+            }),
+          db.collection('dating_matches')
+            .where({ user_id_1: req.to_user_id, user_id_2: req.from_user_id })
+            .limit(1)
+            .get()
+            .catch(error => {
+              if (isCollectionMissing(error)) return { data: [] };
+              throw error;
+            })
+        ]);
+        const existing = { data: [...(forward.data || []), ...(reverse.data || [])] };
 
         if (existing.data.length > 0) {
           // 如果已有记录（可能被软删除），重新激活
-          match_id = existing.data[0].match_id;
+          const existing_match = await normalizeMatchRecord(existing.data[0]);
+          match_id = existing_match.match_id;
           await db.collection('dating_matches').doc(existing.data[0]._id).update({
-            data: { is_active: true, matched_at: db.serverDate(), updated_at: db.serverDate() }
+            data: { match_id, is_active: true, matched_at: db.serverDate(), updated_at: db.serverDate() }
           });
         } else {
           const ids = [req.from_user_id, req.to_user_id].sort();
-          match_id = `match_${ids[0]}_${ids[1]}`.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 64);
-          await db.collection('dating_matches').add({
-            data: {
-              match_id,
-              user_id_1: ids[0],
-              user_id_2: ids[1],
-              matched_at: db.serverDate(),
-              is_active: true,
-              created_at: db.serverDate()
-            }
-          });
+          match_id = buildMatchId(ids[0], ids[1]);
+          try {
+            await db.collection('dating_matches').add({
+              data: {
+                _id: match_id,
+                match_id,
+                user_id_1: ids[0],
+                user_id_2: ids[1],
+                matched_at: db.serverDate(),
+                is_active: true,
+                created_at: db.serverDate(),
+                updated_at: db.serverDate()
+              }
+            });
+          } catch (error) {
+            if (isCollectionMissing(error)) return fail('好友功能暂不可用');
+            await db.collection('dating_matches').doc(match_id).update({
+              data: { is_active: true, matched_at: db.serverDate(), updated_at: db.serverDate() }
+            });
+          }
         }
       } catch (error) {
         if (isCollectionMissing(error)) return fail('好友功能暂不可用');
         throw error;
       }
     }
-
-    // 更新请求状态
-    await db.collection('friend_requests').doc(req._id).update({
-      data: {
-        status: new_status,
-        responded_at: db.serverDate()
-      }
-    });
 
     return success({
       request_id,
@@ -1465,6 +1810,20 @@ async function dating_respondFriendRequest(event) {
   } catch (error) {
     if (isCollectionMissing(error)) return fail('好友功能暂不可用');
     return fail('操作失败: ' + error.message);
+  }
+}
+
+async function dating_repairFriendRelations() {
+  try {
+    const wx_context = cloud.getWXContext();
+    const user = await getCurrentUser(wx_context.OPENID);
+    if (!user) return fail('请先完成授权登录');
+
+    const result = await repairAcceptedFriendRequestsForUser(user._id);
+    return success(result, '好友关系修复完成');
+  } catch (error) {
+    if (isCollectionMissing(error)) return fail('好友功能暂不可用');
+    return fail('好友关系修复失败: ' + error.message);
   }
 }
 
@@ -1490,7 +1849,8 @@ exports.main = async (event, context) => {
     getConversations: dating_getConversations,
     sendFriendRequest: dating_sendFriendRequest,
     getFriendRequests: dating_getFriendRequests,
-    respondFriendRequest: dating_respondFriendRequest
+    respondFriendRequest: dating_respondFriendRequest,
+    repairFriendRelations: dating_repairFriendRelations
   };
 
   const handler = actions[action];

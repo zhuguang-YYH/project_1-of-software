@@ -52,7 +52,7 @@
     </view>
 
     <view class="log-list">
-      <view class="log-card" wx:for="{{logs}}" wx:key="log_id">
+      <view class="log-card {{item.is_income ? 'income' : 'expense'}}" wx:for="{{logs}}" wx:key="log_id">
         <view class="log-left">
           <text class="log-reason">{{item.reason}}</text>
           <text class="log-meta">{{item.type_text}} · {{item.created_text}}</text>

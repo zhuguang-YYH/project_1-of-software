@@ -1,5 +1,6 @@
 const datingService = require('../../services/dating.js');
 const { applyTheme } = require('../../utils/theme.js');
+const { storage } = require('../../utils/storage.js');
 
 const GAME_TYPES = [
   { key: 'script_kill', label: '剧本杀', icon: '🎭' },
@@ -24,6 +25,7 @@ Page({
   data: {
     match_id: '',
     other_user: { user_id: '', display_name: '好友', avatar_url: '' },
+    my_avatar_url: '',
     messages: [],
     input_value: '',
     loading: true,
@@ -42,8 +44,10 @@ Page({
   },
 
   onLoad(options) {
+    const userInfo = storage.getUserInfo() || {};
     this.setData({
       match_id: options.matchId || '',
+      my_avatar_url: userInfo.avatar_url || '',
       other_user: {
         user_id: options.userId || '',
         display_name: decodeURIComponent(options.name || '好友'),

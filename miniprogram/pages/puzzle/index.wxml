@@ -3,6 +3,7 @@
 <view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
   <empty-state
     wx:if="{{error}}"
+    theme="{{theme}}"
     icon="!"
     title="{{error}}"
     description="请检查网络后重试"
@@ -12,6 +13,7 @@
 
   <empty-state
     wx:elif="{{!puzzle}}"
+    theme="{{theme}}"
     icon="?"
     title="今日暂无谜题"
     description="管理员还未发布今日谜题，稍后再来看看。"
