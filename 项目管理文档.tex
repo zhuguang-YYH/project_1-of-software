@@ -1,0 +1,435 @@
+\documentclass[a4paper,12pt]{article}
+
+%----------------------- 宏包引入 -----------------------
+\usepackage{ctex}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{placeins}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfgantt}
+\pgfplotsset{width=10cm,compat=1.9}
+\usetikzlibrary{shapes,arrows,positioning,automata,calc,arrows.meta,patterns}
+
+%----------------------- 页面设置 -----------------------
+\geometry{left=2.5cm,right=2.5cm,top=2.8cm,bottom=2.8cm}
+\linespread{1.5}
+\setlength{\headheight}{14.5pt}
+
+%----------------------- 解决排版问题 -----------------------
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{5}
+
+%----------------------- 页眉页脚 -----------------------
+\pagestyle{fancy}
+\lhead{\kaishu 软件工程团队文档}
+\chead{项目过程管理文档}
+\rhead{第15组}
+\lfoot{}
+\cfoot{第 \thepage 页 \ / \ 共 \pageref{LastPage} 页}
+\rfoot{}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+%----------------------- 封面 -----------------------
+\begin{titlepage}
+  \begin{center}
+    \vspace*{2cm}
+    \includegraphics[width=0.5\textwidth]{软件设计/NKU.png} \\
+    \vspace*{2cm}
+    {\Huge \bfseries 软件工程团队报告} \\
+    \vspace{1.5cm}
+    {\Large \bfseries 项目过程管理文档} \\
+    \vspace{3cm}
+
+    \begin{tabular}{l l}
+      \Large \textbf{团队组号：} & \Large 15                                      \\
+      \Large \textbf{团队成员：} & \Large 杨雨杭、刘轩麟、尹浩燃、张启鑫、王增哲                     \\
+      \Large \textbf{学号：}   & \Large 2310700、2312289、2313547、2313411、2310708 \\
+      \Large \textbf{指导教师：} & \Large 徐思涵                                     \\
+    \end{tabular}
+
+    \vfill
+    {\Large \today}
+  \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+%----------------------- 正文开始 -----------------------
+
+\section{团队分工}
+
+\subsection{项目与团队概况}
+
+本项目是软件工程课程的微信小程序开发项目，开发周期为2026年5月至7月，团队共5人。项目采用\textbf{微信原生框架 + 微信云开发（CloudBase）}技术栈，实现了涵盖首页、排行榜、活动报名、借阅管理、积分兑换、委托任务、谜题库、好友系统、消息通知和后台管理等模块的完整小程序。
+
+\subsection{成员角色与分工说明}
+
+团队设项目负责人一名，其余成员按模块分工协作。以下基于Git提交记录梳理各成员的实际贡献领域。
+
+\textbf{杨雨杭（zhuguang-YYH，项目负责人，约11次提交）}负责项目初始框架搭建、云函数开发与配置、各阶段计划推进以及软件设计报告撰写。在开发过程中承担代码审查与分支合并工作。主要贡献包括：项目初始化（main分支首次上传）、UI界面逐步完善、文字乱码修复、系统设置与头像UI优化、谜题库与好友系统初步开发、云函数配置完善，以及最终阶段的Bug修复与分支合并。
+
+\textbf{尹浩燃（Linganshikake，核心开发者，约10次提交）}全程深度参与项目，贡献覆盖项目启动至最终交付。主要贡献包括：创建并维护\texttt{wechat-miniapp-current}开发分支、完善README文档、后台表单与美术素材整理、委托积分冻结修复与主包资源优化、谜题库及订阅通知与好友系统的稳定性增强、黑金主题与好友请求处理优化、添加好友目标用户解析完善，以及多轮调试反馈中的UI与同步问题修复。在项目收尾阶段，集中完成了黑金主题UI与排行榜显示的最终优化，是保证项目质量的关键成员。
+
+\textbf{刘轩麟（30SC35KD，前端与UI开发，约8次提交）}主要负责前端界面的视觉呈现和多个核心功能模块的交互开发。分三次集中推送：第一次完成了第一轮检测Bug修复与图标资源引入；第二次完成了兑换模块、连续打卡激励与订阅消息补全；第三次完成了黑金风格主题完善、排行榜修复与委托功能开发。其工作集中在6月上旬至中旬的功能密集期，是核心功能闭环的主要推动者。
+
+\textbf{王增哲（moyang5，后台开发，1次提交）}负责积分功能补全和后台数据导出模块的开发，为系统的数据管理与统计能力提供了支撑。
+
+\textbf{张启鑫（jiushan1，Bug修复，1次提交）}通过Fork + Pull Request的方式参与协作，修复了活动报名模块中同一用户对同一活动可无限次报名的逻辑漏洞。
+
+\subsection{协作模式}
+
+团队采用GitHub远程仓库作为代码托管与协作平台。日常工作以 \texttt{wechat-miniapp-current} 分支作为开发主线，核心成员直接在该分支上协作提交，外部贡献者通过Fork仓库后提交Pull Request的方式参与，由项目负责人统一审查合并。
+
+团队沟通主要通过微信工作群进行，日常问题即时交流，阶段性节点召开线上或线下短会同步进度。任务分配方面，前期由项目负责人根据需求文档划分功能模块并指定负责人，后期则根据调试反馈以"发现问题→就近认领→Push修复→负责人合并"的轻量流程灵活推进，避免了繁琐的任务流转环节。
+
+\section{项目开发计划}
+
+\subsection{项目背景与目标}
+
+项目目标是开发一个功能完整、交互流畅的微信小程序，面向校园/社区场景，提供积分体系驱动的多功能服务平台。用户可通过签到打卡、参与活动、完成委托等方式获取积分，在兑换商城中使用积分，并参与排行榜竞争。项目采用微信云开发架构——云函数承载后端业务逻辑，小程序端负责界面呈现与用户交互，数据存储于云数据库。
+
+\subsection{开发过程}
+
+整个开发过程历时约两个月，根据Git提交记录可划分为四个阶段。
+
+\textbf{第一阶段（5月上旬—5月下旬）：项目启动与基础搭建。}
+团队首先完成了技术选型和开发环境配置，确定采用微信原生框架配合云开发后端。5月11日zhuguang-YYH在main分支完成项目初始化并上传初始代码结构，同期编写了软件需求文档。5月22日Linganshikake创建了\texttt{wechat-miniapp-current}开发分支并完善了项目README文档，建立了项目的基础骨架。
+
+\textbf{第二阶段（6月上旬—6月中旬）：核心功能集中开发。}
+这是开发强度最高的阶段。6月1日zhuguang-YYH开始完善UI界面；6月6—7日30SC35KD完成第一轮Bug修复并引入借阅与排行榜图标资源，同期zhuguang-YYH修复了文字乱码问题；6月8日Linganshikake完成了软件设计报告，同时合并了jiushan1提交的活动报名去重修复，并进行了黑金主题的初步适配；6月9—12日，Linganshikake整理了后台表单与美术素材、修复了委托积分冻结问题；30SC35KD在6月10—12日密集完成了兑换模块、连续打卡激励、订阅消息补全、黑金风格完善、排行榜与委托功能修复；zhuguang-YYH在此期间优化了系统设置与头像UI。到6月12日，小程序核心功能闭环基本打通。
+
+\textbf{第三阶段（6月中旬—6月下旬）：功能扩展与深化。}
+在核心功能稳定的基础上，moyang5于6月11日提交了积分功能补全与后台数据导出模块。6月23日zhuguang-YYH初步完成了谜题库和好友系统的开发。
+
+\textbf{第四阶段（6月下旬—7月上旬）：测试修复与最终交付。}
+7月初zhuguang-YYH按照开发计划（\texttt{plan.md}）系统推进剩余工作并完善云函数配置。7月4—5日Linganshikake集中进行了5次Push：先完善谜题库、订阅通知与好友系统的稳定性，再优化黑金主题与好友请求处理，接着完善添加好友的目标用户解析，随后修复多轮调试反馈中的UI与同步问题，最终完成黑金主题UI与排行榜显示的优化。7月7日zhuguang-YYH进行最终Bug修复并将所有工作合并入主分支，项目达到可交付状态。
+
+\subsection{项目甘特图}
+
+项目自2026年5月上旬启动至7月上旬交付，横跨10个自然周。以下甘特图基于Git提交记录还原了各任务的实际起止时间，按四个开发阶段分组。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    x=8.5mm, y=6.8mm,
+    % 颜色定义
+    phase1/.style={fill=blue!45, draw=blue!70!black, line width=0.3pt, rounded corners=1pt},
+    phase2/.style={fill=teal!45, draw=teal!70!black, line width=0.3pt, rounded corners=1pt},
+    phase3/.style={fill=orange!45, draw=orange!70!black, line width=0.3pt, rounded corners=1pt},
+    phase4/.style={fill=purple!45, draw=purple!70!black, line width=0.3pt, rounded corners=1pt},
+    milestone/.style={fill=red!70, draw=red!90!black, line width=0.5pt, regular polygon, regular polygon sides=5, inner sep=1.8pt},
+    grouplabel/.style={font=\small\bfseries\sffamily, anchor=east},
+    tasklabel/.style={font=\footnotesize\sffamily, anchor=east},
+]
+
+% ====== 坐标轴与网格 ======
+% 横向：Week 1 到 Week 10（每小格半天，每大格一周）
+% 只画主要的周竖线
+\foreach \w in {1,2,...,11} {
+    \draw[gray!25, line width=0.2pt] (2*\w-2, 1.2) -- (2*\w-2, -17.5);
+}
+% 横线（任务行分隔）
+\foreach \y in {0,-1.2,-2.4,-4.4,-5.6,-6.8,-8.0,-9.2,-10.4,-12.4,-13.6,-14.8,-16.0} {
+    \draw[gray!15, line width=0.2pt] (0, \y) -- (20, \y);
+}
+
+% ====== 表头：月份 + 周 ======
+% 五月
+\draw[fill=gray!12, draw=gray!40, line width=0.4pt] (0, 1.2) rectangle (6, 0);
+\node[font=\small\sffamily\bfseries] at (3, 0.6) {五 月};
+\draw[fill=white, draw=gray!30, line width=0.2pt] (0, 0) rectangle (2, -0.8);
+\node[font=\scriptsize\sffamily, gray] at (1, -0.4) {W1};
+\draw[fill=white, draw=gray!30, line width=0.2pt] (2, 0) rectangle (4, -0.8);
+\node[font=\scriptsize\sffamily, gray] at (3, -0.4) {W2};
+\draw[fill=white, draw=gray!30, line width=0.2pt] (4, 0) rectangle (6, -0.8);
+\node[font=\scriptsize\sffamily, gray] at (5, -0.4) {W3};
+
+% 六月
+\draw[fill=gray!12, draw=gray!40, line width=0.4pt] (6, 1.2) rectangle (14, 0);
+\node[font=\small\sffamily\bfseries] at (10, 0.6) {六 月};
+\foreach \w in {4,5,6,7} {
+    \pgfmathsetmacro\xa{2*(\w-1)}
+    \pgfmathsetmacro\xb{2*\w}
+    \draw[fill=white, draw=gray!30, line width=0.2pt] (\xa, 0) rectangle (\xb, -0.8);
+    \node[font=\scriptsize\sffamily, gray] at ({2*\w-1}, -0.4) {W\w};
+}
+
+% 七月
+\draw[fill=gray!12, draw=gray!40, line width=0.4pt] (14, 1.2) rectangle (20, 0);
+\node[font=\small\sffamily\bfseries] at (17, 0.6) {七 月};
+\foreach \w in {8,9,10} {
+    \pgfmathsetmacro\xa{2*(\w-1)}
+    \pgfmathsetmacro\xb{2*\w}
+    \draw[fill=white, draw=gray!30, line width=0.2pt] (\xa, 0) rectangle (\xb, -0.8);
+    \node[font=\scriptsize\sffamily, gray] at ({2*\w-1}, -0.4) {W\w};
+}
+
+% 关键日期标记
+\node[font=\tiny\sffamily, gray!60] at (1.2, 1.05) {5/4};
+\node[font=\tiny\sffamily, gray!60] at (3.2, 1.05) {5/11};
+\node[font=\tiny\sffamily, gray!60] at (5.2, 1.05) {5/18};
+\node[font=\tiny\sffamily, gray!60] at (7.2, 1.05) {6/1};
+\node[font=\tiny\sffamily, gray!60] at (9.2, 1.05) {6/8};
+\node[font=\tiny\sffamily, gray!60] at (11.2, 1.05) {6/15};
+\node[font=\tiny\sffamily, gray!60] at (13.2, 1.05) {6/22};
+\node[font=\tiny\sffamily, gray!60] at (15.2, 1.05) {7/1};
+\node[font=\tiny\sffamily, gray!60] at (17.2, 1.05) {7/6};
+\node[font=\tiny\sffamily, gray!60] at (19.2, 1.05) {7/13};
+
+% ====== 第一阶段：项目启动（蓝色） ======
+\node[grouplabel] at (-0.3, -0.8) {\textcolor{blue!70!black}{第一阶段}};
+\node[grouplabel] at (-0.3, -1.6) {\textcolor{blue!70!black}{项目启动}};
+
+% 需求分析与文档
+\node[tasklabel] at (-0.3, -2.6) {需求分析与文档};
+\fill[phase1] (0.3, -3.0) rectangle (3.2, -2.2);
+\node[font=\tiny\sffamily, right, blue!70!black] at (3.3, -2.6) {5/4--5/15};
+
+% 框架搭建
+\node[tasklabel] at (-0.3, -3.8) {框架搭建与配置};
+\fill[phase1] (1.5, -4.2) rectangle (4.8, -3.4);
+\node[font=\tiny\sffamily, right, blue!70!black] at (4.9, -3.8) {5/11--5/24};
+
+% ====== 第二阶段：核心功能（青色） ======
+\node[grouplabel] at (-0.3, -5.4) {\textcolor{teal!70!black}{第二阶段}};
+\node[grouplabel] at (-0.3, -6.2) {\textcolor{teal!70!black}{核心功能}};
+
+\node[tasklabel] at (-0.3, -7.2) {UI与黑金主题};
+\fill[phase2] (6.2, -7.6) rectangle (9.5, -6.8);
+\node[font=\tiny\sffamily, right, teal!70!black] at (9.6, -7.2) {6/1--6/12};
+
+\node[tasklabel] at (-0.3, -8.4) {排行榜/兑换/委托/活动};
+\fill[phase2] (7.5, -8.8) rectangle (10.2, -8.0);
+\node[font=\tiny\sffamily, right, teal!70!black] at (10.3, -8.4) {6/6--6/12};
+
+% ====== 第三阶段：扩展（橙色） ======
+\node[grouplabel] at (-0.3, -9.8) {\textcolor{orange!70!black}{第三阶段}};
+\node[grouplabel] at (-0.3, -10.6) {\textcolor{orange!70!black}{功能扩展}};
+
+\node[tasklabel] at (-0.3, -11.6) {积分/打卡/订阅/后台};
+\fill[phase3] (7.7, -12.0) rectangle (10.5, -11.2);
+\node[font=\tiny\sffamily, right, orange!70!black] at (10.6, -11.6) {6/9--6/12};
+
+\node[tasklabel] at (-0.3, -12.8) {谜题库与好友系统};
+\fill[phase3] (10.5, -13.2) rectangle (14.8, -12.4);
+\node[font=\tiny\sffamily, right, orange!70!black] at (14.9, -12.8) {6/23--7/4};
+
+\node[tasklabel] at (-0.3, -14.0) {云函数配置};
+\fill[phase3] (13.8, -14.4) rectangle (15.2, -13.6);
+\node[font=\tiny\sffamily, right, orange!70!black] at (15.3, -14.0) {7/1--7/4};
+
+% ====== 第四阶段：测试与交付（紫色） ======
+\node[grouplabel] at (-0.3, -15.4) {\textcolor{purple!70!black}{第四阶段}};
+\node[grouplabel] at (-0.3, -16.2) {\textcolor{purple!70!black}{测试交付}};
+
+\node[tasklabel] at (-0.3, -17.2) {测试与Bug修复};
+\fill[phase4] (7.3, -17.6) rectangle (15.2, -16.8);
+\node[font=\tiny\sffamily, right, purple!70!black] at (15.3, -17.2) {6/6--7/4};
+
+\node[tasklabel] at (-0.3, -18.4) {软件设计报告};
+\fill[phase4] (9.2, -18.8) rectangle (9.8, -18.0);
+\node[font=\tiny\sffamily, right, purple!70!black] at (9.9, -18.4) {6/8};
+
+\node[tasklabel] at (-0.3, -19.6) {最终合并与交付};
+\fill[phase4] (15.5, -20.0) rectangle (16.2, -19.2);
+\node[font=\tiny\sffamily, right, purple!70!black] at (16.3, -19.6) {7/6};
+
+% ====== 里程碑 ======
+\node[milestone, label={[font=\tiny\sffamily]above:Initial Commit}] at (1.8, -1.2) {};
+\node[milestone, label={[font=\tiny\sffamily]above:核心闭环}] at (10.0, -5.4) {};
+\node[milestone, label={[font=\tiny\sffamily]above:项目交付}] at (16.0, -16.0) {};
+
+% ====== 今日标记线 ======
+\draw[red!60, line width=0.6pt, dashed] (16.5, 1.2) -- (16.5, -21);
+\node[font=\tiny\sffamily, red!70, anchor=south] at (16.5, 1.3) {交付};
+
+% ====== 图例 ======
+\begin{scope}[shift={(0,-21.8)}]
+\fill[phase1] (0,0.4) rectangle (1.5,-0.1);
+\node[font=\footnotesize\sffamily, anchor=west] at (1.8, 0.15) {启动阶段};
+\fill[phase2] (4.5,0.4) rectangle (6.0,-0.1);
+\node[font=\footnotesize\sffamily, anchor=west] at (6.3,0.15) {核心开发};
+\fill[phase3] (9.0,0.4) rectangle (10.5,-0.1);
+\node[font=\footnotesize\sffamily, anchor=west] at (10.8,0.15) {功能扩展};
+\fill[phase4] (13.5,0.4) rectangle (15.0,-0.1);
+\node[font=\footnotesize\sffamily, anchor=west] at (15.3,0.15) {测试交付};
+\node[milestone] at (18, 0.15) {};
+\node[font=\footnotesize\sffamily, anchor=west] at (18.4,0.15) {里程碑};
+\end{scope}
+
+\end{tikzpicture}%
+}
+\caption{项目开发甘特图（基于Git提交记录还原，横轴为日历周，按四个开发阶段着色分组）}
+\label{fig:gantt}
+\end{figure}
+
+\begin{quote}
+\textbf{说明}：图中时间条的位置与跨度均依据Git提交记录标定。四个阶段的颜色分别为蓝（启动）、青（核心开发）、橙（功能扩展）、紫（测试交付）。
+\end{quote}
+
+\section{版本管理与协同开发}
+
+\subsection{版本控制方案}
+
+本项目全程使用Git进行版本控制，代码托管于GitHub\footnote{仓库地址：\url{https://github.com/zhuguang-YYH/project\_1-of-software}}。仓库设有两个长期分支：\texttt{main}分支作为稳定主分支，存放经过验证的可交付代码；\texttt{wechat-miniapp-current}分支作为日常开发分支，所有功能迭代和Bug修复均在此分支进行。
+
+\subsection{协同开发流程}
+
+团队的协同开发遵循以下流程：每位成员在本地完成功能开发后，直接推送至\texttt{wechat-miniapp-current}分支或通过Pull Request提交。项目负责人（zhuguang-YYH）在合并前对代码进行审查，处理冲突并确保代码质量。
+
+从提交记录中可观察到一次典型的合并操作：7月7日，负责人将Linganshikake在7月4—5日的5次Push（涵盖谜题库完善、好友系统修复、UI与同步问题修复、黑金主题优化）与自己的本地提交进行了分支合并（commit \texttt{b27321a}），体现了多人在同一分支上并行开发后由负责人统一整合的协作方式。协作者jiushan1则通过Fork仓库的方式提交了活动报名Bug的修复，形成了"内部直接协作 + 外部PR贡献"的混合模式。
+
+\subsection{Git提交统计与分析}
+
+从2026年5月11日首次提交至7月7日最后一次推送，仓库共产生约\textbf{31次提交}，覆盖\textbf{22次Push事件}，\textbf{5位贡献者}参与。提交分布如下：
+
+\begin{itemize}
+  \item \textbf{zhuguang-YYH}：约11次提交，覆盖项目全生命周期，从初始化到最终交付与分支合并。
+  \item \textbf{Linganshikake}：约10次提交，全程深度参与，从创建开发分支到收尾阶段的UI与主题最终优化。
+  \item \textbf{30SC35KD}：约8次提交，集中在6月上旬至中旬的核心功能密集开发阶段，分三次集中推送。
+  \item \textbf{moyang5} 与 \textbf{jiushan1}：各1次提交，分别在后台数据导出和活动报名Bug修复上做出贡献。
+\end{itemize}
+
+整体而言，团队提交节奏与开发计划基本吻合：5月为启动期，6月为开发高峰期，7月上旬为收尾期。团队在开发过程中形成了较为一致的提交信息规范：统一使用中文描述，格式为"动词 + 具体模块/问题 + 动作对象"（如"修复了排行榜点不开的问题""完善了黑金风格的显示"），语义清晰、便于回溯。每次Push聚焦于一个逻辑主题，单个Push包含的commit数量多为1--3个，粒度适中。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    bar width=18pt,
+    width=0.85\textwidth,
+    height=6cm,
+    ylabel={提交次数},
+    symbolic x coords={YYH,LSK,35KD,MY5,JS1},
+    xtick=data,
+    xticklabel style={font=\footnotesize, text width=2em, align=center},
+    nodes near coords,
+    nodes near coords align={vertical},
+    enlarge x limits=0.3,
+    ymin=0
+]
+\addplot[blue!50,fill=blue!30] coordinates {
+    (YYH,11)
+    (LSK,10)
+    (35KD,8)
+    (MY5,1)
+    (JS1,1)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{团队成员提交次数分布（YYH=zhuguang-YYH，LSK=Linganshikake，35KD=30SC35KD，MY5=moyang5，JS1=jiushan1）}
+\label{fig:commits}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\textbf{请在此处插入 \texttt{git log --graph --oneline --all} 命令输出的截图}
+\end{figure}
+
+\section{需求变更管理}
+
+在开发过程中，团队根据实际调试反馈和用户体验测试，对部分功能进行了调整和优化。以下为记录到的主要变更：
+
+\subsection{黑金主题统一适配（6月8日—7月4日）}
+
+最初黑金UI风格仅在部分页面生效，其他页面仍沿用默认样式，视觉一致性较差。经过多轮迭代（6月8日"完善小程序功能与黑金主题适配"→6月12日"完善了黑金风格的显示"→7月4日"优化黑金主题UI与排行榜显示"），逐步将黑金主题推广至全部页面，形成了统一的视觉风格。
+
+\subsection{委托积分冻结机制（6月9日）}
+
+在测试中发现委托任务完成后积分结算存在漏洞：用户可以在委托方确认完成前提前支取积分。Linganshikake增加了积分冻结—解冻流程（Push记录："修复委托积分冻结并优化主包资源"），确保任务完成确认后积分才能到账，保障了积分体系的安全性。
+
+\subsection{活动重复报名限制（6月8日）}
+
+协作者jiushan1发现同一用户可对同一活动无限次报名，通过Fork仓库提交了修复（Push记录："修复了同一活动单用户无限次报名的bug"），增加了报名去重校验逻辑。该修复由Linganshikake合并入开发分支。
+
+\subsection{好友目标用户解析优化（7月4日）}
+
+在好友添加功能中，目标用户的识别与解析逻辑不够健壮，存在解析失败或误匹配的问题。Linganshikake对此进行了完善（commit："完善添加好友目标用户解析"），提升了添加好友的成功率。
+
+\subsection{变更管理方式}
+
+以上变更均为调试驱动的局部优化，未对整体架构和项目进度产生重大影响。团队未设立正式的需求变更审批流程，变更由发现者直接与负责人沟通确认后实施；所有变更均通过Git提交记录留痕，具备可追溯性。
+
+\section{附加材料}
+
+\subsection{项目甘特图}
+
+此处插入正式的甘特图（建议使用Project或在线工具生成）：
+
+\begin{figure}[H]
+\centering
+\textbf{【请在此处插入甘特图截图或图片】}
+\end{figure}
+
+\subsection{Git提交记录截图}
+
+\begin{figure}[H]
+\centering
+\textbf{【请在此处插入 \texttt{git log --graph --oneline --all} 截图】}
+\end{figure}
+
+\subsection{开发日志}
+
+以下是基于GitHub Push记录整理的团队开发日志概要，各成员可根据个人记录补充详细内容：
+
+\begin{itemize}
+  \item \textbf{5月11日 · 项目初始化}：zhuguang-YYH在GitHub创建仓库，完成项目骨架搭建（\texttt{miniprogram/}、\texttt{cloudfunctions/}目录结构），配置\texttt{app.json}页面路由和分包策略，随后将文件整理至lab2文件夹。
+  \item \textbf{5月22日 · 开发分支创建}：Linganshikake创建\texttt{wechat-miniapp-current}分支作为日常开发主线，更新项目README文档。
+  \item \textbf{6月1日—7日 · UI与基础修复}：zhuguang-YYH完善部分UI界面并修复文字乱码问题；30SC35KD完成第一轮检测Bug修复，引入借阅与排行榜图标资源。
+  \item \textbf{6月8日 · 报告与活动修复}：zhuguang-YYH完成软件设计报告初稿；jiushan1通过PR提交活动报名去重修复（同一用户不可对同一活动无限次报名）；Linganshikake合并该修复并进行黑金主题适配。
+  \item \textbf{6月9日—12日 · 核心功能密集期}：Linganshikake整理后台表单与美术素材，修复委托积分冻结与主包资源优化；30SC35KD连续完成兑换模块、连续打卡激励、订阅消息补全（6/10），随后完成黑金风格完善、排行榜修复与委托功能（6/12）；moyang5提交积分功能补全与后台数据导出；zhuguang-YYH优化系统设置与头像UI。
+  \item \textbf{6月23日—7月2日 · 功能扩展}：zhuguang-YYH初步完成谜题库和好友系统，随后按照\texttt{plan.md}推进剩余工作并完善云函数配置。
+  \item \textbf{7月4日—5日 · 集中修复与优化}：Linganshikake连续进行5次Push——完善谜题库、订阅通知与好友系统稳定性；优化黑金主题与好友请求处理；完善添加好友目标用户解析；修复调试反馈中的UI与同步问题；优化黑金主题UI与排行榜显示。
+  \item \textbf{7月7日 · 收尾与合并}：zhuguang-YYH进行最终Bug修复，将Linganshikake的全部工作合并入主分支，项目达到可交付状态。
+\end{itemize}
+
+各成员可在上述基础上补充个人开发日志，包括遇到的具体技术问题、解决思路、心得反思等。
+
+\section{项目总结}
+
+\subsection{项目成果}
+
+经过约两个月的协作开发，团队成功交付了一个涵盖11个功能模块、前后端完整的微信小程序。项目采用云开发架构，实现了积分流转、委托任务、排行榜竞争、社交好友等核心业务逻辑，并配合黑金主题形成了统一的视觉风格。同时交付了需求文档和软件设计报告等课程材料。
+
+\subsection{经验与反思}
+
+\textbf{成功经验。}分工明确是本次项目顺利推进的关键因素：杨雨杭把控全局架构与合并节点，尹浩燃负责开发分支维护与全链条功能实现，刘轩麟聚焦前端UI与核心交互模块，王增哲和张启鑫则在各自专长领域精准贡献。此外，\texttt{wechat-miniapp-current}单分支配合Push直推的轻量协作模式适合5人小团队，避免了过度工程化的分支管理开销，让每个人都能快速将代码合入主线。
+
+\textbf{不足之处。}项目初期缺少自动化测试环节，Bug发现主要依赖人工调试和手工回归，导致后期修复成本较高。分支策略过于扁平——所有开发共用同一分支，在中后期多人并行时产生过合并冲突（如7月7日的Merge commit所示），虽然在负责人协调下及时解决，但反映出缺少Feature Branch隔离的风险。此外，部分阶段（如6月中旬至下旬）提交密度骤降，开发节奏不够均衡，可能与期末学业压力有关。
+
+\textbf{改进建议。}后续类似项目中可引入以下实践：（1）每个独立功能在Feature Branch上开发，完成后PR合并，降低并行冲突概率；（2）利用微信开发者工具的命令行接口实现至少编译级别的自动化检查；（3）建立一份共享的Bug追踪清单（如GitHub Issues），便于状态同步与优先级排序；（4）在项目初期制定更细粒度的周计划，预留学业缓冲期，避免出现开发断档。
+
+\vspace{1cm}
+\begin{flushright}
+\begin{minipage}{0.6\textwidth}
+\textbf{说明}：Git提交统计数据来源于GitHub仓库Push记录分析（截至2026年7月7日，约31次提交，22次Push事件，5位贡献者）。
+\end{minipage}
+\end{flushright}
+
+\end{document}
