@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "物资借阅",
+  "usingComponents": {
+    "skeleton": "/components/skeleton/index"
+  }
+}

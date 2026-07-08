@@ -1,0 +1,1 @@
+<text class="tag-badge variant-{{variant}} size-{{size}}">{{text}}<slot></slot></text>

@@ -1,0 +1,33 @@
+Component({
+  properties: {
+    visible: {
+      type: Boolean,
+      value: false
+    },
+    loading: {
+      type: Boolean,
+      value: false
+    },
+    card: {
+      type: Object,
+      value: null
+    },
+    theme: {
+      type: String,
+      value: 'blue'
+    }
+  },
+
+  methods: {
+    close() {
+      this.triggerEvent('close');
+    },
+
+    onAddFriend() {
+      const card = this.data.card || {};
+      this.triggerEvent('addfriend', { user_id: card.user_id || card.card_id || card._id || '' });
+    },
+
+    noop() {}
+  }
+});

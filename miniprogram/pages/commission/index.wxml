@@ -1,0 +1,249 @@
+<view class="page theme-{{theme}} {{a11yFontClass}}">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else>
+    <view class="summary">
+      <view>
+        <text class="summary-label">可用积分</text>
+        <text class="summary-value">{{user_points.available_points}}</text>
+      </view>
+      <view>
+        <text class="summary-label">冻结积分</text>
+        <text class="summary-value frozen">{{user_points.frozen_points}}</text>
+      </view>
+      <button class="publish-btn" bindtap="openPublishModal">发布委托</button>
+    </view>
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="tab-nav">
+      <view class="tab-item {{tab === 'available' ? 'active' : ''}}" data-tab="available" bindtap="switchTab">可领取</view>
+      <view class="tab-item {{tab === 'accepted' ? 'active' : ''}}" data-tab="accepted" bindtap="switchTab">我领取的</view>
+      <view class="tab-item {{tab === 'published' ? 'active' : ''}}" data-tab="published" bindtap="switchTab">我发布的</view>
+    </view>
+
+    <view wx:if="{{tab === 'available'}}" class="list">
+      <view class="commission-card" wx:for="{{commissions}}" wx:key="commission_id" data-commission_id="{{item.commission_id}}" bindtap="goCommissionDetail">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.publisher_name}} / {{item.created_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">奖励</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">剩余</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">截止</text>
+            <view class="deadline-value">
+              <text class="deadline-date">{{item.deadline_date_text}}</text>
+              <text class="deadline-time">{{item.deadline_time_text}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="card-actions" catchtap="noop">
+          <button
+            class="primary-btn claim-btn"
+            wx:if="{{item.can_accept}}"
+            loading="{{accepting_id === item.commission_id}}"
+            disabled="{{accepting_id === item.commission_id}}"
+            data-commission_id="{{item.commission_id}}"
+            bindtap="acceptCommission">领取委托</button>
+          <button class="primary-btn claim-btn owner-btn" wx:elif="{{item.is_mine}}" disabled="{{true}}">我发布的</button>
+          <button class="primary-btn claim-btn expired-btn" wx:elif="{{item.is_expired}}" disabled="{{true}}">{{item.my_acceptance_status_text || '不可领取'}}</button>
+          <button class="primary-btn claim-btn accepted-btn" wx:elif="{{item.accepted_by_me}}" disabled="{{true}}">{{item.my_acceptance_status_text || '已领取'}}</button>
+          <button class="primary-btn claim-btn unavailable-btn" wx:else disabled="{{true}}">{{item.my_acceptance_status_text || '不可领取'}}</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{commissions.length === 0}}">
+        <text class="empty-title">暂无可领取的委托</text>
+        <text class="empty-text">发布一个小任务，请其他侦探助你一臂之力。</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'accepted'}}" class="list">
+      <view class="commission-card" wx:for="{{accepted}}" wx:key="acceptance_id" data-commission_id="{{item.commission_id}}" bindtap="goCommissionDetail">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.accepted_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.commission.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">奖励</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">剩余</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">发布者</text>
+            <text class="info-value">{{item.publisher_name}}</text>
+          </view>
+        </view>
+
+        <view class="card-actions" catchtap="noop">
+          <button
+            class="primary-btn claim-btn"
+            wx:if="{{item.can_complete}}"
+            loading="{{completing_id === item.acceptance_id}}"
+            disabled="{{completing_id === item.acceptance_id}}"
+            data-acceptance_id="{{item.acceptance_id}}"
+            bindtap="completeCommission">标记完成</button>
+          <button class="primary-btn claim-btn status-btn status-btn-{{item.status}}" wx:else disabled="{{true}}">{{item.status_text}}</button>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{accepted.length === 0}}">
+        <text class="empty-title">还未领取委托</text>
+        <text class="empty-text">去可领取列表看看有哪些任务适合你。</text>
+      </view>
+    </view>
+
+    <view wx:if="{{tab === 'published'}}" class="list">
+      <view class="commission-card" wx:for="{{published}}" wx:key="commission_id" data-commission_id="{{item.commission_id}}" bindtap="goCommissionDetail">
+        <view class="card-head">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-meta">{{item.created_text}}</text>
+          </view>
+          <view class="status status-{{item.status}}">{{item.status_text}}</view>
+        </view>
+        <text class="desc">{{item.description}}</text>
+
+        <view class="info-row">
+          <view class="info-item">
+            <text class="info-label">奖励</text>
+            <text class="info-value">{{item.reward_points}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">剩余</text>
+            <text class="info-value">{{item.remaining_reward}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">进度</text>
+            <text class="info-value">{{item.accepted_count}}/{{item.completed_count}}</text>
+          </view>
+        </view>
+
+        <view class="acceptance-list" wx:if="{{item.has_acceptances}}">
+          <view class="acceptance-item" wx:for="{{item.acceptances}}" wx:for-item="acc" wx:key="acceptance_id">
+            <view>
+              <text class="receiver">{{acc.receiver_name}}</text>
+              <text class="acceptance-meta">{{acc.status_text}} / {{acc.accepted_text}}</text>
+            </view>
+            <button
+              class="small-primary"
+              wx:if="{{acc.can_reward}}"
+              data-commission_id="{{item.commission_id}}"
+              data-acceptance_id="{{acc.acceptance_id}}"
+              data-receiver_name="{{acc.receiver_name}}"
+              data-max="{{item.remaining_reward}}"
+              catchtap="openRewardModal">发放奖励</button>
+          </view>
+        </view>
+        <view class="no-acceptance" wx:else>暂无人领取</view>
+      </view>
+
+      <view class="empty-state" wx:if="{{published.length === 0}}">
+        <text class="empty-title">还未发布委托</text>
+        <text class="empty-text">发布后积分将被冻结直至分配完成。</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="modal-mask" wx:if="{{show_publish_modal}}" bindtap="closePublishModal">
+    <view class="modal" catchtap="noop">
+      <view class="modal-head">
+        <text>发布委托</text>
+        <button class="close-btn" bindtap="closePublishModal">×</button>
+      </view>
+
+      <view class="form">
+        <view class="field">
+          <text class="field-label">标题</text>
+          <input value="{{publish_form.title}}" data-field="title" bindinput="onPublishInput" maxlength="40" placeholder="委托标题" />
+          <text class="field-error" wx:if="{{publish_errors.title}}">{{publish_errors.title}}</text>
+        </view>
+        <view class="field">
+          <text class="field-label">描述</text>
+          <textarea value="{{publish_form.description}}" data-field="description" bindinput="onPublishInput" maxlength="200" placeholder="详细描述任务与交付要求" show-confirm-bar="{{false}}" />
+          <text class="counter">{{publish_form.description.length}}/200</text>
+          <text class="field-error" wx:if="{{publish_errors.description}}">{{publish_errors.description}}</text>
+        </view>
+        <view class="field">
+          <text class="field-label">奖励积分</text>
+          <input type="number" value="{{publish_form.reward_points}}" data-field="reward_points" bindinput="onPublishInput" placeholder="发布时从可用积分冻结" />
+          <text class="hint">可用：{{user_points.available_points}}</text>
+          <text class="field-error" wx:if="{{publish_errors.reward_points}}">{{publish_errors.reward_points}}</text>
+        </view>
+        <view class="field">
+          <text class="field-label">截止时间</text>
+          <view class="deadline-picker-row">
+            <picker mode="date" value="{{publish_form.deadline_date}}" bindchange="onDeadlineDateChange">
+              <view class="picker-input">{{publish_form.deadline_date || '选择日期'}}</view>
+            </picker>
+            <picker mode="time" value="{{publish_form.deadline_time}}" bindchange="onDeadlineTimeChange">
+              <view class="picker-input">{{publish_form.deadline_time || '选择时间'}}</view>
+            </picker>
+          </view>
+          <text class="hint">不选择则长期有效；只选日期时默认当天 23:59 截止</text>
+          <text class="field-error" wx:if="{{publish_errors.deadline}}">{{publish_errors.deadline}}</text>
+        </view>
+      </view>
+
+      <view class="modal-actions">
+        <button class="secondary-btn" bindtap="closePublishModal">取消</button>
+        <button class="primary-btn" loading="{{publishing}}" disabled="{{publishing || !publish_valid}}" bindtap="publishCommission">确认发布</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="modal-mask" wx:if="{{show_reward_modal}}" bindtap="closeRewardModal">
+    <view class="modal small" catchtap="noop">
+      <view class="modal-head">
+        <text>发放奖励</text>
+        <button class="close-btn" bindtap="closeRewardModal">×</button>
+      </view>
+      <view class="reward-box">
+        <text class="reward-name">领取人：{{reward_target.receiver_name}}</text>
+        <text class="hint">可发放上限：{{reward_target.max}}</text>
+        <input class="reward-input" type="number" value="{{reward_points_input}}" bindinput="onRewardInput" />
+      </view>
+      <view class="modal-actions">
+        <button class="secondary-btn" bindtap="closeRewardModal">取消</button>
+        <button class="primary-btn" loading="{{rewarding}}" disabled="{{rewarding}}" bindtap="allocateReward">确认发放</button>
+      </view>
+    </view>
+  </view>
+
+  <common-modal id="publishConfirm" bind:confirm="executePublishCommission" />
+</view>

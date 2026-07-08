@@ -1,0 +1,178 @@
+<view class="page-bg-gradient page-root theme-{{theme}} {{a11yFontClass}}">
+  <skeleton wx:if="{{loading}}" variant="card" rows="4" title="加载首页中..." />
+
+  <scroll-view
+    class="scroll-view"
+    scroll-y
+    refresher-enabled="{{true}}"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    wx:else
+  >
+    <view class="hero">
+      <view class="hero-deco hero-deco-1"></view>
+      <view class="hero-deco hero-deco-2"></view>
+
+      <view class="hero-content" wx:if="{{isLoggedIn}}">
+        <view class="hero-greeting">
+          <text class="hero-eyebrow">NK DETECTIVE</text>
+          <text class="hero-title">{{userInfo.nickname || '待完善昵称'}}</text>
+          <text class="hero-sub">让我们继续今天的推理</text>
+        </view>
+        <image class="hero-avatar" src="{{userInfo.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+      </view>
+
+      <view class="hero-content hero-content-guest" wx:else>
+        <view class="hero-greeting">
+          <text class="hero-eyebrow">NK DETECTIVE</text>
+          <text class="hero-title">NK推协侦探管理系统</text>
+          <text class="hero-sub">登录后即可参与谜题、积分与活动</text>
+        </view>
+      </view>
+
+      <view class="hero-stats" wx:if="{{isLoggedIn}}">
+        <view class="hero-stat tap-feedback" bindtap="goToProfile">
+          <text class="hero-stat-value">{{myPoints || 0}}</text>
+          <text class="hero-stat-label">可兑换积分</text>
+        </view>
+        <view class="hero-stat-divider"></view>
+        <view class="hero-stat tap-feedback" bindtap="goToRanking">
+          <text class="hero-stat-value">{{(myRank && myRank <= 100) ? myRank : '—'}}</text>
+          <text class="hero-stat-label">当前排名</text>
+        </view>
+        <view class="hero-stat-divider"></view>
+        <view class="hero-stat tap-feedback" bindtap="goToPuzzle">
+          <text class="hero-stat-value">{{dailyPuzzle.current_streak || 0}}</text>
+          <text class="hero-stat-label">连续打卡</text>
+        </view>
+        <view class="hero-stat-divider"></view>
+        <view class="hero-stat tap-feedback" bindtap="onDailyCheckin">
+          <text class="hero-stat-value">{{checkedInToday ? '✓' : '签'}}</text>
+          <text class="hero-stat-label">{{checkedInToday ? '今日已签到' : '每日签到'}}</text>
+        </view>
+      </view>
+
+      <button class="hero-login-btn" wx:if="{{!isLoggedIn}}" bindtap="navigateToLogin">立即登录</button>
+    </view>
+
+    <view class="error-banner" wx:if="{{error}}">
+      <text class="error-text">{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <!-- 运营 Banner 轮播 -->
+    <swiper class="banner-swiper" wx:if="{{banners.length > 0}}" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.3)" indicator-active-color="#d4af37" autoplay="{{true}}" interval="4000" circular="{{true}}">
+      <swiper-item wx:for="{{banners}}" wx:key="id">
+        <view class="banner-card tap-feedback" data-url="{{item.link_url}}" data-type="{{item.link_type}}" bindtap="onBannerTap">
+          <image class="banner-image" src="{{item.image_url}}" mode="aspectFill" lazy-load="{{true}}" />
+          <view class="banner-overlay">
+            <text class="banner-title">{{item.title}}</text>
+            <text class="banner-desc" wx:if="{{item.description}}">{{item.description}}</text>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <!-- 系统公告 -->
+    <view class="announcement-bar tap-feedback" wx:if="{{announcement}}" bindtap="onAnnouncementTap">
+      <view class="announcement-icon">📢</view>
+      <text class="announcement-text">{{announcement.content || announcement.title}}</text>
+      <text class="announcement-arrow">›</text>
+    </view>
+
+    <view class="section-title-bar">快捷功能</view>
+    <view class="quick-nav">
+      <view class="nav-item tap-feedback" bindtap="goToPuzzle">
+        <view class="icon-circle is-gold">谜</view>
+        <text class="nav-text">每日谜题</text>
+        <text class="nav-desc" wx:if="{{dailyPuzzle && dailyPuzzle.answered && dailyPuzzle.current_streak}}">连续 {{dailyPuzzle.current_streak}} 天</text>
+        <text class="nav-desc" wx:elif="{{dailyPuzzle && dailyPuzzle.answered}}">今日已完成</text>
+        <text class="nav-desc" wx:elif="{{dailyPuzzle}}">今日未完成</text>
+        <text class="nav-desc" wx:else>进入答题</text>
+        <view class="nav-dot" wx:if="{{dailyPuzzle && !dailyPuzzle.answered}}"></view>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToRanking">
+        <view class="icon-circle">榜</view>
+        <text class="nav-text">排行榜</text>
+        <text class="nav-desc">积分排名</text>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToActivity">
+        <view class="icon-circle is-success">动</view>
+        <text class="nav-text">活动报名</text>
+        <text class="nav-desc">报名与签到</text>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToDud">
+        <view class="icon-circle is-purple">聊</view>
+        <text class="nav-text">Dud 对话</text>
+        <text class="nav-desc">关键词助手</text>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToPuzzleBank">
+        <view class="icon-circle">库</view>
+        <text class="nav-text">谜题库</text>
+        <text class="nav-desc">练习与收藏</text>
+      </view>
+
+      <view class="nav-item tap-feedback" bindtap="goToDating">
+        <view class="icon-circle is-pink">友</view>
+        <text class="nav-text">我的好友</text>
+        <text class="nav-desc">聊天与约局</text>
+      </view>
+    </view>
+
+    <view class="section detective-card" wx:if="{{topThree.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-inline">排行榜前三</view>
+        <view class="section-more tap-feedback" bindtap="goToRanking">查看更多 ›</view>
+      </view>
+
+      <view class="ranking-list">
+        <detective-card-item
+          wx:for="{{topThree}}"
+          wx:key="user_id"
+          user="{{item}}"
+          variant="compact"
+          theme="{{rankingCardTheme}}"
+          a11y-font-class="{{a11yFontClass}}"
+          bind:cardtap="openRankingUser"
+        />
+      </view>
+    </view>
+
+    <view class="section detective-card" wx:if="{{recommendations.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-inline">推荐阅读</view>
+        <view class="section-more tap-feedback" bindtap="goToRecommendations">查看更多 ›</view>
+      </view>
+
+      <view class="recommend-list">
+        <view class="recommend-item tap-feedback" wx:for="{{recommendations}}" wx:key="id" data-id="{{item.id}}" bindtap="goToRecommendationDetail">
+          <image class="recommend-cover" src="{{item.cover_url || '/pages/exchange/images/goods-default.jpg'}}" mode="aspectFill" lazy-load="{{true}}" />
+          <view class="recommend-info">
+            <text class="recommend-title">{{item.title}}</text>
+            <text class="recommend-category">{{item.category || '推荐'}}</text>
+          </view>
+          <text class="recommend-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!dailyPuzzle && isLoggedIn && !error && topThree.length === 0 && recommendations.length === 0}}">
+      <view class="icon-circle is-lg is-gold">?</view>
+      <text class="empty-text">暂无内容，下拉刷新试试</text>
+    </view>
+
+    <view class="page-footer">NK推协 · Detective Club</view>
+  </scroll-view>
+
+  <detective-card-modal
+    visible="{{show_card_modal}}"
+    loading="{{card_loading}}"
+    card="{{selected_card}}"
+    theme="{{theme}}"
+    bind:close="closeCardModal"
+    bind:addfriend="onAddFriend" />
+</view>

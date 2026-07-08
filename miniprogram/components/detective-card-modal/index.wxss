@@ -1,0 +1,462 @@
+.modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: flex-end;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.card-modal {
+  width: 100%;
+  max-height: 84vh;
+  padding: 36rpx;
+  border-radius: 32rpx 32rpx 0 0;
+  background: #f8fafc;
+  box-sizing: border-box;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+}
+
+.modal-close {
+  width: 64rpx !important;
+  height: 64rpx !important;
+  line-height: 60rpx !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  color: #526174 !important;
+  background: #edf2f7 !important;
+  font-size: 40rpx !important;
+}
+
+.modal-close::after { border: none !important; }
+
+.card-loading {
+  padding: 36rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  color: #7a8797;
+  font-size: 26rpx;
+}
+
+.mini-spinner {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
+  animation: spin 0.8s linear infinite;
+}
+
+.detective-card {
+  position: relative;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 16rpx 48rpx rgba(22, 34, 51, 0.08);
+}
+
+.detective-card::before { display: none; }
+
+.card-hero {
+  position: relative;
+  min-height: 220rpx;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  background: linear-gradient(135deg, #1a1f3a 0%, #3a4cd1 100%);
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  overflow: hidden;
+}
+
+.card-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-case-no,
+.card-avatar,
+.card-identity {
+  position: relative;
+  z-index: 1;
+}
+
+.card-case-no {
+  position: absolute;
+  top: 20rpx;
+  right: 24rpx;
+  color: rgba(245, 176, 65, 0.85);
+  font-size: 20rpx;
+  letter-spacing: 3rpx;
+  font-weight: 700;
+}
+
+.card-avatar {
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: 50%;
+  border: 4rpx solid #f5b041;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.card-identity {
+  flex: 1;
+  min-width: 0;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.card-name {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #fff;
+}
+
+.card-signature {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+
+.card-stats {
+  display: flex;
+  margin-top: 24rpx;
+  background: #eef0ff;
+  border-radius: 16rpx;
+  padding: 24rpx 0;
+}
+
+.card-stat {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.card-stat-icon {
+  width: 42rpx;
+  height: 42rpx;
+  margin-bottom: 4rpx;
+}
+
+.card-stat-value {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #3a4cd1;
+}
+
+.card-stat-label {
+  font-size: 22rpx;
+  color: #4a5577;
+}
+
+.card-section {
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  background: #f4f6fb;
+  border-radius: 14rpx;
+}
+
+.card-section-title {
+  display: block;
+  font-size: 22rpx;
+  color: #8a96a8;
+  margin-bottom: 8rpx;
+  font-weight: 600;
+}
+
+.card-section-value {
+  font-size: 26rpx;
+  color: #1a1f3a;
+  line-height: 1.6;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.theme-blue.modal-mask {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.theme-blue .card-modal {
+  background: #f8fafc;
+  border: none;
+  box-shadow: none;
+}
+
+.theme-blue .modal-title {
+  color: #1a1f3a;
+}
+
+.theme-blue .modal-close {
+  color: #526174 !important;
+  background: #edf2f7 !important;
+  border: none !important;
+}
+
+.theme-blue .card-loading {
+  color: #7a8797;
+}
+
+.theme-blue .mini-spinner {
+  border-color: #eef0ff;
+  border-top-color: #5b6cff;
+}
+
+.theme-blue .detective-card {
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 16rpx 48rpx rgba(22, 34, 51, 0.08);
+}
+
+.theme-blue .card-hero {
+  background: linear-gradient(135deg, #1a1f3a 0%, #3a4cd1 100%);
+  border: none;
+}
+
+.theme-blue .card-hero-bg {
+  opacity: 0.35;
+}
+
+.theme-blue .card-case-no {
+  color: rgba(245, 176, 65, 0.85);
+}
+
+.theme-blue .card-avatar {
+  border-color: #f5b041;
+  background: #fff;
+  box-shadow: none;
+}
+
+.theme-blue .card-name {
+  color: #fff;
+}
+
+.theme-blue .card-signature {
+  color: rgba(255,255,255,0.7);
+}
+
+.theme-blue .card-stats {
+  background: #eef0ff;
+  border: none;
+}
+
+.theme-blue .card-stat-value {
+  color: #3a4cd1;
+}
+
+.theme-blue .card-stat-label {
+  color: #4a5577;
+}
+
+.theme-blue .card-section {
+  background: #f4f6fb;
+  border: none;
+}
+
+.theme-blue .card-section-title {
+  color: #8a96a8;
+}
+
+.theme-blue .card-section-value {
+  color: #1a1f3a;
+}
+
+.theme-gold.modal-mask {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.theme-gold .card-modal {
+  background: #0f0f0f;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 -16rpx 48rpx rgba(0, 0, 0, 0.48);
+}
+
+.theme-gold .modal-title {
+  color: #f4ecd6;
+}
+
+.theme-gold .modal-close {
+  color: #f8e7a8 !important;
+  background: rgba(212, 175, 55, 0.12) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.22) !important;
+}
+
+.theme-gold .card-loading {
+  color: rgba(244, 236, 214, 0.72);
+}
+
+.theme-gold .mini-spinner {
+  border-color: rgba(212, 175, 55, 0.18);
+  border-top-color: #d4af37;
+}
+
+.theme-gold .detective-card {
+  background: #151515;
+  border: 1rpx solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 18rpx 48rpx rgba(0, 0, 0, 0.38);
+}
+
+.theme-gold .card-hero {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(248, 231, 168, 0.22), transparent 34%),
+    linear-gradient(135deg, #14100a 0%, #211909 55%, #3b2a0b 100%);
+  border: 1rpx solid rgba(212, 175, 55, 0.26);
+}
+
+.theme-gold .card-hero-bg {
+  opacity: 0.18;
+}
+
+.theme-gold .card-case-no {
+  color: rgba(248, 231, 168, 0.88);
+}
+
+.theme-gold .card-avatar {
+  border-color: #d4af37;
+  background: #1b1b1b;
+  box-shadow: 0 0 0 6rpx rgba(212, 175, 55, 0.12);
+}
+
+.theme-gold .card-name {
+  color: #f8e7a8;
+}
+
+.theme-gold .card-signature {
+  color: rgba(244, 236, 214, 0.76);
+}
+
+.theme-gold .card-stats {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16), rgba(255, 255, 255, 0.05));
+  border: 1rpx solid rgba(212, 175, 55, 0.16);
+}
+
+.theme-gold .card-stat-value {
+  color: #f8e7a8;
+}
+
+.theme-gold .card-stat-label {
+  color: rgba(244, 236, 214, 0.68);
+}
+
+.theme-gold .card-section {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1rpx solid rgba(212, 175, 55, 0.14);
+}
+
+.theme-gold .card-section-title {
+  color: rgba(248, 231, 168, 0.82);
+}
+
+.theme-gold .card-section-value {
+  color: #f4ecd6;
+}
+
+/* ========== 好友操作区 ========== */
+.card-friend-actions {
+  margin-top: 24rpx;
+}
+
+.card-add-friend-btn {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.25);
+}
+
+.card-add-friend-btn::after { border: none; }
+
+.add-friend-icon {
+  font-size: 36rpx;
+  font-weight: 300;
+}
+
+.add-friend-text {
+  font-size: 28rpx;
+}
+
+.card-friend-status {
+  width: 100%;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.card-friend-status.already {
+  background: #e6f7e6;
+  color: #389e0d;
+}
+
+.card-friend-status.pending {
+  background: #fff8e1;
+  color: #d48806;
+}
+
+/* gold theme */
+.theme-gold .card-add-friend-btn {
+  background: linear-gradient(135deg, #d4af37, #b8941f);
+  box-shadow: 0 6rpx 18rpx rgba(212, 175, 55, 0.3);
+}
+
+.theme-gold .card-friend-status.already {
+  background: rgba(82, 196, 26, 0.15);
+  color: #95de64;
+}
+
+.theme-gold .card-friend-status.pending {
+  background: rgba(212, 175, 55, 0.15);
+  color: #f8e7a8;
+}

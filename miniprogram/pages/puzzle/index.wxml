@@ -1,0 +1,102 @@
+<common-loading visible="{{loading}}" title="加载谜题中..." mask="{{false}}" />
+
+<view class="container theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
+  <empty-state
+    wx:if="{{error}}"
+    theme="{{theme}}"
+    icon="!"
+    title="{{error}}"
+    description="请检查网络后重试"
+    action-text="重试"
+    bind:action="onRetry"
+  />
+
+  <empty-state
+    wx:elif="{{!puzzle}}"
+    theme="{{theme}}"
+    icon="?"
+    title="今日暂无谜题"
+    description="管理员还未发布今日谜题，稍后再来看看。"
+    action-text="刷新"
+    bind:action="onRetry"
+  />
+
+  <view class="puzzle-card" wx:elif="{{puzzle}}">
+    <view class="puzzle-header">
+      <view class="puzzle-title-block">
+        <text class="puzzle-eyebrow">DAILY PUZZLE</text>
+        <text class="puzzle-title">每日谜题</text>
+      </view>
+      <text class="puzzle-difficulty difficulty-{{puzzle._difficulty_class || 'normal'}}">
+        {{puzzle._difficulty_text || '中等'}}
+      </text>
+    </view>
+
+    <view class="puzzle-content">
+      <text class="puzzle-desc">{{puzzle.content}}</text>
+    </view>
+
+    <view class="options-container" wx:if="{{!answered}}">
+      <view
+        class="option {{selected_option_id === item.option_id ? 'selected' : ''}}"
+        wx:for="{{options}}"
+        wx:key="option_id"
+        data-option-id="{{item.option_id}}"
+        bindtap="selectOption"
+      >
+        <view class="option-label">{{item.option_label}}</view>
+        <text class="option-text">{{item.option_content}}</text>
+      </view>
+    </view>
+
+    <view class="answer-display" wx:elif="{{answered}}">
+      <view class="answer-status {{is_correct ? 'correct' : 'wrong'}}">
+        <text class="status-icon">{{is_correct ? '✓' : '×'}}</text>
+        <text class="status-text">{{is_correct ? '恭喜答对！' : '回答错误'}}</text>
+      </view>
+
+      <view class="answer-info">
+        <text class="info-title">正确答案</text>
+        <text class="info-content">{{puzzle.correct_answer}}</text>
+      </view>
+
+      <view class="analysis" wx:if="{{puzzle.answer_explanation}}">
+        <text class="analysis-title">解析</text>
+        <text class="analysis-content">{{puzzle.answer_explanation}}</text>
+      </view>
+    </view>
+
+    <view class="action-buttons">
+      <button
+        class="btn btn-submit"
+        wx:if="{{!answered}}"
+        disabled="{{!selected_option_id || submitting}}"
+        bindtap="submitAnswer"
+        loading="{{submitting}}"
+      >
+        {{submitting ? '提交中...' : '提交答案'}}
+      </button>
+      <button class="btn btn-back" bindtap="goBack">返回首页</button>
+    </view>
+
+    <view class="bank-link tap-feedback" bindtap="goToBank">
+      <text>浏览谜题库 →</text>
+    </view>
+
+    <view class="reward-info" wx:if="{{puzzle.reward_points}}">
+      <view class="reward-line">
+        <text class="reward-label">答对可获得</text>
+        <text class="reward-points">+{{puzzle.reward_points}} 积分</text>
+      </view>
+      <view class="streak-line">
+        <text class="streak-text">连续打卡 {{puzzle.current_streak || 0}} 天</text>
+        <text class="streak-bonus" wx:if="{{puzzle.last_streak_bonus_points}}">
+          本次额外 +{{puzzle.last_streak_bonus_points}} 积分
+        </text>
+        <text class="streak-bonus" wx:elif="{{puzzle.next_streak_bonus_in && puzzle.streak_bonus_points}}">
+          再答对 {{puzzle.next_streak_bonus_in}} 天额外 +{{puzzle.streak_bonus_points}} 积分
+        </text>
+      </view>
+    </view>
+  </view>
+</view>

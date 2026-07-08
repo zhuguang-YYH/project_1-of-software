@@ -1,0 +1,6 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 档案文件夹背景 -->
+  <path d="M20 30H50L60 40H108V100H20V30Z" fill="#34495E" stroke="#2C3E50" stroke-width="4"/>
+  <!-- 中心圆圈 (已移除十字线) -->
+  <circle cx="64" cy="70" r="15" stroke="white" stroke-width="4"/>
+</svg>

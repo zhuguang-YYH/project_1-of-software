@@ -1,0 +1,21 @@
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.size-sm { padding: 4rpx 12rpx; font-size: 20rpx; }
+.size-lg { padding: 8rpx 22rpx; font-size: 24rpx; }
+
+.variant-primary { color: #3a4cd1; background: #eef0ff; }
+.variant-gold    { color: #92580d; background: #fef3df; }
+.variant-success { color: #166534; background: #dcfce7; }
+.variant-warning { color: #92400e; background: #fef3c7; }
+.variant-danger  { color: #991b1b; background: #fee2e2; }
+.variant-info    { color: #075985; background: #e0f2fe; }
+.variant-muted   { color: #475569; background: #e2e8f0; }
+.variant-outline { color: #5b6cff; background: transparent; border: 2rpx solid #5b6cff; padding: 4rpx 14rpx; }

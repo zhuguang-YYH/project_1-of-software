@@ -1,0 +1,26 @@
+<svg width="750" height="1000" viewBox="0 0 750 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 纸张底色 -->
+  <rect width="750" height="1000" fill="#FDF5E6"/>
+  
+  <!-- 装饰性网格线 (微弱) -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E0C9A6" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="750" height="1000" fill="url(#grid)" opacity="0.3"/>
+
+  <!-- 左侧边缘打孔效果 -->
+  <circle cx="30" cy="100" r="10" fill="#2C3E50" opacity="0.1"/>
+  <circle cx="30" cy="500" r="10" fill="#2C3E50" opacity="0.1"/>
+  <circle cx="30" cy="900" r="10" fill="#2C3E50" opacity="0.1"/>
+
+  <!-- "机密" 印章 -->
+  <g transform="translate(580, 80) rotate(15)">
+    <rect x="0" y="0" width="120" height="40" rx="3" stroke="#C0392B" stroke-width="3" fill="none" opacity="0.6"/>
+    <text x="60" y="27" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#C0392B" text-anchor="middle" opacity="0.6">CONFIDENTIAL</text>
+  </g>
+
+  <!-- 底部署名 -->
+  <text x="700" y="970" font-family="Courier, monospace" font-size="16" font-weight="bold" fill="#8B4513" text-anchor="end" opacity="0.5">NK Detective</text>
+</svg>

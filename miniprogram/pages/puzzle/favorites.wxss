@@ -1,0 +1,190 @@
+/* pages/puzzle/favorites/index.wxss */
+.container {
+  min-height: 100vh;
+  padding: 20rpx 24rpx 80rpx;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
+}
+
+.fav-header {
+  padding: 16rpx 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.fav-count {
+  font-size: 26rpx;
+  color: #4a5577;
+  font-weight: 600;
+}
+
+.fav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.fav-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.08);
+}
+
+.fav-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.fav-tags {
+  display: flex;
+  gap: 10rpx;
+}
+
+.card-category {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+  background: #f4f6fb;
+  color: #4a5577;
+}
+
+.card-difficulty {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+}
+
+.difficulty-easy { background: rgba(52, 211, 153, 0.15); color: #16a085; }
+.difficulty-normal,
+.difficulty-medium { background: rgba(245, 176, 65, 0.15); color: #92580d; }
+.difficulty-hard { background: rgba(231, 76, 60, 0.15); color: #c0392b; }
+.difficulty-extreme { background: rgba(168, 85, 247, 0.2); color: #7b1fa2; }
+
+.fav-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.fav-meta {
+  display: flex;
+  gap: 20rpx;
+}
+
+.meta-text {
+  font-size: 22rpx;
+  color: #9aa3b8;
+}
+
+.fav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.fav-remove {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #e74c3c;
+}
+
+.fav-remove:active {
+  transform: scale(0.9);
+}
+
+.fav-arrow {
+  font-size: 36rpx;
+  color: #c5cee0;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: #5b6cff;
+  font-weight: 600;
+}
+
+.load-more-text.loading {
+  color: #9aa3b8;
+}
+
+.no-more {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #9aa3b8;
+}
+
+.theme-gold.container {
+  background: radial-gradient(circle at 18% 0%, rgba(212, 175, 55, 0.2), transparent 36%),
+    linear-gradient(180deg, #090909 0%, #12100a 56%, #090909 100%) !important;
+}
+
+.theme-gold .fav-count {
+  color: #f2d77c;
+}
+
+.theme-gold .fav-item {
+  background: #171717;
+  border: 1rpx solid rgba(212, 175, 55, 0.26);
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.34);
+}
+
+.theme-gold .card-category,
+.theme-gold .card-difficulty {
+  background: rgba(255, 250, 240, 0.08);
+  color: rgba(247, 236, 209, 0.86);
+}
+
+.theme-gold .difficulty-easy { background: rgba(52, 211, 153, 0.14); color: #7ee2b8; }
+.theme-gold .difficulty-normal,
+.theme-gold .difficulty-medium { background: rgba(212, 175, 55, 0.18); color: #f2d77c; }
+.theme-gold .difficulty-hard { background: rgba(231, 76, 60, 0.18); color: #ff9b8d; }
+.theme-gold .difficulty-extreme { background: rgba(168, 85, 247, 0.2); color: #d9bff5; }
+
+.theme-gold .fav-title {
+  color: #f7ecd1;
+}
+
+.theme-gold .meta-text,
+.theme-gold .fav-arrow,
+.theme-gold .no-more-text {
+  color: rgba(247, 236, 209, 0.68);
+}
+
+.theme-gold .fav-remove {
+  background: rgba(212, 175, 55, 0.16);
+  color: #f2d77c;
+  border: 1rpx solid rgba(212, 175, 55, 0.28);
+}
+
+.theme-gold .load-more-text {
+  color: #f2d77c;
+}

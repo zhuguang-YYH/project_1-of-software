@@ -1,0 +1,330 @@
+/* pages/puzzle/index.wxss */
+.container {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 80rpx;
+  background: linear-gradient(180deg, #f4f6fb 0%, #eef0ff 60%, #fef3df 100%);
+}
+
+/* 谜题卡片 */
+.puzzle-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 0;
+  box-shadow: 0 16rpx 40rpx rgba(91, 108, 255, 0.12);
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+/* 谜题头部 - 渐变 */
+.puzzle-header {
+  position: relative;
+  padding: 36rpx 32rpx 28rpx;
+  background: linear-gradient(135deg, #1a1f3a 0%, #3a4cd1 100%);
+  color: #fff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  overflow: hidden;
+}
+
+.puzzle-header::after {
+  content: '?';
+  position: absolute;
+  right: -30rpx;
+  bottom: -70rpx;
+  font-size: 280rpx;
+  font-weight: 900;
+  color: rgba(245, 176, 65, 0.12);
+  pointer-events: none;
+}
+
+.puzzle-title-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.puzzle-eyebrow {
+  font-size: 22rpx;
+  letter-spacing: 4rpx;
+  color: rgba(245, 176, 65, 0.9);
+  font-weight: 700;
+}
+
+.puzzle-title {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #fff;
+}
+
+.puzzle-difficulty {
+  position: relative;
+  z-index: 1;
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  flex-shrink: 0;
+}
+
+.difficulty-easy { background: rgba(52, 211, 153, 0.25); color: #5af0a8; }
+.difficulty-normal,
+.difficulty-medium { background: rgba(245, 176, 65, 0.25); color: #ffd58c; }
+.difficulty-hard { background: rgba(231, 76, 60, 0.25); color: #ff9b8d; }
+.difficulty-extreme { background: rgba(168, 85, 247, 0.3); color: #d9bff5; }
+
+/* 谜题内容 */
+.puzzle-content {
+  padding: 32rpx 32rpx 16rpx;
+}
+
+.puzzle-desc {
+  font-size: 30rpx;
+  line-height: 1.75;
+  color: #1a1f3a;
+  display: block;
+  word-break: break-word;
+}
+
+/* 选项容器 */
+.options-container {
+  padding: 0 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 24rpx 22rpx;
+  border: 2rpx solid #e2e6f3;
+  border-radius: 16rpx;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.option:active {
+  transform: scale(0.98);
+}
+
+.option.selected {
+  border-color: #5b6cff;
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.15);
+}
+
+.option-label {
+  min-width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #f4f6fb;
+  color: #4a5577;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 28rpx;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.option.selected .option-label {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.3);
+}
+
+.option-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1a1f3a;
+  line-height: 1.5;
+}
+
+/* 答题结果 */
+.answer-display {
+  padding: 0 32rpx 24rpx;
+}
+
+.answer-status {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 30rpx 28rpx;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  animation: result-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes result-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.answer-status.correct {
+  background: linear-gradient(135deg, #dcfce7, #a7f3d0);
+  border: 1rpx solid #34d399;
+}
+
+.answer-status.wrong {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 1rpx solid #f87171;
+}
+
+.status-icon {
+  font-size: 52rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.answer-status.correct .status-icon { background: linear-gradient(135deg, #34d399, #16a085); }
+.answer-status.wrong .status-icon { background: linear-gradient(135deg, #f87171, #e74c3c); }
+
+.status-text {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.answer-status.correct .status-text { color: #14532d; }
+.answer-status.wrong .status-text { color: #7f1d1d; }
+
+.answer-info,
+.analysis {
+  background: #f8fbff;
+  padding: 24rpx 26rpx;
+  border-radius: 14rpx;
+  margin-bottom: 20rpx;
+  border-left: 6rpx solid #5b6cff;
+}
+
+.analysis { border-left-color: #f5b041; background: #fffaf0; }
+
+.info-title,
+.analysis-title {
+  display: block;
+  font-weight: 700;
+  color: #1a1f3a;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  letter-spacing: 1rpx;
+}
+
+.info-content,
+.analysis-content {
+  display: block;
+  font-size: 27rpx;
+  color: #4a5577;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+/* 按钮 */
+.action-buttons {
+  display: flex;
+  gap: 18rpx;
+  padding: 8rpx 32rpx 28rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.btn::after { border: none; }
+
+.btn-submit {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
+  color: #fff !important;
+  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.32);
+}
+
+.btn-submit[disabled] {
+  background: #c5cee0 !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+
+.btn-back {
+  background: #fff !important;
+  color: #5b6cff !important;
+  border: 2rpx solid #5b6cff !important;
+}
+
+/* 奖励信息 */
+.reward-info {
+  margin: 0 32rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 22rpx;
+  background: linear-gradient(135deg, #fef3df, #ffd76b);
+  border-radius: 16rpx;
+  box-shadow: inset 0 0 0 2rpx rgba(245, 176, 65, 0.3);
+}
+
+.reward-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+}
+
+.reward-label { font-size: 26rpx; color: #92580d; font-weight: 600; }
+
+.reward-points {
+  font-size: 32rpx;
+  color: #92580d;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+}
+
+.streak-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10rpx 18rpx;
+  font-size: 23rpx;
+  color: #92580d;
+}
+
+.streak-text,
+.streak-bonus {
+  line-height: 1.4;
+}
+
+.streak-bonus {
+  font-weight: 700;
+}
+
+/* 谜题库链接 */
+.bank-link {
+  text-align: center;
+  padding: 0 32rpx 28rpx;
+}
+
+.bank-link text {
+  font-size: 26rpx;
+  color: #5b6cff;
+  font-weight: 600;
+}
+

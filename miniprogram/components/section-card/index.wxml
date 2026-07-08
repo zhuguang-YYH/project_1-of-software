@@ -1,0 +1,14 @@
+<view class="sc-card {{accent ? 'with-accent' : ''}}">
+  <view class="sc-header" wx:if="{{title}}">
+    <view class="sc-titles">
+      <text class="sc-title">{{title}}</text>
+      <text class="sc-subtitle" wx:if="{{subtitle}}">{{subtitle}}</text>
+    </view>
+    <view class="sc-extra">
+      <slot name="extra"></slot>
+    </view>
+  </view>
+  <view class="sc-body">
+    <slot></slot>
+  </view>
+</view>

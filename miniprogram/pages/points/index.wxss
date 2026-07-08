@@ -1,0 +1,272 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a1f3a 0%, #3a4cd1 280rpx, #f4f6fb 280rpx, #eef0ff 100%);
+  background-attachment: fixed;
+  color: #1a1f3a;
+}
+
+.scroll-view {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.loading-state {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  color: #8a96a8;
+  font-size: 26rpx;
+}
+
+.loading-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 6rpx solid #eef0ff;
+  border-top-color: #5b6cff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 顶部积分汇总 */
+.summary {
+  position: relative;
+  margin: 24rpx;
+  padding: 40rpx 32rpx 32rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #3a4cd1 0%, #5b6cff 60%, #6c5bff 100%);
+  box-shadow: 0 16rpx 40rpx rgba(91, 108, 255, 0.32);
+  color: #fff;
+  overflow: hidden;
+}
+
+.summary::before,
+.summary::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.summary::before { width: 240rpx; height: 240rpx; top: -80rpx; right: -60rpx; }
+.summary::after { width: 160rpx; height: 160rpx; bottom: -60rpx; left: -40rpx; opacity: 0.6; }
+
+.summary-main {
+  position: relative;
+  padding-bottom: 28rpx;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.18);
+}
+
+.summary-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+}
+
+.summary-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 80rpx;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
+.summary-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18rpx;
+  padding-top: 28rpx;
+}
+
+.summary-item {
+  min-width: 0;
+  text-align: center;
+}
+
+.item-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 22rpx;
+}
+
+.item-value {
+  display: block;
+  margin-top: 8rpx;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.item-value.frozen {
+  color: #ffd58c;
+}
+
+/* 错误条 */
+.error-banner {
+  margin: 0 24rpx 18rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 14rpx;
+  background: #fff1f2;
+  color: #be123c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 25rpx;
+  gap: 16rpx;
+  border-left: 6rpx solid #e74c3c;
+}
+
+/* 筛选 */
+.filter-row {
+  margin: 8rpx 24rpx 18rpx;
+  padding: 8rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.08);
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64rpx;
+  line-height: 1.2;
+  border-radius: 12rpx;
+  text-align: center;
+  color: #8a96a8;
+  font-size: 26rpx;
+  transition: all 0.2s;
+}
+
+.filter-item.active {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4rpx 12rpx rgba(91, 108, 255, 0.3);
+}
+
+/* 流水列表 */
+.log-list { padding: 4rpx 24rpx 24rpx; }
+
+.log-card {
+  margin-bottom: 14rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  box-shadow: 0 4rpx 14rpx rgba(91, 108, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.log-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4rpx;
+  background: #cbd5e1;
+}
+
+.log-card:has(.log-amount.income)::before { background: #16a085; }
+.log-card:has(.log-amount.expense)::before { background: #e74c3c; }
+.log-card.income::before { background: #16a085; }
+.log-card.expense::before { background: #e74c3c; }
+
+.log-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.log-reason {
+  display: block;
+  color: #1a1f3a;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.log-meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a96a8;
+  font-size: 22rpx;
+}
+
+.log-amount {
+  flex: 0 0 auto;
+  font-size: 36rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+}
+
+.log-amount.income { color: #16a085; }
+.log-amount.expense { color: #e74c3c; }
+
+/* 空状态 */
+.empty-state {
+  margin: 60rpx 24rpx;
+  padding: 80rpx 48rpx;
+  text-align: center;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.06);
+}
+
+.empty-title,
+.empty-text {
+  display: block;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+}
+
+.empty-text {
+  margin-top: 14rpx;
+  color: #8a96a8;
+  font-size: 25rpx;
+  line-height: 1.6;
+}
+
+.load-more {
+  padding: 22rpx 0 60rpx;
+  text-align: center;
+  color: #8a96a8;
+  font-size: 24rpx;
+}
+
+/* 黑金主题：积分页筛选按钮修正 */
+.theme-gold .filter-row {
+  background: rgba(17, 17, 17, 0.96) !important;
+  border: 1rpx solid rgba(212, 175, 55, 0.18) !important;
+  box-shadow: 0 10rpx 26rpx rgba(0, 0, 0, 0.22) !important;
+}
+
+.theme-gold .filter-item {
+  color: rgba(244, 236, 214, 0.70) !important;
+  background: transparent !important;
+}
+
+.theme-gold .filter-item.active {
+  color: #17110a !important;
+  background: linear-gradient(135deg, #f8e7a8 0%, #d4af37 54%, #b98d1d 100%) !important;
+  box-shadow: 0 8rpx 20rpx rgba(212, 175, 55, 0.24) !important;
+  font-weight: 700;
+}

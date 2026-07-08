@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "推理交友",
+  "usingComponents": {
+    "empty-state": "/components/empty-state/index",
+    "common-loading": "/components/common/loading"
+  }
+}

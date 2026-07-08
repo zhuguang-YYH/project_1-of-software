@@ -1,0 +1,13 @@
+<view class="empty-state-wrap variant-{{variant}} theme-{{theme}}">
+  <view class="empty-icon">
+    <slot name="icon">
+      <text>{{icon}}</text>
+    </slot>
+  </view>
+  <text class="empty-title">{{title}}</text>
+  <text class="empty-desc" wx:if="{{description}}">{{description}}</text>
+  <view class="empty-action" wx:if="{{actionText}}" bindtap="onAction">
+    {{actionText}}
+  </view>
+  <slot></slot>
+</view>

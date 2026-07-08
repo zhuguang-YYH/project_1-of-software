@@ -1,0 +1,86 @@
+.empty-state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 48rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #eef0ff, #e0e4ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64rpx;
+  color: #5b6cff;
+  margin-bottom: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.12);
+}
+
+.empty-title {
+  font-size: 30rpx;
+  color: #1a1f3a;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.empty-desc {
+  font-size: 24rpx;
+  color: #9aa3b8;
+  line-height: 1.6;
+  max-width: 480rpx;
+}
+
+.empty-action {
+  margin-top: 32rpx;
+  min-width: 180rpx;
+  padding: 16rpx 48rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.3);
+  box-sizing: border-box;
+}
+.empty-action:active {
+  opacity: 0.85;
+}
+
+.variant-compact {
+  padding: 60rpx 32rpx;
+}
+.variant-compact .empty-icon {
+  width: 100rpx;
+  height: 100rpx;
+  font-size: 44rpx;
+  margin-bottom: 18rpx;
+}
+.variant-compact .empty-title { font-size: 26rpx; }
+
+.theme-gold .empty-icon {
+  background: linear-gradient(135deg, #292111, #d4af37);
+  color: #fff6d6;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.22);
+}
+
+.theme-gold .empty-title {
+  color: #f2d77c;
+}
+
+.theme-gold .empty-desc {
+  color: rgba(247, 236, 209, 0.74);
+}
+
+.theme-gold .empty-action {
+  background: linear-gradient(135deg, #f1d56a, #b77b18);
+  color: #17130c;
+  font-weight: 700;
+  box-shadow: 0 10rpx 22rpx rgba(183, 123, 24, 0.28);
+}

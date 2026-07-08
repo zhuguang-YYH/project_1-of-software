@@ -1,0 +1,15 @@
+{
+  "name": "dud",
+  "version": "1.0.0",
+  "description": "DUD chat with keyword matching",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["dud", "chat"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

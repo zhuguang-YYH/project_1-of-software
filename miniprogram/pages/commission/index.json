@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "事件委托",
+  "usingComponents": {
+    "common-modal": "/components/common/modal"
+  }
+}

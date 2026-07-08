@@ -1,0 +1,417 @@
+/* pages/ranking/index.wxss */
+.container {
+  min-height: 100vh;
+  padding-bottom: 80rpx;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 800rpx;
+  gap: 40rpx;
+}
+
+.error-text {
+  font-size: 32rpx;
+  color: #c33;
+  text-align: center;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1) !important;
+  color: white !important;
+  width: 320rpx;
+  border-radius: 16rpx !important;
+  box-shadow: 0 8rpx 20rpx rgba(91, 108, 255, 0.25);
+}
+
+.tab-container { flex: 1; }
+
+/* ===== Period Tabs ===== */
+.period-tabs {
+  display: flex;
+  margin: 24rpx 24rpx 16rpx;
+  gap: 12rpx;
+}
+
+.period-item {
+  flex: 1;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+  font-weight: 600;
+  color: #8a96a8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(212, 175, 55, 0.16);
+  transition: all 0.25s;
+}
+
+.period-item.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.20), rgba(212, 175, 55, 0.08));
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.48);
+  box-shadow: 0 4rpx 16rpx rgba(212, 175, 55, 0.16);
+}
+
+.theme-blue .period-item {
+  background: #fff;
+  border: 1rpx solid #eef0f3;
+  color: #8a96a8;
+}
+
+.theme-blue .period-item.active {
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba(91, 108, 255, 0.25);
+}
+
+.tabs {
+  display: flex;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 24rpx 0;
+  border-radius: 18rpx;
+  padding: 8rpx;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.08);
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  height: 88rpx;
+  padding: 0 12rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #8a96a8;
+  line-height: 1.2;
+  border-radius: 12rpx;
+  transition: all 0.25s;
+  font-weight: 500;
+}
+
+.tab-item.active {
+  color: #fff;
+  background: linear-gradient(135deg, #5b6cff, #3a4cd1);
+  font-weight: 700;
+  box-shadow: 0 6rpx 16rpx rgba(91, 108, 255, 0.3);
+}
+
+.tab-content { padding: 32rpx 24rpx; }
+
+/* 领奖台 */
+.podium-wrap {
+  position: relative;
+  padding-top: 40rpx;
+  overflow: hidden;
+}
+
+.podium-decor {
+  position: absolute;
+  left: 50%;
+  top: -16rpx;
+  width: 640rpx;
+  height: 240rpx;
+  transform: translateX(-50%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.podium {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14rpx;
+  margin-bottom: 40rpx;
+}
+
+.podium-item {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 31%;
+  flex: 0 0 31%;
+}
+
+.podium-avatar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rank-1 { z-index: 2; }
+
+.podium-medal {
+  width: 68rpx;
+  height: 68rpx;
+  margin-bottom: -28rpx;
+  z-index: 2;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6rpx 10rpx rgba(0, 0, 0, 0.18));
+}
+
+.medal-gold {
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: -34rpx;
+}
+
+.podium-avatar {
+  width: 124rpx;
+  height: 124rpx;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+  align-self: center;
+}
+.avatar-gold { border: 6rpx solid #f5b041; box-shadow: 0 10rpx 28rpx rgba(245, 176, 65, 0.4); width: 140rpx; height: 140rpx; }
+.avatar-silver { border: 6rpx solid #c0c8d4; box-shadow: 0 8rpx 20rpx rgba(149, 165, 166, 0.25); }
+.avatar-bronze { border: 6rpx solid #cd853f; box-shadow: 0 8rpx 20rpx rgba(205, 133, 63, 0.25); }
+
+.podium-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1a1f3a;
+  max-width: 180rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 4rpx;
+}
+
+.podium-points {
+  font-size: 22rpx;
+  color: #92580d;
+  font-weight: 700;
+  background: #fef3df;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  margin-top: 4rpx;
+}
+
+.podium-base {
+  width: 100%;
+  margin-top: 10rpx;
+  border-radius: 14rpx 14rpx 0 0;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.base-gold { height: 170rpx; background: linear-gradient(180deg, #ffd76b, #f5a623); box-shadow: 0 10rpx 24rpx rgba(245, 166, 35, 0.3); }
+.base-silver { height: 130rpx; background: linear-gradient(180deg, #d8dee9, #95a5a6); }
+.base-bronze { height: 90rpx; background: linear-gradient(180deg, #d4977a, #a0522d); }
+
+.podium-placeholder {
+  opacity: 0.5;
+}
+
+.podium-placeholder .podium-avatar {
+  filter: grayscale(1);
+}
+
+.podium-tip {
+  text-align: center;
+  color: #8a96a8;
+  font-size: 22rpx;
+  margin-top: 16rpx;
+}
+
+/* 排行列表 */
+.ranking-list {
+  background: #fff;
+  border-radius: 18rpx;
+  overflow: hidden;
+  padding: 12rpx;
+  box-shadow: 0 6rpx 18rpx rgba(91, 108, 255, 0.06);
+}
+
+/* 我的排名 */
+.my-ranking-card {
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 12rpx 32rpx rgba(91, 108, 255, 0.12);
+}
+
+.my-ranking-header {
+  background: linear-gradient(135deg, #3a4cd1, #5b6cff);
+  padding: 48rpx 40rpx;
+  text-align: center;
+  color: #fff;
+}
+
+.my-ranking-title {
+  display: block;
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.my-ranking-sub {
+  display: block;
+  margin-top: 10rpx;
+  color: rgba(255,255,255,0.78);
+  font-size: 24rpx;
+}
+
+.my-ranking-content { padding: 40rpx 36rpx; }
+
+.my-ranking-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+}
+
+.my-stat {
+  flex: 1;
+  background: linear-gradient(135deg, #eef0ff, #fef3df);
+  padding: 28rpx 0;
+  border-radius: 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.my-stat-value { font-size: 48rpx; font-weight: 800; color: #3a4cd1; }
+.my-stat-label { font-size: 24rpx; color: #4a5577; }
+
+.my-ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid #f0f3f8;
+}
+
+.my-ranking-item:last-child { border-bottom: none; }
+.my-ranking-label { font-size: 28rpx; color: #8a96a8; }
+.my-ranking-value { font-size: 30rpx; font-weight: 600; color: #1a1f3a; }
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 120rpx 40rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #8a96a8;
+}
+
+.theme-gold.container {
+  background: radial-gradient(circle at 20% 0%, rgba(212, 175, 55, 0.18), transparent 34%),
+    linear-gradient(180deg, #090909 0%, #12100a 58%, #090909 100%);
+}
+
+.theme-gold .tabs,
+.theme-gold .ranking-list,
+.theme-gold .my-ranking-card {
+  background: #171717;
+  border: 1rpx solid rgba(212, 175, 55, 0.24);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.34);
+}
+
+.theme-gold .tab-item {
+  color: rgba(247, 236, 209, 0.72);
+}
+
+.theme-gold .tab-item.active {
+  color: #15110a;
+  background: linear-gradient(135deg, #f0d46a 0%, #d4af37 48%, #a86f16 100%);
+  box-shadow: 0 8rpx 18rpx rgba(212, 175, 55, 0.24);
+}
+
+.theme-gold .podium-name {
+  color: #f7ecd1;
+}
+
+.theme-gold .podium-points {
+  color: #15110a;
+  background: linear-gradient(135deg, #f0d46a, #d4af37);
+}
+
+.theme-gold .podium-tip,
+.theme-gold .empty-text {
+  color: rgba(247, 236, 209, 0.7);
+}
+
+.theme-gold .podium-avatar {
+  background: #151515;
+}
+
+.theme-gold .avatar-gold {
+  border-color: #f0d46a;
+  box-shadow: 0 10rpx 28rpx rgba(212, 175, 55, 0.36);
+}
+
+.theme-gold .avatar-silver {
+  border-color: #e5dcc2;
+  box-shadow: 0 8rpx 20rpx rgba(229, 220, 194, 0.2);
+}
+
+.theme-gold .avatar-bronze {
+  border-color: #c78a43;
+  box-shadow: 0 8rpx 20rpx rgba(199, 138, 67, 0.22);
+}
+
+.theme-gold .my-ranking-header {
+  background: linear-gradient(135deg, #17130c, #5d4314);
+  border-bottom: 1rpx solid rgba(212, 175, 55, 0.28);
+}
+
+.theme-gold .my-ranking-title {
+  color: #f2d77c;
+}
+
+.theme-gold .my-ranking-sub {
+  color: rgba(247, 236, 209, 0.72);
+}
+
+.theme-gold .my-ranking-content {
+  background: #171717;
+}
+
+.theme-gold .my-stat {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1rpx solid rgba(212, 175, 55, 0.2);
+}
+
+.theme-gold .my-stat-value {
+  color: #f2d77c;
+}
+
+.theme-gold .my-stat-label,
+.theme-gold .my-ranking-label {
+  color: rgba(247, 236, 209, 0.68);
+}
+
+.theme-gold .my-ranking-value {
+  color: #f7ecd1;
+}
+
+.theme-gold .my-ranking-item {
+  border-bottom-color: rgba(212, 175, 55, 0.18);
+}

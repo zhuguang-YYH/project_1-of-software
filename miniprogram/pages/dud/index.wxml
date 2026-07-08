@@ -1,0 +1,75 @@
+<view class="page theme-{{theme}} {{a11yFontClass}}">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在唤醒 Dud...</text>
+  </view>
+
+  <view class="chat-shell" wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <scroll-view
+      class="message-list"
+      scroll-y
+      scroll-with-animation
+      scroll-into-view="{{scroll_into_view}}"
+      refresher-enabled="{{true}}"
+      bindrefresherrefresh="onPullDownRefresh">
+      <view
+        id="msg-{{item.message_id}}"
+        class="message-row {{item.type === 'user' ? 'from-user' : 'from-dud'}}"
+        wx:for="{{messages}}"
+        wx:key="message_id">
+        <view class="avatar {{item.type === 'user' ? 'user-avatar' : 'dud-avatar'}}">
+          <text>{{item.type === 'user' ? '我' : 'D'}}</text>
+        </view>
+        <view class="bubble-wrap">
+          <view class="bubble">
+            <text>{{item.message}}</text>
+          </view>
+          <view class="message-meta">
+            <text>{{item.time_text}}</text>
+            <text wx:if="{{item.matched_keyword}}"> · 命中 {{item.matched_keyword}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="typing" wx:if="{{sending}}">
+        <view class="avatar dud-avatar"><text>D</text></view>
+        <view class="typing-bubble">
+          <text>Dud 正在查线索</text>
+          <view class="typing-dots">
+            <view class="dot"></view>
+            <view class="dot"></view>
+            <view class="dot"></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="quick-prompts">
+      <view
+        class="prompt"
+        wx:for="{{quick_prompts}}"
+        wx:key="*this"
+        data-text="{{item}}"
+        bindtap="usePrompt">{{item}}</view>
+    </view>
+
+    <view class="composer">
+      <input
+        class="message-input"
+        value="{{input_value}}"
+        confirm-type="send"
+        maxlength="200"
+        placeholder="输入关键词或问题"
+        bindinput="onInput"
+        bindconfirm="sendMessage" />
+      <button class="send-btn" disabled="{{sending}}" bindtap="sendMessage">
+        <text class="send-btn-text">发送</text>
+      </button>
+    </view>
+  </view>
+</view>

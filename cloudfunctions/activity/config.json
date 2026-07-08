@@ -1,0 +1,11 @@
+{
+  "timeout": 60,
+  "memorySize": 256,
+  "triggers": [
+    {
+      "name": "activityReminder",
+      "type": "timer",
+      "config": "0 7 * * * * *"
+    }
+  ]
+}

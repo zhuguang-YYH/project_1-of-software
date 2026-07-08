@@ -1,0 +1,231 @@
+/* pages/puzzle/practice/index.wxss */
+/* 复用每日谜题的所有样式 */
+@import './index.wxss';
+
+/* 头部操作区 */
+.puzzle-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  max-width: 240rpx;
+  flex-wrap: wrap;
+}
+
+.puzzle-header-actions .puzzle-difficulty {
+  max-width: 160rpx;
+  text-align: center;
+  padding: 8rpx 16rpx;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* 收藏按钮 */
+.fav-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  color: rgba(255,255,255,0.6);
+  transition: all 0.2s;
+}
+
+.fav-btn:active {
+  transform: scale(0.9);
+}
+
+.fav-btn.favorited {
+  background: rgba(245, 176, 65, 0.4);
+  color: #ffd76b;
+}
+
+/* 已答提示 */
+.already-notice {
+  text-align: center;
+  padding: 16rpx;
+  background: #fef3df;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  color: #92580d;
+}
+
+/* 谜题库链接 */
+.bank-link {
+  text-align: center;
+  padding: 20rpx 32rpx 28rpx;
+  font-size: 26rpx;
+  color: #5b6cff;
+  font-weight: 600;
+}
+
+/* 黑金主题：谜题库答题页单独调色 */
+.theme-gold.container {
+  background:
+    linear-gradient(180deg, #111111 0%, #181818 48%, #f6f0df 100%);
+}
+
+.theme-gold .puzzle-card {
+  background: #fffaf0;
+  border: 1rpx solid rgba(210, 165, 63, 0.35);
+  box-shadow: 0 22rpx 48rpx rgba(0, 0, 0, 0.28);
+}
+
+.theme-gold .puzzle-header {
+  background: linear-gradient(135deg, #111111 0%, #1f1a0e 58%, #3d2b0f 100%);
+  border-bottom: 1rpx solid rgba(224, 179, 75, 0.42);
+}
+
+.theme-gold .puzzle-header::after {
+  color: rgba(224, 179, 75, 0.12);
+}
+
+.theme-gold .puzzle-eyebrow,
+.theme-gold .puzzle-difficulty,
+.theme-gold .fav-btn.favorited {
+  color: #f6d77b;
+}
+
+.theme-gold .puzzle-content {
+  background: #fffaf0;
+}
+
+.theme-gold .puzzle-desc {
+  color: #2a2418;
+}
+
+.theme-gold .fav-btn {
+  background: rgba(255, 250, 240, 0.12);
+  border: 1rpx solid rgba(246, 215, 123, 0.26);
+  color: rgba(255, 250, 240, 0.72);
+}
+
+.theme-gold .fav-btn.favorited {
+  background: rgba(224, 179, 75, 0.22);
+  border-color: rgba(246, 215, 123, 0.72);
+}
+
+.theme-gold .already-notice {
+  background: #fbefd1;
+  border: 1rpx solid rgba(195, 142, 34, 0.28);
+  color: #7c520a;
+}
+
+.theme-gold .option {
+  background: #fffaf0;
+  border-color: rgba(92, 71, 35, 0.18);
+}
+
+.theme-gold .option.selected {
+  background: linear-gradient(135deg, #fff6dd, #f3dfaa);
+  border-color: #d7a83f;
+  box-shadow: 0 8rpx 18rpx rgba(145, 105, 26, 0.18);
+}
+
+.theme-gold .option-label {
+  background: #f3ead6;
+  color: #6f5220;
+}
+
+.theme-gold .option.selected .option-label {
+  background: linear-gradient(135deg, #e8c35a, #a97519);
+  color: #16130d;
+  box-shadow: 0 4rpx 12rpx rgba(169, 117, 25, 0.25);
+}
+
+.theme-gold .option-text {
+  color: #2d281e;
+}
+
+.theme-gold .answer-status {
+  border-radius: 18rpx;
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.18);
+}
+
+.theme-gold .answer-status.correct {
+  background: linear-gradient(135deg, #15130d, #211b0d);
+  border: 2rpx solid rgba(224, 179, 75, 0.8);
+}
+
+.theme-gold .answer-status.wrong {
+  background: linear-gradient(135deg, #1b1110, #2b1714);
+  border: 2rpx solid rgba(225, 105, 82, 0.78);
+}
+
+.theme-gold .answer-status.correct .status-icon {
+  background: linear-gradient(135deg, #f1cf68, #b98320);
+  color: #15110a;
+}
+
+.theme-gold .answer-status.wrong .status-icon {
+  background: linear-gradient(135deg, #f08b72, #b9402f);
+  color: #fffaf0;
+}
+
+.theme-gold .answer-status.correct .status-text {
+  color: #f7d97f;
+}
+
+.theme-gold .answer-status.wrong .status-text {
+  color: #ffb29e;
+}
+
+.theme-gold .answer-info {
+  background: #fff8e8;
+  border-left-color: #d7a83f;
+  border-top: 1rpx solid rgba(215, 168, 63, 0.18);
+  box-shadow: 0 8rpx 18rpx rgba(122, 86, 16, 0.08);
+}
+
+.theme-gold .analysis {
+  background: #171717;
+  border-left-color: #d7a83f;
+  border-top: 1rpx solid rgba(215, 168, 63, 0.28);
+  box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.18);
+}
+
+.theme-gold .info-title,
+.theme-gold .analysis-title {
+  color: #6f4e12;
+}
+
+.theme-gold .analysis-title {
+  color: #f0cf70;
+}
+
+.theme-gold .info-content {
+  color: #2b2416;
+}
+
+.theme-gold .analysis-content {
+  color: #f3e6c5;
+}
+
+.theme-gold .btn-submit {
+  background: linear-gradient(135deg, #efcb68, #b77b18) !important;
+  color: #17130c !important;
+  box-shadow: 0 10rpx 22rpx rgba(183, 123, 24, 0.28);
+}
+
+.theme-gold .btn-submit[disabled] {
+  background: #d9cfb8 !important;
+  color: #8b7a56 !important;
+}
+
+.theme-gold .btn-back {
+  background: #fff8e8 !important;
+  color: #9a6811 !important;
+  border-color: rgba(183, 123, 24, 0.36) !important;
+}
+
+.theme-gold .bank-link,
+.theme-gold .bank-link text {
+  color: #b77b18;
+}

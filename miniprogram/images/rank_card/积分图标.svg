@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 循环交换图标 -->
+  <path d="M64 20C39.7 20 20 39.7 20 64C20 88.3 39.7 108 64 108C88.3 108 108 88.3 108 64" stroke="#27AE60" stroke-width="8" stroke-linecap="round"/>
+  <path d="M95 35L115 55L128 42" stroke="#27AE60" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 中心积分金币 -->
+  <circle cx="64" cy="64" r="30" fill="#F1C40F" stroke="#F39C12" stroke-width="3"/>
+  <path d="M64 50L66 58H74L68 63L70 71L64 66L58 71L60 63L54 58H62L64 50Z" fill="white"/>
+</svg>

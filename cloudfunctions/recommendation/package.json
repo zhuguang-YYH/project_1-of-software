@@ -1,0 +1,15 @@
+{
+  "name": "recommendation",
+  "version": "1.0.0",
+  "description": "Content recommendation system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["recommendation"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

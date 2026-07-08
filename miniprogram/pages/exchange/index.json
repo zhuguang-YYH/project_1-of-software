@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "积分兑换",
+  "usingComponents": {
+    "skeleton": "/components/skeleton/index",
+    "common-modal": "/components/common/modal"
+  }
+}

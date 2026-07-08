@@ -1,0 +1,35 @@
+<view class="page theme-{{theme}} {{a11yFontClass}}">
+  <skeleton wx:if="{{loading}}" variant="card" rows="4" title="加载消息中..." />
+
+  <view class="page-body" wx:else>
+    <view class="error-banner" wx:if="{{error}}">
+      <text>{{error}}</text>
+      <button size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <view class="notif-header" wx:if="{{!error}}">
+      <view class="notif-title">
+        <text class="notif-title-text">消息中心</text>
+        <text class="notif-desc" wx:if="{{unread_count > 0}}">{{unread_count}} 条未读</text>
+        <text class="notif-desc" wx:else>全部已读</text>
+      </view>
+      <button class="mark-all-btn" wx:if="{{unread_count > 0}}" bindtap="markAllRead">全部已读</button>
+    </view>
+
+    <view class="notif-list" wx:if="{{!error && notification_list.length > 0}}">
+      <view class="notif-card {{item.is_read ? '' : 'unread'}} tap-feedback" wx:for="{{notification_list}}" wx:key="id" data-id="{{item.id}}" data-url="{{item.link_url}}" bindtap="onNotificationTap">
+        <view class="notif-icon">{{item.type_icon}}</view>
+        <view class="notif-body">
+          <view class="notif-head">
+            <text class="notif-card-title">{{item.title}}</text>
+            <text class="notif-time">{{item.created_text}}</text>
+          </view>
+          <text class="notif-content">{{item.content}}</text>
+        </view>
+        <view class="notif-dot" wx:if="{{!item.is_read}}"></view>
+      </view>
+    </view>
+
+    <empty-state wx:if="{{!error && notification_list.length === 0}}" icon="📭" title="暂无消息" description="活动报名、兑换、委托等通知会显示在这里" />
+  </view>
+</view>

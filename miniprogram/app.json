@@ -1,0 +1,177 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/ranking/index",
+    "pages/profile/index"
+  ],
+  "subpackages": [
+    {
+      "root": "pages/admin",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "admin"
+    },
+    {
+      "root": "pages/activity",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "activity"
+    },
+    {
+      "root": "pages/borrow",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "borrow"
+    },
+    {
+      "root": "pages/exchange",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "exchange"
+    },
+    {
+      "root": "pages/dud",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "dud"
+    },
+    {
+      "root": "pages/commission",
+      "pages": [
+        "index",
+        "detail"
+      ],
+      "independent": false,
+      "name": "commission"
+    },
+    {
+      "root": "pages/feedback",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "feedback"
+    },
+    {
+      "root": "pages/recommendation",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "recommendation"
+    },
+    {
+      "root": "pages/points",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "points"
+    },
+    {
+      "root": "pages/settings",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "settings"
+    },
+    {
+      "root": "pages/notifications",
+      "pages": [
+        "index"
+      ],
+      "independent": false,
+      "name": "notifications"
+    },
+    {
+      "root": "pages/puzzle",
+      "pages": [
+        "index",
+        "bank",
+        "practice",
+        "favorites"
+      ],
+      "independent": false,
+      "name": "puzzle_ext"
+    },
+    {
+      "root": "pages/dating",
+      "pages": [
+        "index",
+        "matches",
+        "chat"
+      ],
+      "independent": false,
+      "name": "dating"
+    }
+  ],
+  "window": {
+    "backgroundColor": "#0a0a0a",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1a1f3a",
+    "navigationBarTitleText": "NK推协侦探管理系统",
+    "navigationBarTextStyle": "white",
+    "navigationStyle": "default"
+  },
+  "tabBar": {
+    "color": "#9aa3b8",
+    "selectedColor": "#5b6cff",
+    "backgroundColor": "#151515",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/icons/home.png",
+        "selectedIconPath": "images/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/ranking/index",
+        "text": "排行榜",
+        "iconPath": "images/icons/goods.png",
+        "selectedIconPath": "images/icons/goods-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "images/icons/usercenter.png",
+        "selectedIconPath": "images/icons/usercenter-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["puzzle_ext", "activity"]
+    },
+    "pages/ranking/index": {
+      "network": "all",
+      "packages": ["puzzle_ext"]
+    },
+    "pages/profile/index": {
+      "network": "all",
+      "packages": ["activity", "exchange", "borrow", "commission", "settings"]
+    }
+  },
+  "requiredPrivateInfos": [
+    "chooseAddress",
+    "chooseLocation",
+    "getLocation",
+    "onLocationChange",
+    "startLocationUpdate"
+  ]
+}

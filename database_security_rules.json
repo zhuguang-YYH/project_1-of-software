@@ -1,0 +1,193 @@
+{
+  "_README": "微信云开发数据库安全规则配置。每个集合的规则需要在【云开发控制台 -> 数据库 -> 对应集合 -> 权限设置 -> 自定义安全规则】中分别粘贴对应 JSON 值（不含外层集合名）。客户端写操作默认禁止，统一通过云函数完成。",
+
+  "users": {
+    "read": "auth.openid != null && doc.openid == auth.openid",
+    "write": false
+  },
+
+  "profile_cards": {
+    "read": "doc.visibility != 'private' || (auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "point_accounts": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "points_log": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzles": {
+    "read": true,
+    "write": false
+  },
+
+  "puzzle_options": {
+    "read": true,
+    "write": false
+  },
+
+  "puzzle_answers": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzle_favorites": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzle_practice_answers": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "puzzle_subscriptions": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "activities": {
+    "read": true,
+    "write": false
+  },
+
+  "activity_registrations": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "activity_waitlist": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "inventory_items": {
+    "read": true,
+    "write": false
+  },
+
+  "borrow_records": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "borrow_applications": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "exchange_records": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "commissions": {
+    "read": true,
+    "write": false
+  },
+
+  "commission_acceptances": {
+    "read": "auth.openid != null && (get(`database.users.${doc.receiver_id}`).openid == auth.openid || get(`database.users.${doc.publisher_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "commission_allocations": {
+    "read": true,
+    "write": false
+  },
+
+  "dud_keywords": {
+    "read": true,
+    "write": false
+  },
+
+  "dud_messages": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "feedback": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "recommendations": {
+    "read": true,
+    "write": false
+  },
+
+  "banners": {
+    "read": "doc.status == 'active'",
+    "write": false
+  },
+
+  "announcements": {
+    "read": "doc.status == 'active'",
+    "write": false
+  },
+
+  "notifications": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "ranking_snapshots": {
+    "read": true,
+    "write": false
+  },
+
+  "system_settings": {
+    "read": true,
+    "write": false
+  },
+
+  "dating_pool": {
+    "read": true,
+    "write": false
+  },
+
+  "dating_swipes": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "dating_matches": {
+    "read": "auth.openid != null && (get(`database.users.${doc.user_id_1}`).openid == auth.openid || get(`database.users.${doc.user_id_2}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "dating_preferences": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "game_invitations": {
+    "read": "auth.openid != null && (get(`database.users.${doc.from_user_id}`).openid == auth.openid || get(`database.users.${doc.to_user_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "friend_requests": {
+    "read": "auth.openid != null && (get(`database.users.${doc.from_user_id}`).openid == auth.openid || get(`database.users.${doc.to_user_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "friend_messages": {
+    "read": "auth.openid != null && (get(`database.users.${doc.from_user_id}`).openid == auth.openid || get(`database.users.${doc.to_user_id}`).openid == auth.openid)",
+    "write": false
+  },
+
+  "invitation_rewards": {
+    "read": "auth.openid != null && get(`database.users.${doc.user_id}`).openid == auth.openid",
+    "write": false
+  },
+
+  "admin_logs": {
+    "read": false,
+    "write": false
+  }
+}

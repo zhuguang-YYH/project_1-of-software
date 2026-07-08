@@ -1,0 +1,9 @@
+{
+  "name": "dating",
+  "version": "1.0.0",
+  "description": "交友系统云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

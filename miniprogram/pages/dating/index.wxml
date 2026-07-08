@@ -1,0 +1,212 @@
+<view class="page theme-{{theme}} {{a11yFontClass}}">
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text>正在为你寻找有缘人...</text>
+  </view>
+
+  <!-- 主体 -->
+  <view class="discover-shell" wx:else>
+    <!-- 错误横幅 -->
+    <view class="error-banner" wx:if="{{error && profiles.length === 0}}">
+      <text>{{error}}</text>
+      <button class="error-retry" size="mini" bindtap="onRetry">重试</button>
+    </view>
+
+    <!-- 顶部状态栏 -->
+    <view class="discover-header">
+      <view class="header-left">
+        <text class="header-title">推理交友</text>
+        <text class="header-subtitle">找到志同道合的探友</text>
+      </view>
+      <view class="header-right">
+        <view class="header-badge {{is_in_pool ? 'active' : ''}}" bindtap="togglePool">
+          <text>{{is_in_pool ? '已加入' : '加入交友池'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 次数提示 -->
+    <view class="swipe-status">
+      <text class="status-text">今日剩余 <text class="status-count">{{remaining_swipes}}</text>/{{daily_limit}} 次浏览</text>
+      <view class="status-bar">
+        <view class="status-bar-fill" style="width: {{remaining_swipes / daily_limit * 100}}%"></view>
+      </view>
+    </view>
+
+    <!-- 卡片区域 -->
+    <view class="cards-area" wx:if="{{profiles.length > 0}}">
+      <view
+        class="profile-card {{swiping_card_id === item.user_id ? 'swiping-' + swipe_direction : ''}}"
+        wx:for="{{profiles}}"
+        wx:key="user_id"
+        data-user-id="{{item.user_id}}"
+      >
+        <!-- 头像和基本信息 -->
+        <view class="card-header">
+          <image
+            class="card-avatar"
+            src="{{item.avatar_url || '/images/icons/avatar.png'}}"
+            mode="aspectFill"
+            lazy-load="{{true}}"
+          />
+          <view class="card-header-info">
+            <text class="card-name">{{item.display_name}}</text>
+            <view class="card-meta">
+              <text class="card-meta-item">{{item.campus || '未知校区'}}</text>
+              <text class="card-meta-divider">·</text>
+              <text class="card-meta-item">{{item.grade || '未知年级'}}</text>
+            </view>
+            <!-- 正确率 -->
+            <view class="card-rate">
+              <text class="rate-label">谜题正确率</text>
+              <text class="rate-value {{item.puzzle_correct_rate >= 70 ? 'high' : item.puzzle_correct_rate >= 40 ? 'mid' : 'low'}}">{{item.puzzle_correct_rate}}%</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 自我介绍 -->
+        <view class="card-intro" wx:if="{{item.self_intro}}">
+          <text class="intro-text">"{{item.self_intro}}"</text>
+        </view>
+
+        <!-- 兴趣标签 -->
+        <view class="card-tags">
+          <text class="tags-label">兴趣标签</text>
+          <view class="tags-list">
+            <view
+              class="tag-item {{shared_interests.indexOf && shared_interests.indexOf(tag) >= 0 ? 'shared' : ''}}"
+              wx:for="{{item.interests}}"
+              wx:for-item="tag"
+              wx:key="*this"
+            >
+              <text>{{tag}}</text>
+            </view>
+            <text class="no-tags" wx:if="{{item.interests.length === 0}}">暂无标签</text>
+          </view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="card-actions">
+          <view class="action-btn pass-btn" data-user-id="{{item.user_id}}" data-action="pass" bindtap="doSwipe">
+            <text class="action-icon">✕</text>
+            <text class="action-label">跳过</text>
+          </view>
+          <view class="action-btn like-btn" data-user-id="{{item.user_id}}" data-action="like" bindtap="doSwipe">
+            <text class="action-icon">♥</text>
+            <text class="action-label">喜欢</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-area" wx:if="{{profiles.length === 0 && !loading}}">
+      <view class="empty-icon">🔍</view>
+      <text class="empty-title">暂无可推荐的侦探</text>
+      <text class="empty-desc">
+        {{is_in_pool ? '可能大家都被推荐完了，明天再来看看吧' : '加入交友池后即可浏览其他侦探'}}
+      </text>
+      <button class="empty-action" wx:if="{{!is_in_pool}}" bindtap="togglePool">加入交友池</button>
+      <button class="empty-action secondary" bindtap="onPullDownRefresh">刷新</button>
+    </view>
+
+    <!-- 底部操作栏 -->
+    <view class="discover-footer">
+      <view class="footer-btn prefs-btn" bindtap="openPreferences">
+        <text>偏好设置</text>
+      </view>
+      <view class="footer-btn matches-btn" bindtap="goToMatches">
+        <text>我的好友</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 匹配成功弹窗 -->
+  <view class="match-overlay" wx:if="{{show_match_modal}}" catchtouchmove="noop">
+    <view class="match-modal">
+      <view class="match-fireworks">🎉</view>
+      <text class="match-title">配对成功！</text>
+      <text class="match-desc">你和 {{matched_user.display_name}} 互相喜欢</text>
+      <view class="match-actions">
+        <button class="match-btn secondary" bindtap="closeMatchModal">继续浏览</button>
+        <button class="match-btn primary" bindtap="goToChatFromMatch">开始聊天</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 偏好设置弹窗 -->
+  <view class="prefs-overlay" wx:if="{{show_prefs_modal}}" catchtouchmove="noop">
+    <view class="prefs-modal">
+      <view class="prefs-header">
+        <text class="prefs-title">交友偏好</text>
+        <view class="prefs-close" bindtap="closePreferences">✕</view>
+      </view>
+
+      <scroll-view class="prefs-body" scroll-y>
+        <!-- 可见性 -->
+        <view class="prefs-section">
+          <text class="prefs-section-label">交友可见性</text>
+          <view class="prefs-toggle" bindtap="toggleVisibility">
+            <text>{{edit_visibility ? '✅ 在交友池中可见' : '⛔ 隐藏'}}</text>
+          </view>
+        </view>
+
+        <!-- 兴趣标签 -->
+        <view class="prefs-section">
+          <text class="prefs-section-label">感兴趣的方向（影响推荐排序）</text>
+          <view class="prefs-tags">
+            <view class="prefs-tag" wx:for="{{edit_tags}}" wx:key="*this" data-index="{{index}}" bindtap="removeTag">
+              <text>{{item}}</text>
+              <text class="prefs-tag-remove">✕</text>
+            </view>
+          </view>
+          <view class="prefs-tag-input-wrap">
+            <input
+              class="prefs-tag-input"
+              value="{{tag_input}}"
+              placeholder="输入标签后回车添加"
+              placeholder-class="input-placeholder"
+              maxlength="10"
+              bindinput="onTagInput"
+              bindconfirm="addTag"
+            />
+            <view class="prefs-tag-add" bindtap="addTag">
+              <text>添加</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 校区偏好 -->
+        <view class="prefs-section">
+          <text class="prefs-section-label">校区偏好</text>
+          <view class="prefs-options">
+            <view class="prefs-option {{edit_campus_pref === 'any' ? 'selected' : ''}}" data-value="any" bindtap="selectCampusPref">
+              <text>不限</text>
+            </view>
+            <view class="prefs-option {{edit_campus_pref === 'same' ? 'selected' : ''}}" data-value="same" bindtap="selectCampusPref">
+              <text>同校区优先</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 年级偏好 -->
+        <view class="prefs-section">
+          <text class="prefs-section-label">年级偏好</text>
+          <view class="prefs-options">
+            <view class="prefs-option {{edit_grade_pref === 'any' ? 'selected' : ''}}" data-value="any" bindtap="selectGradePref">
+              <text>不限</text>
+            </view>
+            <view class="prefs-option {{edit_grade_pref === 'same' ? 'selected' : ''}}" data-value="same" bindtap="selectGradePref">
+              <text>同年级优先</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="prefs-footer">
+        <button class="prefs-save-btn" bindtap="savePreferences">保存偏好</button>
+      </view>
+    </view>
+  </view>
+</view>

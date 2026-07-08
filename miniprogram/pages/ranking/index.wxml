@@ -1,0 +1,118 @@
+<view class="container page-bg-gradient theme-{{theme}} {{a11yFontClass}}" wx:if="{{!loading}}">
+  <view class="error-state" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="onRetry">重试</button>
+  </view>
+
+  <view class="tab-container" wx:else>
+    <!-- 时间周期 -->
+    <view class="period-tabs">
+      <view class="period-item {{period === 'all' ? 'active' : ''}}" data-period="all" bindtap="switchPeriod">总榜</view>
+      <view class="period-item {{period === 'weekly' ? 'active' : ''}}" data-period="weekly" bindtap="switchPeriod">周榜</view>
+      <view class="period-item {{period === 'monthly' ? 'active' : ''}}" data-period="monthly" bindtap="switchPeriod">月榜</view>
+    </view>
+
+    <view class="tabs">
+      <view class="tab-item {{tab === 'top3' ? 'active' : ''}}" data-tab="top3" bindtap="switchTab">前三名</view>
+      <view class="tab-item {{tab === 'full' ? 'active' : ''}}" data-tab="full" bindtap="switchTab">完整榜单</view>
+      <view class="tab-item {{tab === 'my' ? 'active' : ''}}" data-tab="my" bindtap="switchTab">我的排名</view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'top3'}}">
+      <view class="podium-wrap" wx:if="{{top_three.length > 0}}">
+        <image class="podium-decor" src="/images/rank_card/排行榜背景装饰.svg" mode="aspectFit" />
+        <view class="podium">
+          <view class="podium-item rank-2 {{top_three[1]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[1]}}" data-user_id="{{top_three[1].user_id}}" bindtap="openDetectiveCard">
+            <image class="podium-medal medal-silver" src="/images/rank_card/第二名奖牌.svg" mode="aspectFit" />
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-silver" src="{{top_three[1].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[1].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[1]._placeholder ? '—' : top_three[1].total_points + ' 分'}}</text>
+            <view class="podium-base base-silver"><text>2nd</text></view>
+          </view>
+
+          <view class="podium-item rank-1 {{top_three[0]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[0]}}" data-user_id="{{top_three[0].user_id}}" bindtap="openDetectiveCard">
+            <image class="podium-medal medal-gold" src="/images/rank_card/第一名奖牌.svg" mode="aspectFit" />
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-gold" src="{{top_three[0].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[0].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[0]._placeholder ? '—' : top_three[0].total_points + ' 分'}}</text>
+            <view class="podium-base base-gold"><text>1st</text></view>
+          </view>
+
+          <view class="podium-item rank-3 {{top_three[2]._placeholder ? 'podium-placeholder' : 'tap-feedback'}}" wx:if="{{top_three[2]}}" data-user_id="{{top_three[2].user_id}}" bindtap="openDetectiveCard">
+            <image class="podium-medal medal-bronze" src="/images/rank_card/第三名奖牌.svg" mode="aspectFit" />
+            <view class="podium-avatar-wrap">
+              <image class="podium-avatar avatar-bronze" src="{{top_three[2].avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+            </view>
+            <text class="podium-name">{{top_three[2].nickname || '虚位以待'}}</text>
+            <text class="podium-points">{{top_three[2]._placeholder ? '—' : top_three[2].total_points + ' 分'}}</text>
+            <view class="podium-base base-bronze"><text>3rd</text></view>
+          </view>
+        </view>
+        <view class="podium-tip">点击头像查看侦探名片</view>
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">暂无排行数据</text>
+      </view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'full'}}">
+      <view class="ranking-list" wx:if="{{full_ranking.length > 0}}">
+        <detective-card-item
+          wx:for="{{full_ranking}}"
+          wx:key="user_id"
+          user="{{item}}"
+          theme="{{rankingCardTheme}}"
+          a11y-font-class="{{a11yFontClass}}"
+          bind:cardtap="openDetectiveCard" />
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">暂无排行数据</text>
+      </view>
+    </view>
+
+    <view class="tab-content" wx:if="{{tab === 'my'}}">
+      <view class="my-ranking-card" wx:if="{{user_ranking}}">
+        <view class="my-ranking-header">
+          <text class="my-ranking-title">我的排名</text>
+          <text class="my-ranking-sub">累计积分越高，排名越靠前</text>
+        </view>
+        <view class="my-ranking-content">
+          <view class="my-ranking-row">
+            <view class="my-stat">
+              <text class="my-stat-value">{{user_ranking.rank_no || '—'}}</text>
+              <text class="my-stat-label">名次</text>
+            </view>
+            <view class="my-stat">
+              <text class="my-stat-value">{{user_ranking.total_points || 0}}</text>
+              <text class="my-stat-label">总积分</text>
+            </view>
+          </view>
+          <view class="my-ranking-item">
+            <text class="my-ranking-label">昵称</text>
+            <text class="my-ranking-value">{{user_ranking.nickname || '侦探'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:else>
+        <text class="empty-text">请先登录查看排名</text>
+      </view>
+    </view>
+  </view>
+
+  <detective-card-modal
+    visible="{{show_card_modal}}"
+    loading="{{card_loading}}"
+    card="{{selected_card}}"
+    theme="{{theme}}"
+    bind:close="closeCardModal"
+    bind:addfriend="onAddFriend" />
+</view>
+
+<skeleton wx:elif="{{loading}}" variant="ranking" rows="4" title="加载排行中..." />

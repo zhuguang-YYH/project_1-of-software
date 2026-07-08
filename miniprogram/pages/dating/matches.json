@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "我的好友",
+  "usingComponents": {
+    "empty-state": "/components/empty-state/index",
+    "common-loading": "/components/common/loading",
+    "detective-card-modal": "/components/detective-card-modal/index"
+  }
+}

@@ -1,0 +1,9 @@
+<view class="loading-container" wx:if="{{visible}}">
+  <view class="loading-mask" wx:if="{{mask}}"></view>
+  <view class="loading-content">
+    <view class="loading-spinner">
+      <view class="spinner"></view>
+    </view>
+    <view class="loading-title">{{title}}</view>
+  </view>
+</view>

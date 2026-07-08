@@ -1,0 +1,73 @@
+<view class="page theme-{{theme}}">
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{error}}" class="error-state">
+    <text>{{error}}</text>
+    <button size="mini" bindtap="onRetry">重试</button>
+  </view>
+
+  <scroll-view wx:else class="scroll-view" scroll-y>
+    <view class="hero-card">
+      <view class="hero-head">
+        <view>
+          <text class="title">{{commission.title}}</text>
+          <text class="meta">发布人：{{commission.publisher_name}}</text>
+        </view>
+        <text class="status status-{{commission.status}}">{{commission.status_text}}</text>
+      </view>
+      <view class="description">{{commission.description}}</view>
+    </view>
+
+    <view class="section-grid">
+      <view class="info-item">
+        <text class="info-label">奖励</text>
+        <text class="info-value">{{commission.reward_points}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">剩余</text>
+        <text class="info-value">{{commission.remaining_reward}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">截止</text>
+        <view class="deadline-value">
+          <text class="deadline-date">{{commission.deadline_date_text}}</text>
+          <text class="deadline-time">{{commission.deadline_time_text}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">进度</view>
+      <view class="progress-card">
+        <view>
+          <text class="progress-number">{{commission.accepted_count}}</text>
+          <text class="progress-label">已领取</text>
+        </view>
+        <view>
+          <text class="progress-number">{{commission.completed_count}}</text>
+          <text class="progress-label">已完成</text>
+        </view>
+        <view>
+          <text class="progress-number">{{acceptances.length}}</text>
+          <text class="progress-label">记录数</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-section">
+      <view class="section-title">领取记录</view>
+      <view class="acceptance-card" wx:for="{{acceptances}}" wx:key="acceptance_id">
+        <view>
+          <text class="receiver">{{item.receiver_name}}</text>
+          <text class="acceptance-meta">领取：{{item.accepted_text || '未知'}}</text>
+          <text class="acceptance-meta" wx:if="{{item.completed_text}}">完成：{{item.completed_text}}</text>
+        </view>
+        <text class="status status-{{item.status}}">{{item.status_text}}</text>
+      </view>
+      <view class="empty-state" wx:if="{{acceptances.length === 0}}">暂无领取记录</view>
+    </view>
+  </scroll-view>
+</view>
