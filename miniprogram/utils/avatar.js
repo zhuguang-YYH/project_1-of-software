@@ -53,6 +53,16 @@ async function resolveCloudAvatarUrls(list = []) {
       }
     });
 
+    const unresolved = file_ids.filter(fileID => !url_map[fileID]);
+    if (unresolved.length && serverResolver) {
+      try {
+        const server_map = await serverResolver(unresolved);
+        Object.assign(url_map, server_map || {});
+      } catch (serverError) {
+        console.error('server avatar resolver failed:', serverError);
+      }
+    }
+
     return applyResolvedAvatarUrls(items, url_map);
   } catch (error) {
     console.error('resolveCloudAvatarUrls failed:', error);
@@ -98,6 +108,14 @@ async function resolveCloudAvatarUrl(url) {
       status: file && file.status,
       errMsg: file && file.errMsg
     });
+    if (serverResolver) {
+      try {
+        const url_map = await serverResolver([avatar_url]);
+        return (url_map && url_map[avatar_url]) || DEFAULT_AVATAR;
+      } catch (serverError) {
+        console.error('server avatar resolver failed:', serverError);
+      }
+    }
     return DEFAULT_AVATAR;
   } catch (error) {
     console.error('resolveCloudAvatarUrl failed:', error);
