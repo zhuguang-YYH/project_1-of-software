@@ -98,6 +98,22 @@ class RankingService {
     return { success: false, data: {} };
   }
 
+  async resolveAvatarUrls(file_ids = []) {
+    try {
+      const result = await callFunction('ranking_resolveAvatarUrls', {
+        file_ids
+      }, {
+        timeout: CONFIG.timeout.ranking
+      });
+
+      if (result.success) return { success: true, data: result.data || {} };
+    } catch (error) {
+      console.error('Failed to resolve avatar urls:', error);
+    }
+
+    return { success: false, data: {} };
+  }
+
   refreshCache() {
     storage.removeSync('ranking_cache');
   }

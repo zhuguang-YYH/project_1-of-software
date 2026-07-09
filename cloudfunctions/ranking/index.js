@@ -40,6 +40,47 @@ function normalizeAvatarUrl(url) {
   return value;
 }
 
+async function resolveAvatarUrls(file_ids = []) {
+  const ids = Array.from(new Set(
+    (Array.isArray(file_ids) ? file_ids : [])
+      .map(normalizeAvatarUrl)
+      .filter(url => url.startsWith('cloud://'))
+  ));
+
+  if (!ids.length) return {};
+
+  try {
+    const res = await cloud.getTempFileURL({ fileList: ids });
+    const url_map = {};
+    (res.fileList || []).forEach(file => {
+      if (file && file.fileID && file.tempFileURL) {
+        url_map[file.fileID] = file.tempFileURL;
+      } else if (file && file.fileID) {
+        console.warn('Resolve avatar temp URL failed:', {
+          fileID: file.fileID,
+          status: file.status,
+          errMsg: file.errMsg
+        });
+      }
+    });
+    return url_map;
+  } catch (error) {
+    console.warn('Resolve avatar temp URLs skipped:', error.message);
+    return {};
+  }
+}
+
+async function attachAvatarTempUrls(list = []) {
+  const url_map = await resolveAvatarUrls(list.map(item => item.avatar_url));
+  return list.map(item => {
+    const avatar_url = normalizeAvatarUrl(item.avatar_url);
+    return {
+      ...item,
+      avatar_url: url_map[avatar_url] || (avatar_url.startsWith('cloud://') ? '' : avatar_url)
+    };
+  });
+}
+
 function normalizePeriod(period) {
   return ['all', 'weekly', 'monthly'].includes(period) ? period : 'all';
 }
@@ -194,7 +235,7 @@ async function ranking_getTopThree(event) {
   try {
     const period = normalizePeriod(String(event.period || 'all').trim());
     const result = await getRankedUsers(3, 0, period);
-    const list = applyTieRanks(result.list);
+    const list = await attachAvatarTempUrls(applyTieRanks(result.list));
     if (period === 'all') await writeRankingSnapshots(list);
     return ok(list);
   } catch (error) {
@@ -223,7 +264,7 @@ async function ranking_getFullRanking(event) {
       source = source.slice(0, page_size);
     }
 
-    const list = applyTieRanks(source, skip);
+    const list = await attachAvatarTempUrls(applyTieRanks(source, skip));
     if (period === 'all') await writeRankingSnapshots(list);
     return ok({
       list,
@@ -254,10 +295,10 @@ async function ranking_getUserRanking(event) {
       const ranked = applyTieRanks(result.list);
       const user_id = user._id || user.user_id || '';
       const current = ranked.find(item => item.user_id === user_id);
-      if (current) return ok(current);
+      if (current) return ok((await attachAvatarTempUrls([current]))[0]);
 
       return ok({
-        ...normalizeRankUser(user, (result.total || 0) + 1),
+        ...(await attachAvatarTempUrls([normalizeRankUser(user, (result.total || 0) + 1)]))[0],
         total_points: 0
       });
     }
@@ -267,9 +308,17 @@ async function ranking_getUserRanking(event) {
       .where({ total_points: _.gt(score) })
       .count();
 
-    return ok(normalizeRankUser(user, rank_res.total + 1));
+    return ok((await attachAvatarTempUrls([normalizeRankUser(user, rank_res.total + 1)]))[0]);
   } catch (error) {
     return fail('get user ranking failed: ' + error.message);
+  }
+}
+
+async function ranking_resolveAvatarUrls(event) {
+  try {
+    return ok(await resolveAvatarUrls(event.file_ids || event.fileIds || []));
+  } catch (error) {
+    return fail('resolve avatar urls failed: ' + error.message);
   }
 }
 
@@ -318,6 +367,7 @@ exports.main = async (event, context) => {
     getTopThree: ranking_getTopThree,
     getFullRanking: ranking_getFullRanking,
     getUserRanking: ranking_getUserRanking,
+    resolveAvatarUrls: ranking_resolveAvatarUrls,
     generateSnapshot: ranking_generateSnapshot,
     getStats: ranking_getStats
   };

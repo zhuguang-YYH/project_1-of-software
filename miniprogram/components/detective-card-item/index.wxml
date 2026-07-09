@@ -4,7 +4,7 @@
   </view>
 
   <view class="avatar-wrap">
-    <image class="avatar" src="{{user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" binderror="onAvatarError" />
+    <image class="avatar" src="{{displayAvatar}}" mode="aspectFill" lazy-load="{{true}}" binderror="onAvatarError" />
     <view class="rank-glow" wx:if="{{user.rank_no <= 3 && user.rank_no > 0}}"></view>
   </view>
 

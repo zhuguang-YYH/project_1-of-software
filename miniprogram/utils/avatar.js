@@ -1,4 +1,9 @@
 const DEFAULT_AVATAR = '/images/icons/avatar.png';
+let serverResolver = null;
+
+function setAvatarUrlResolver(resolver) {
+  serverResolver = typeof resolver === 'function' ? resolver : null;
+}
 
 function normalizeAvatarUrl(url) {
   const value = String(url || '').trim();
@@ -39,27 +44,79 @@ async function resolveCloudAvatarUrls(list = []) {
     (res.fileList || []).forEach(file => {
       if (file && file.fileID && file.tempFileURL) {
         url_map[file.fileID] = file.tempFileURL;
+      } else if (file && file.fileID) {
+        console.warn('Avatar temp URL unavailable:', {
+          fileID: file.fileID,
+          status: file.status,
+          errMsg: file.errMsg
+        });
       }
     });
 
-    return items.map(item => {
-      const avatar_url = normalizeAvatarUrl(item && item.avatar_url);
-      return {
-        ...item,
-        avatar_url: url_map[avatar_url] || avatar_url
-      };
-    });
+    return applyResolvedAvatarUrls(items, url_map);
   } catch (error) {
     console.error('resolveCloudAvatarUrls failed:', error);
-    return items.map(item => ({
+    if (serverResolver) {
+      try {
+        const url_map = await serverResolver(file_ids);
+        return applyResolvedAvatarUrls(items, url_map || {});
+      } catch (serverError) {
+        console.error('server avatar resolver failed:', serverError);
+      }
+    }
+    return applyResolvedAvatarUrls(items, {});
+  }
+}
+
+function applyResolvedAvatarUrls(items, url_map = {}) {
+  return items.map(item => {
+    const avatar_url = normalizeAvatarUrl(item && item.avatar_url);
+    const resolved_url = url_map[avatar_url] || avatar_url;
+    return {
       ...item,
-      avatar_url: normalizeAvatarUrl(item && item.avatar_url)
-    }));
+      avatar_url: resolved_url.startsWith('cloud://') ? DEFAULT_AVATAR : resolved_url
+    };
+  });
+}
+
+async function resolveCloudAvatarUrl(url) {
+  const avatar_url = normalizeAvatarUrl(url);
+  if (!avatar_url) return '';
+  if (!avatar_url.startsWith('cloud://')) return avatar_url;
+
+  if (typeof wx === 'undefined' || !wx.cloud || !wx.cloud.getTempFileURL) {
+    return DEFAULT_AVATAR;
+  }
+
+  try {
+    const res = await wx.cloud.getTempFileURL({ fileList: [avatar_url] });
+    const file = res.fileList && res.fileList[0];
+    if (file && file.tempFileURL) return file.tempFileURL;
+
+    console.warn('Avatar temp URL unavailable:', {
+      fileID: avatar_url,
+      status: file && file.status,
+      errMsg: file && file.errMsg
+    });
+    return DEFAULT_AVATAR;
+  } catch (error) {
+    console.error('resolveCloudAvatarUrl failed:', error);
+    if (serverResolver) {
+      try {
+        const url_map = await serverResolver([avatar_url]);
+        return (url_map && url_map[avatar_url]) || DEFAULT_AVATAR;
+      } catch (serverError) {
+        console.error('server avatar resolver failed:', serverError);
+      }
+    }
+    return DEFAULT_AVATAR;
   }
 }
 
 module.exports = {
   DEFAULT_AVATAR,
   normalizeAvatarUrl,
-  resolveCloudAvatarUrls
+  resolveCloudAvatarUrl,
+  resolveCloudAvatarUrls,
+  setAvatarUrlResolver
 };

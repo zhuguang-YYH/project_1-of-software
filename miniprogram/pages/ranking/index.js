@@ -5,7 +5,12 @@ const { storage } = require('../../utils/storage.js');
 const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
 const { normalizePublicCard } = require('../../utils/public-card.js');
-const { DEFAULT_AVATAR, normalizeAvatarUrl, resolveCloudAvatarUrls } = require('../../utils/avatar.js');
+const { DEFAULT_AVATAR, normalizeAvatarUrl, resolveCloudAvatarUrls, setAvatarUrlResolver } = require('../../utils/avatar.js');
+
+setAvatarUrlResolver(async file_ids => {
+  const result = await rankingService.resolveAvatarUrls(file_ids);
+  return result.data || {};
+});
 
 function normalizeRankUser(item = {}, index = 0) {
   const rank_no = Number(item.rank_no || index + 1);
