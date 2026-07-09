@@ -37,6 +37,12 @@ Component({
         user_id: user.user_id || '',
         user
       });
+    },
+
+    onAvatarError() {
+      this.setData({
+        'user.avatar_url': '/images/icons/avatar.png'
+      });
     }
   }
 });

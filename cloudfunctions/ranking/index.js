@@ -22,6 +22,24 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function normalizeAvatarUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  const lower = value.toLowerCase();
+
+  if (
+    lower.startsWith('wxfile://') ||
+    lower.startsWith('http://tmp/') ||
+    lower.includes('/__tmp__/') ||
+    lower.includes('127.0.0.1') ||
+    lower.includes('localhost')
+  ) {
+    return '';
+  }
+
+  return value;
+}
+
 function normalizePeriod(period) {
   return ['all', 'weekly', 'monthly'].includes(period) ? period : 'all';
 }
@@ -39,7 +57,7 @@ function normalizeRankUser(user = {}, rank_no = 0) {
     user_id: user._id || user.user_id || '',
     rank_no,
     nickname: user.nickname || 'Detective',
-    avatar_url: user.avatar_url || '',
+    avatar_url: normalizeAvatarUrl(user.avatar_url),
     total_points: toNumber(user.total_points)
   };
 }

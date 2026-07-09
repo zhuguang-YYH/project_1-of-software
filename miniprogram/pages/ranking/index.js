@@ -6,13 +6,33 @@ const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
 const { normalizePublicCard } = require('../../utils/public-card.js');
 
+const DEFAULT_AVATAR = '/images/icons/avatar.png';
+
+function normalizeAvatarUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  const lower = value.toLowerCase();
+
+  if (
+    lower.startsWith('wxfile://') ||
+    lower.startsWith('http://tmp/') ||
+    lower.includes('/__tmp__/') ||
+    lower.includes('127.0.0.1') ||
+    lower.includes('localhost')
+  ) {
+    return '';
+  }
+
+  return value;
+}
+
 function normalizeRankUser(item = {}, index = 0) {
   const rank_no = Number(item.rank_no || index + 1);
   return {
     user_id: item.user_id || '',
     rank_no,
     nickname: item.nickname || 'Detective',
-    avatar_url: item.avatar_url || '',
+    avatar_url: normalizeAvatarUrl(item.avatar_url),
     total_points: Number(item.total_points || 0),
     meta: `No.${rank_no}`
   };
@@ -244,6 +264,14 @@ Page({
       show_card_modal: false,
       selected_card: null,
       card_loading: false
+    });
+  },
+
+  onPodiumAvatarError(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+    this.setData({
+      [`top_three[${index}].avatar_url`]: DEFAULT_AVATAR
     });
   },
 
