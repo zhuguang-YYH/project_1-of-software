@@ -5,6 +5,12 @@ const { storage } = require('../../utils/storage.js');
 const { applyTheme } = require('../../utils/theme.js');
 const share = require('../../utils/share.js');
 const { normalizePublicCard } = require('../../utils/public-card.js');
+const { DEFAULT_AVATAR, normalizeAvatarUrl, resolveCloudAvatarUrls, setAvatarUrlResolver } = require('../../utils/avatar.js');
+
+setAvatarUrlResolver(async file_ids => {
+  const result = await rankingService.resolveAvatarUrls(file_ids);
+  return result.data || {};
+});
 
 function normalizeRankUser(item = {}, index = 0) {
   const rank_no = Number(item.rank_no || index + 1);
@@ -12,7 +18,7 @@ function normalizeRankUser(item = {}, index = 0) {
     user_id: item.user_id || '',
     rank_no,
     nickname: item.nickname || 'Detective',
-    avatar_url: item.avatar_url || '',
+    avatar_url: normalizeAvatarUrl(item.avatar_url),
     total_points: Number(item.total_points || 0),
     meta: `No.${rank_no}`
   };
@@ -84,7 +90,7 @@ Page({
     try {
       const result = await rankingService.getTopThree({ period: this.data.period });
       const list = Array.isArray(result.data) ? result.data : [];
-      const ranked = list.slice(0, 3).map(normalizeRankUser);
+      const ranked = (await resolveCloudAvatarUrls(list.slice(0, 3).map(normalizeRankUser)));
       // Always pad to 3 positions so the podium layout is complete
       while (ranked.length < 3) {
         ranked.push({ user_id: '', rank_no: ranked.length + 1, nickname: '虚位以待', avatar_url: '', total_points: 0, _placeholder: true });
@@ -104,7 +110,8 @@ Page({
         period: this.data.period
       });
       const list = result.data || [];
-      this.setData({ full_ranking: list.map(normalizeRankUser) });
+      const full_ranking = await resolveCloudAvatarUrls(list.map(normalizeRankUser));
+      this.setData({ full_ranking });
     } catch (err) {
       console.error('Load full ranking failed:', err);
       this.setData({ full_ranking: [] });
@@ -137,8 +144,10 @@ Page({
   switchPeriod(e) {
     const period = e.currentTarget.dataset.period;
     if (period === this.data.period) return;
-    this.setData({ period, loading: true });
-    this.initPage();
+    if (rankingService.refreshCache) rankingService.refreshCache();
+    this.setData({ period, loading: true }, () => {
+      this.initPage();
+    });
   },
 
   async onPullDownRefresh() {
@@ -242,6 +251,14 @@ Page({
       show_card_modal: false,
       selected_card: null,
       card_loading: false
+    });
+  },
+
+  onPodiumAvatarError(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+    this.setData({
+      [`top_three[${index}].avatar_url`]: DEFAULT_AVATAR
     });
   },
 

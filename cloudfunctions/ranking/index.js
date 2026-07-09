@@ -22,6 +22,69 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function normalizeAvatarUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  const lower = value.toLowerCase();
+
+  if (
+    lower.startsWith('wxfile://') ||
+    lower.startsWith('http://tmp/') ||
+    lower.includes('/__tmp__/') ||
+    lower.includes('127.0.0.1') ||
+    lower.includes('localhost')
+  ) {
+    return '';
+  }
+
+  return value;
+}
+
+async function resolveAvatarUrls(file_ids = []) {
+  const ids = Array.from(new Set(
+    (Array.isArray(file_ids) ? file_ids : [])
+      .map(normalizeAvatarUrl)
+      .filter(url => url.startsWith('cloud://'))
+  ));
+
+  if (!ids.length) return {};
+
+  try {
+    const res = await cloud.getTempFileURL({ fileList: ids });
+    const url_map = {};
+    (res.fileList || []).forEach(file => {
+      if (file && file.fileID && file.tempFileURL) {
+        url_map[file.fileID] = file.tempFileURL;
+      } else if (file && file.fileID) {
+        console.warn('Resolve avatar temp URL failed:', {
+          fileID: file.fileID,
+          status: file.status,
+          errMsg: file.errMsg
+        });
+      }
+    });
+    return url_map;
+  } catch (error) {
+    console.warn('Resolve avatar temp URLs skipped:', error.message);
+    return {};
+  }
+}
+
+async function attachAvatarTempUrls(list = []) {
+  const url_map = await resolveAvatarUrls(list.map(item => item.avatar_url));
+  return list.map(item => {
+    const avatar_url = normalizeAvatarUrl(item.avatar_url);
+    return {
+      ...item,
+      avatar_url: url_map[avatar_url] || (avatar_url.startsWith('cloud://') ? '' : avatar_url)
+    };
+  });
+}
+
+function normalizePeriod(period) {
+  return ['all', 'weekly', 'monthly'].includes(period) ? period : 'all';
+}
+
 function isCollectionMissing(error) {
   return error && (
     error.errCode === -502005 ||
@@ -35,7 +98,7 @@ function normalizeRankUser(user = {}, rank_no = 0) {
     user_id: user._id || user.user_id || '',
     rank_no,
     nickname: user.nickname || 'Detective',
-    avatar_url: user.avatar_url || '',
+    avatar_url: normalizeAvatarUrl(user.avatar_url),
     total_points: toNumber(user.total_points)
   };
 }
@@ -111,7 +174,12 @@ async function aggregatePeriodPoints(days) {
   all_logs.forEach(log => {
     const uid = log.user_id || '';
     if (!uid) return;
-    user_points[uid] = (user_points[uid] || 0) + (Number(log.points || 0) || 0);
+    const raw_amount = log.change_amount !== undefined
+      ? log.change_amount
+      : log.amount !== undefined
+        ? log.amount
+        : log.points;
+    user_points[uid] = (user_points[uid] || 0) + (Number(raw_amount || 0) || 0);
   });
 
   return user_points;
@@ -123,24 +191,7 @@ async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
     const days = period === 'weekly' ? 7 : 30;
 
     try {
-      // Aggregate points from points_log within the period
-      const res = await db.collection('points_log')
-        .where({ created_at: _.gte(since) })
-        .limit(500)
-        .get();
-
-      // Sum points per user
-      const user_points = {};
-      (res.data || []).forEach(log => {
-        const uid = log.user_id || '';
-        if (!uid) return;
-        const raw_amount = log.change_amount !== undefined
-          ? log.change_amount
-          : log.amount !== undefined
-            ? log.amount
-            : log.points;
-        user_points[uid] = (user_points[uid] || 0) + (Number(raw_amount || 0) || 0);
-      });
+      const user_points = await aggregatePeriodPoints(days);
 
       // Convert to sorted array
       let ranked = Object.entries(user_points)
@@ -182,9 +233,9 @@ async function getRankedUsers(limit = 100, skip = 0, period = 'all') {
 
 async function ranking_getTopThree(event) {
   try {
-    const period = String(event.period || 'all').trim();
+    const period = normalizePeriod(String(event.period || 'all').trim());
     const result = await getRankedUsers(3, 0, period);
-    const list = applyTieRanks(result.list);
+    const list = await attachAvatarTempUrls(applyTieRanks(result.list));
     if (period === 'all') await writeRankingSnapshots(list);
     return ok(list);
   } catch (error) {
@@ -198,7 +249,7 @@ async function ranking_getFullRanking(event) {
     const page_size = Math.min(100, Math.max(1, Number(event.page_size) || 20));
     const skip = (page - 1) * page_size;
     const fetch_size = page === 1 && page_size >= 100 ? 200 : page_size;
-    const period = String(event.period || 'all').trim();
+    const period = normalizePeriod(String(event.period || 'all').trim());
     const result = await getRankedUsers(fetch_size, skip, period);
     const users = result.list;
     const totalCount = result.total !== null ? result.total : (await db.collection('users').count()).total;
@@ -213,7 +264,7 @@ async function ranking_getFullRanking(event) {
       source = source.slice(0, page_size);
     }
 
-    const list = applyTieRanks(source, skip);
+    const list = await attachAvatarTempUrls(applyTieRanks(source, skip));
     if (period === 'all') await writeRankingSnapshots(list);
     return ok({
       list,
@@ -229,9 +280,8 @@ async function ranking_getFullRanking(event) {
 
 async function ranking_getUserRanking(event) {
   try {
-    const period = String((event && event.period) || 'all').trim();
+    const period = normalizePeriod(String((event && event.period) || 'all').trim());
     const wx_context = cloud.getWXContext();
-    const period = String(event.period || 'all').trim();
 
     const user_res = await db.collection('users')
       .where({ openid: wx_context.OPENID })
@@ -239,18 +289,16 @@ async function ranking_getUserRanking(event) {
       .get();
 
     if (user_res.data.length === 0) return fail('user not found', 'USER_NOT_FOUND');
-    const current_user = user_res.data[0];
-
     const user = user_res.data[0];
     if (period === 'weekly' || period === 'monthly') {
       const result = await getRankedUsers(500, 0, period);
       const ranked = applyTieRanks(result.list);
       const user_id = user._id || user.user_id || '';
       const current = ranked.find(item => item.user_id === user_id);
-      if (current) return ok(current);
+      if (current) return ok((await attachAvatarTempUrls([current]))[0]);
 
       return ok({
-        ...normalizeRankUser(user, (result.total || 0) + 1),
+        ...(await attachAvatarTempUrls([normalizeRankUser(user, (result.total || 0) + 1)]))[0],
         total_points: 0
       });
     }
@@ -260,9 +308,17 @@ async function ranking_getUserRanking(event) {
       .where({ total_points: _.gt(score) })
       .count();
 
-    return ok(normalizeRankUser(current_user, rank_res.total + 1));
+    return ok((await attachAvatarTempUrls([normalizeRankUser(user, rank_res.total + 1)]))[0]);
   } catch (error) {
     return fail('get user ranking failed: ' + error.message);
+  }
+}
+
+async function ranking_resolveAvatarUrls(event) {
+  try {
+    return ok(await resolveAvatarUrls(event.file_ids || event.fileIds || []));
+  } catch (error) {
+    return fail('resolve avatar urls failed: ' + error.message);
   }
 }
 
@@ -311,6 +367,7 @@ exports.main = async (event, context) => {
     getTopThree: ranking_getTopThree,
     getFullRanking: ranking_getFullRanking,
     getUserRanking: ranking_getUserRanking,
+    resolveAvatarUrls: ranking_resolveAvatarUrls,
     generateSnapshot: ranking_generateSnapshot,
     getStats: ranking_getStats
   };

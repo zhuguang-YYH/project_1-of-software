@@ -62,14 +62,29 @@
 }
 
 .puzzle-difficulty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72rpx;
+  height: 44rpx;
+  box-sizing: border-box;
   position: relative;
   z-index: 1;
   font-size: 22rpx;
-  padding: 8rpx 20rpx;
+  padding: 6rpx 18rpx;
   border-radius: 999rpx;
   font-weight: 700;
   letter-spacing: 1rpx;
   flex-shrink: 0;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.puzzle-difficulty text {
+  display: block;
+  line-height: 1;
+  text-align: center;
 }
 
 .difficulty-easy { background: rgba(52, 211, 153, 0.25); color: #5af0a8; }
@@ -240,12 +255,16 @@
 }
 
 .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
   height: 88rpx;
-  line-height: 88rpx;
+  line-height: 1.2;
   border-radius: 16rpx;
   font-size: 30rpx;
   font-weight: 700;
+  text-align: center;
 }
 
 .btn::after { border: none; }

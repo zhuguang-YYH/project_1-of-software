@@ -340,7 +340,8 @@ Page({
       title: '确认发布委托',
       content: `发布后将冻结 ${Number(form.reward_points)} 积分作为奖励。`,
       confirmText: '确认发布',
-      cancelText: '再检查'
+      cancelText: '再检查',
+      theme: this.data.theme
     });
   },
 

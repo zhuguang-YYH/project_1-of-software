@@ -19,7 +19,7 @@
         <text class="fr-section-count">{{pendingReceiveCount}} 条待处理</text>
       </view>
       <view class="fr-item" wx:for="{{friendRequests}}" wx:key="request_id">
-        <image class="fr-avatar" src="{{item.from_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+        <image class="fr-avatar" src="{{item.from_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" data-index="{{index}}" binderror="onFriendRequestAvatarError" />
         <view class="fr-body">
           <text class="fr-name">{{item.from_user.display_name}}</text>
           <text class="fr-message" wx:if="{{item.message}}">{{item.message}}</text>
@@ -49,7 +49,7 @@
         bindtap="goToChat"
       >
         <view class="conv-avatar-wrap">
-          <image class="conv-avatar" src="{{item.other_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" />
+          <image class="conv-avatar" src="{{item.other_user.avatar_url || '/images/icons/avatar.png'}}" mode="aspectFill" lazy-load="{{true}}" data-index="{{index}}" binderror="onConversationAvatarError" />
           <view class="conv-unread-badge" wx:if="{{item.unread_count > 0}}">
             <text>{{item.unread_count > 99 ? '99+' : item.unread_count}}</text>
           </view>

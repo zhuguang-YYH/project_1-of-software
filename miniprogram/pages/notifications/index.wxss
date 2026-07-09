@@ -27,7 +27,8 @@
 }
 
 .notif-title-text {
-  font-size: 34rpx;
+  font-size: 36rpx;
+  line-height: 1.35;
   font-weight: 800;
   color: #1a1f3a;
 }
@@ -35,12 +36,18 @@
 .notif-desc {
   display: block;
   margin-top: 4rpx;
-  font-size: 24rpx;
+  font-size: 26rpx;
+  line-height: 1.4;
   color: #8a96a8;
 }
 
 .mark-all-btn {
-  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56rpx;
+  font-size: 26rpx;
+  line-height: 1.2;
   color: #5b6cff;
   background: transparent;
   border: none;
@@ -95,21 +102,23 @@
 }
 
 .notif-card-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
+  line-height: 1.35;
   font-weight: 700;
   color: #1a1f3a;
   flex: 1;
 }
 
 .notif-time {
-  font-size: 22rpx;
+  font-size: 23rpx;
+  line-height: 1.35;
   color: #8a96a8;
   flex-shrink: 0;
 }
 
 .notif-content {
   display: block;
-  font-size: 25rpx;
+  font-size: 27rpx;
   color: #64748b;
   line-height: 1.5;
   display: -webkit-box;
@@ -128,6 +137,44 @@
   background: #e74c3c;
 }
 
+.notif-empty {
+  min-height: 560rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
+.notif-empty-icon {
+  width: 148rpx;
+  height: 148rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+  background: linear-gradient(135deg, #eef0ff, #e0e4ff);
+  font-size: 66rpx;
+  box-shadow: 0 8rpx 24rpx rgba(91, 108, 255, 0.12);
+}
+
+.notif-empty-title {
+  font-size: 34rpx;
+  line-height: 1.35;
+  font-weight: 800;
+  color: #1a1f3a;
+}
+
+.notif-empty-desc {
+  margin-top: 14rpx;
+  max-width: 520rpx;
+  font-size: 27rpx;
+  line-height: 1.55;
+  color: #64748b;
+}
+
 /* 黑金主题 */
 .theme-gold.page {
   background:
@@ -136,15 +183,15 @@
 }
 
 .theme-gold .notif-title-text {
-  color: #f4ecd6;
+  color: #f8e7a8;
 }
 
 .theme-gold .notif-desc {
-  color: rgba(244, 236, 214, 0.56);
+  color: rgba(244, 236, 214, 0.78);
 }
 
 .theme-gold .mark-all-btn {
-  color: #d4af37;
+  color: #f8e7a8;
 }
 
 .theme-gold .notif-card {
@@ -159,9 +206,27 @@
 }
 
 .theme-gold .notif-card-title {
-  color: #f4ecd6;
+  color: #f8e7a8;
 }
 
 .theme-gold .notif-content {
-  color: rgba(244, 236, 214, 0.64);
+  color: rgba(244, 236, 214, 0.82);
+}
+
+.theme-gold .notif-time {
+  color: rgba(244, 236, 214, 0.66);
+}
+
+.theme-gold .notif-empty-icon {
+  background: linear-gradient(135deg, #292111, #d4af37);
+  color: #fff6d6;
+  box-shadow: 0 12rpx 32rpx rgba(212, 175, 55, 0.24);
+}
+
+.theme-gold .notif-empty-title {
+  color: #f8e7a8;
+}
+
+.theme-gold .notif-empty-desc {
+  color: rgba(244, 236, 214, 0.82);
 }

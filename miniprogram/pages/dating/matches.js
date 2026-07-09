@@ -1,5 +1,12 @@
 const datingService = require('../../services/dating.js');
+const rankingService = require('../../services/ranking.js');
 const { applyTheme } = require('../../utils/theme.js');
+const { DEFAULT_AVATAR, normalizeAvatarUrl, resolveCloudAvatarUrls, setAvatarUrlResolver } = require('../../utils/avatar.js');
+
+setAvatarUrlResolver(async file_ids => {
+  const result = await rankingService.resolveAvatarUrls(file_ids);
+  return result.data || {};
+});
 
 function formatTime(value) {
   if (!value) return '';
@@ -27,6 +34,22 @@ function buildPreview(msg) {
   }
   const text = (msg.content || '').replace(/[\r\n]+/g, ' ');
   return text.length > 30 ? text.slice(0, 30) + '...' : text;
+}
+
+async function resolveNestedAvatars(items, userKey) {
+  const avatarItems = items.map((item, index) => ({
+    index,
+    avatar_url: item[userKey] && item[userKey].avatar_url
+  }));
+  const resolved = await resolveCloudAvatarUrls(avatarItems);
+
+  return items.map((item, index) => ({
+    ...item,
+    [userKey]: {
+      ...item[userKey],
+      avatar_url: normalizeAvatarUrl((resolved[index] && resolved[index].avatar_url) || '')
+    }
+  }));
 }
 
 Page({
@@ -80,7 +103,7 @@ Page({
         other_user: {
           user_id: c.other_user.user_id,
           display_name: c.other_user.display_name || '神秘侦探',
-          avatar_url: c.other_user.avatar_url || ''
+          avatar_url: normalizeAvatarUrl(c.other_user.avatar_url)
         },
         last_message: c.last_message,
         last_content_preview: buildPreview(c.last_message),
@@ -89,7 +112,7 @@ Page({
         matched_at: c.matched_at
       }));
 
-      this.setData({ conversations });
+      this.setData({ conversations: await resolveNestedAvatars(conversations, 'other_user') });
     } catch (err) {
       console.error('Failed to load conversations:', err);
     }
@@ -106,16 +129,17 @@ Page({
         from_user: {
           user_id: r.from_user.user_id,
           display_name: r.from_user.display_name || '神秘侦探',
-          avatar_url: r.from_user.avatar_url || ''
+          avatar_url: normalizeAvatarUrl(r.from_user.avatar_url)
         },
         message: r.message,
         is_sent: false,
         created_at_text: formatTime(r.created_at)
       }));
 
+      const friendRequests = await resolveNestedAvatars(received, 'from_user');
       this.setData({
-        friendRequests: received,
-        pendingReceiveCount: received.length
+        friendRequests,
+        pendingReceiveCount: friendRequests.length
       });
     } catch (err) {
       console.error('Failed to load friend requests:', err);
@@ -165,6 +189,22 @@ Page({
     const { matchId, userId, name, avatar } = e.currentTarget.dataset;
     wx.navigateTo({
       url: `/pages/dating/chat?matchId=${matchId}&userId=${userId}&name=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
+    });
+  },
+
+  onFriendRequestAvatarError(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+    this.setData({
+      [`friendRequests[${index}].from_user.avatar_url`]: DEFAULT_AVATAR
+    });
+  },
+
+  onConversationAvatarError(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+    this.setData({
+      [`conversations[${index}].other_user.avatar_url`]: DEFAULT_AVATAR
     });
   },
 

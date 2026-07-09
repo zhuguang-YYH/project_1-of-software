@@ -151,10 +151,13 @@
 .small-primary::after { border: none !important; }
 
 .small-primary {
-  min-width: 144rpx;
-  line-height: 56rpx;
-  font-size: 24rpx;
-  padding: 0 22rpx;
+  min-width: 184rpx;
+  height: 64rpx;
+  line-height: 1.2;
+  font-size: 25rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .error-banner {
