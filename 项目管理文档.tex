@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{geometry}
 \usepackage{xcolor}
+\usepackage{colortbl}
 \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -349,7 +350,9 @@
 
 \begin{figure}[H]
 \centering
-\textbf{请在此处插入 \texttt{git log --graph --oneline --all} 命令输出的截图}
+\includegraphics[width=\textwidth]{figures/git-log-graph.png}
+\caption{\texttt{git log --graph --oneline --all} 命令输出截图}
+\label{fig:git-log-main}
 \end{figure}
 
 \section{需求变更管理}
@@ -380,36 +383,86 @@
 
 \subsection{项目甘特图}
 
-此处插入正式的甘特图（建议使用Project或在线工具生成）：
-
-\begin{figure}[H]
-\centering
-\textbf{【请在此处插入甘特图截图或图片】}
-\end{figure}
+项目甘特图统一采用正文第\ref{fig:gantt}图所示的手绘\texttt{tikzpicture}版本。
 
 \subsection{Git提交记录截图}
 
 \begin{figure}[H]
 \centering
-\textbf{【请在此处插入 \texttt{git log --graph --oneline --all} 截图】}
+\includegraphics[width=\textwidth]{figures/git-log-graph.png}
+\caption{\texttt{git log --graph --oneline --all} 提交记录截图}
+\label{fig:git-log-appendix}
 \end{figure}
+
+\subsection{会议记录}
+
+以下会议记录依据Git提交节点、项目计划文档和阶段性成果反推整理，用于补充团队过程管理材料。团队实际沟通以微信群即时交流为主，会议形式以线上短会和阶段复盘为主。
+
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{5pt}
+\arrayrulecolor{gray!55}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{2.3cm}|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{5.2cm}|}
+\caption{团队阶段会议记录}\\
+\hline
+\rowcolor{gray!18}
+\textbf{日期} & \textbf{会议主题} & \textbf{主要参与人} & \textbf{讨论内容与决议} \\
+\hline
+\endfirsthead
+\hline
+\rowcolor{gray!18}
+\textbf{日期} & \textbf{会议主题} & \textbf{主要参与人} & \textbf{讨论内容与决议} \\
+\hline
+\endhead
+5月下旬 & 项目启动与分工确认 & 全体成员 & 明确微信小程序作为课程项目形态，确定采用微信原生框架与云开发方案；根据需求分析文档拆分首页、排行榜、活动、借阅、积分、委托、后台等模块；约定使用GitHub仓库进行协作，开发主线围绕\texttt{wechat-miniapp-current}分支推进。\\ \hline
+6月1日 & 界面与基础功能推进会 & 全体成员 & 结合6月1日“完善了部分UI界面”提交，确认先完成主要页面可用界面，再逐步补充云函数与业务逻辑；同步第一轮功能检查中发现的UI、资源和文字显示问题。\\ \hline
+6月8日 & 设计报告与活动模块评审 & 全体成员 & 围绕软件设计报告初稿和活动报名模块进行检查；确认同一用户重复报名属于高优先级Bug，由张启鑫提交修复，负责人完成合并；同时决定继续推进黑金主题统一适配。\\ \hline
+6月10日至6月12日 & 核心功能联调会 & 全体成员 & 针对兑换模块、连续打卡、订阅消息、排行榜、委托功能、积分功能和后台数据导出进行联调；确认积分流转、兑换反馈、排行榜入口、委托冻结等流程需要集中修复，形成6月10日至12日的密集提交。\\ \hline
+6月23日 & 扩展功能计划会 & 全体成员 & 根据阶段进度决定补充谜题库与好友系统，作为提升用户留存和社交互动的扩展功能；同时要求后续开发参照\texttt{plan.md}继续推进订阅消息、云函数配置和体验优化。\\ \hline
+7月4日 & 收尾测试与问题认领会 & 全体成员 & 结合调试反馈集中梳理谜题库、订阅通知、好友请求、目标用户解析、UI同步和排行榜显示问题；采用“发现问题、就近认领、提交修复、负责人合并”的轻量流程完成收尾。\\ \hline
+7月6日至7月8日 & 交付复盘与文档整理会 & 全体成员 & 完成最终Bug修复、分支合并和项目管理文档编写；确认代码、需求文档、软件设计报告、甘特图、Git记录截图和开发日志作为最终提交材料。\\
+\hline
+\end{longtable}
+\arrayrulecolor{black}
+\endgroup
 
 \subsection{开发日志}
 
-以下是基于GitHub Push记录整理的团队开发日志概要，各成员可根据个人记录补充详细内容：
+以下开发日志直接依据当前Git提交记录整理，按时间顺序记录主要开发活动、提交成员与阶段成果。
 
-\begin{itemize}
-  \item \textbf{5月11日 · 项目初始化}：zhuguang-YYH在GitHub创建仓库，完成项目骨架搭建（\texttt{miniprogram/}、\texttt{cloudfunctions/}目录结构），配置\texttt{app.json}页面路由和分包策略，随后将文件整理至lab2文件夹。
-  \item \textbf{5月22日 · 开发分支创建}：Linganshikake创建\texttt{wechat-miniapp-current}分支作为日常开发主线，更新项目README文档。
-  \item \textbf{6月1日—7日 · UI与基础修复}：zhuguang-YYH完善部分UI界面并修复文字乱码问题；30SC35KD完成第一轮检测Bug修复，引入借阅与排行榜图标资源。
-  \item \textbf{6月8日 · 报告与活动修复}：zhuguang-YYH完成软件设计报告初稿；jiushan1通过PR提交活动报名去重修复（同一用户不可对同一活动无限次报名）；Linganshikake合并该修复并进行黑金主题适配。
-  \item \textbf{6月9日—12日 · 核心功能密集期}：Linganshikake整理后台表单与美术素材，修复委托积分冻结与主包资源优化；30SC35KD连续完成兑换模块、连续打卡激励、订阅消息补全（6/10），随后完成黑金风格完善、排行榜修复与委托功能（6/12）；moyang5提交积分功能补全与后台数据导出；zhuguang-YYH优化系统设置与头像UI。
-  \item \textbf{6月23日—7月2日 · 功能扩展}：zhuguang-YYH初步完成谜题库和好友系统，随后按照\texttt{plan.md}推进剩余工作并完善云函数配置。
-  \item \textbf{7月4日—5日 · 集中修复与优化}：Linganshikake连续进行5次Push——完善谜题库、订阅通知与好友系统稳定性；优化黑金主题与好友请求处理；完善添加好友目标用户解析；修复调试反馈中的UI与同步问题；优化黑金主题UI与排行榜显示。
-  \item \textbf{7月7日 · 收尾与合并}：zhuguang-YYH进行最终Bug修复，将Linganshikake的全部工作合并入主分支，项目达到可交付状态。
-\end{itemize}
-
-各成员可在上述基础上补充个人开发日志，包括遇到的具体技术问题、解决思路、心得反思等。
+\begingroup
+\renewcommand{\arraystretch}{1.22}
+\setlength{\tabcolsep}{5pt}
+\arrayrulecolor{gray!55}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{1.9cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{5.3cm}|}
+\caption{项目开发日志}\\
+\hline
+\rowcolor{gray!18}
+\textbf{日期} & \textbf{提交成员} & \textbf{提交主题} & \textbf{开发内容与成果} \\
+\hline
+\endfirsthead
+\hline
+\rowcolor{gray!18}
+\textbf{日期} & \textbf{提交成员} & \textbf{提交主题} & \textbf{开发内容与成果} \\
+\hline
+\endhead
+5月22日 & unknown、zhuguang-YYH & Initial Commit；更新README & 完成仓库初始提交，建立项目基础文件；随后更新README，使项目说明与当前版本保持一致，为后续团队协作提供入口文档。\\ \hline
+6月1日 & zhuguang-YYH & 完善部分UI界面 & 推进小程序主要页面的初步界面搭建，形成可继续接入功能逻辑的前端基础。\\ \hline
+6月6日至6月7日 & 30SC35KD、zhuguang-YYH & 第一轮检测Bug修复、图标加入、乱码修复 & 根据第一轮检查反馈修复基础Bug，引入借阅与排行榜相关图标资源；处理部分中文文字乱码问题，提高界面可读性。\\ \hline
+6月8日 & zhuguang-YYH、G14 LeaZhang23 & 软件设计报告、活动报名修复、黑金主题适配 & 完成软件设计报告；修复同一用户可重复报名同一活动的问题；合并远程活动报名修复，并开始进行小程序功能与黑金主题适配。\\ \hline
+6月9日 & zhuguang-YYH & 后台表单、美术素材、委托积分冻结 & 完善后台表单并加入可用美术素材；修复委托积分冻结问题，优化主包资源，为积分体系安全性和页面资源加载提供支撑。\\ \hline
+6月10日 & 30SC35KD & 兑换、连续打卡、订阅消息 & 完善积分兑换模块，加入连续打卡激励，并补全部分订阅消息能力，提升运营留存相关功能。\\ \hline
+6月11日 & 30SC35KD、2310708-Wang Zengzhe & 排行榜、委托、积分与后台导出 & 修复排行榜无法打开的问题，完善委托功能；补全积分功能并加入后台数据导出能力，增强管理端的数据处理能力。\\ \hline
+6月12日 & 30SC35KD、zhuguang-YYH & 黑金风格、系统设置与头像UI & 完善黑金风格显示；优化系统设置和头像相关界面，使整体视觉风格更加统一。\\ \hline
+6月23日 & zhuguang-YYH & 谜题库和好友功能 & 初步完成谜题库与好友系统，扩展小程序的互动玩法和社交能力。\\ \hline
+7月1日至7月4日 & zhuguang-YYH & 按计划推进、云函数配置 & 根据\texttt{plan.md}推进剩余任务，完善部分云函数配置，为最终联调和部署补齐后端基础。\\ \hline
+7月4日 & Linganshikake & 谜题库、订阅通知、好友系统、黑金主题与排行榜优化 & 集中完成谜题库、订阅通知和好友系统稳定性增强；优化黑金主题、好友请求处理、添加好友目标用户解析，并修复调试反馈中的UI与同步问题。\\ \hline
+7月6日 & zhuguang-YYH & Bug修复与分支合并 & 修复部分收尾Bug，并将\texttt{wechat-miniapp-current}分支中的集中优化内容合并到开发主线，完成多人协作成果整合。\\ \hline
+7月8日 & zhuguang-YYH & 项目管理文档 & 编写项目管理文档，补充团队分工、开发计划、甘特图、版本管理、需求变更、会议记录和开发日志等过程材料。\\
+\hline
+\end{longtable}
+\arrayrulecolor{black}
+\endgroup
 
 \section{项目总结}
 
